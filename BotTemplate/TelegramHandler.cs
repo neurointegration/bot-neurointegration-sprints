@@ -50,16 +50,9 @@ public class TelegramHandler : YcFunction<string, Response>
         var body = JObject.Parse(request).GetValue("body")!.Value<string>()!;
         var update = JsonConvert.DeserializeObject<Update>(body)!;
         var view = new HtmlMessageView(tgClient);
-        var messagesRepo = new S3MessageDetailsBucket(configuration.CreateBotBucketService());
         var botDatabase = new BotDatabase(configuration);
 
-        var commands = new IChatCommandHandler[]
-        {
-            new StartCommandHandler(view),
-            new HelpCommandHandler(view),
-        };
-
-        var updateService = new HandleUpdateService(view, commands, messagesRepo, botDatabase);
+        var updateService = new HandleUpdateService(view, botDatabase);
         await updateService.Handle(update);
     }
 }

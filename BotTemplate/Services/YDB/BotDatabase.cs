@@ -37,7 +37,7 @@ public class BotDatabase : IBotDatabase
         
     }
 
-    public async Task ExecuteModify(string query, Dictionary<string, YdbValue> parameters)
+    public async Task ExecuteModify(string query, Dictionary<string, YdbValue?> parameters)
     {
         using var tableClient = await CreateTableClient();
         

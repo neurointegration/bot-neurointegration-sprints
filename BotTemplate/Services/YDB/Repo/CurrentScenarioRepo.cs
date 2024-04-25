@@ -1,90 +1,169 @@
+using BotTemplate.Services.YDB.Repo;
 using Ydb.Sdk.Value;
 
 namespace BotTemplate.Services.YDB;
 
-public class CurrentScenarioRepo
+public class CurrentScenarioRepo : IRepo
 {
     public virtual string TableName => "current_scenarios";
 
-    private readonly IBotDatabase botDatabase;
+    private readonly IBotDatabase _botDatabase;
+    private readonly ScenariosRepo _scenariosRepo;
 
-    public CurrentScenarioRepo(IBotDatabase botDatabase)
+    private CurrentScenarioRepo(IBotDatabase botDatabase, ScenariosRepo scenariosRepo)
     {
-        this.botDatabase = botDatabase;
+        _botDatabase = botDatabase;
+        _scenariosRepo = scenariosRepo;
     }
 
-    public static async Task<CurrentScenarioRepo> InitWithDatabase(IBotDatabase botDatabase)
+    public static async Task<CurrentScenarioRepo> InitWithDatabase(IBotDatabase botDatabase, ScenariosRepo scenariosRepo)
     {
-        var model = new CurrentScenarioRepo(botDatabase);
+        var model = new CurrentScenarioRepo(botDatabase, scenariosRepo);
         await model.CreateTable();
+
         return model;
     }
 
-    public async Task<ulong> GetPastWeekUsersCount()
+    public async Task<string?> StartNewScenarioAndGetMessage(long chatId, long scenarioId)
     {
-        var rows = await botDatabase.ExecuteFind($@"
-            DECLARE $current_date AS Date;
-
-            SELECT COUNT(*) AS user_count
-            FROM {TableName} view idx_lmd
-            WHERE last_message_date >= DateTime::MakeDatetime(DateTime::StartOfWeek($current_date));
-        ", new Dictionary<string, YdbValue>
-        {
-            {"$current_date", YdbValue.MakeDate(DateTime.Now)},
-        });
+        var curIndex = await GetIndexByChatId(chatId);
+        if (curIndex is not null)
+            return null;
         
-        return rows?.First()["user_count"].GetUint64() ?? 0;
-    }
-
-    public async void UpdateOrInsertDateTime(long chatId, DateTime? dateTime = null)
-    {
-        await botDatabase.ExecuteModify($@"
+        await _botDatabase.ExecuteModify($@"
             DECLARE $chat_id AS Int64;
-            DECLARE $date_time AS DateTime;
+            DECLARE $scenario_id AS Int64;
 
-            UPSERT INTO {TableName} ( chat_id, last_message_date )
-            VALUES ( $chat_id, $date_time )
-        ", new Dictionary<string, YdbValue>
+            INSERT INTO {TableName} ( chat_id, scenario_id, index )
+            VALUES ( $chat_id, $scenario_id, 0 )
+        ", new Dictionary<string, YdbValue?>
         {
             {"$chat_id", YdbValue.MakeInt64(chatId)},
-            {"$date_time", YdbValue.MakeDatetime(dateTime ?? DateTime.Now)},
+            {"$scenario_id", YdbValue.MakeInt64(scenarioId)},
+        });
+
+        var message = await _scenariosRepo.GetMessageByScenarioIdAndMessageIndex(scenarioId, 0);
+        return message;
+    }
+
+    public async Task<string?> IncreaseAndGetNewMessage(long chatId)
+    {
+        var oldIndex = await GetIndexByChatId(chatId);
+        if (oldIndex is null)
+            return null;
+        
+        var scenarioId = await GetScenarioIdByChatId(chatId);
+        var newIndex = oldIndex.Value + 1;
+        var message = await _scenariosRepo.GetMessageByScenarioIdAndMessageIndex(scenarioId!.Value, newIndex);
+        
+        await _botDatabase.ExecuteModify($@"
+            DECLARE $chat_id AS Int64;
+            DECLARE $scenario_id AS Int64;
+            DECLARE $new_index AS Int32;
+
+            UPDATE {TableName}
+            SET index = $new_index, scenario_id = $scenario_id
+            WHERE chat_id = $chat_id;
+        ", new Dictionary<string, YdbValue?>
+        {
+            {"$chat_id", YdbValue.MakeInt64(chatId)},
+            {"$scenario_id", YdbValue.MakeInt64(scenarioId.Value)},
+            {"$new_index", YdbValue.MakeInt32(newIndex)}
+        });
+
+        var key = await _scenariosRepo.GetKeyByIndex(scenarioId!.Value, newIndex);
+        if (key is null)
+            await EndScenario(chatId);
+        
+        return message;
+    }
+    
+    public async Task EndScenario(long chatId)
+    {
+        await _botDatabase.ExecuteModify($@"
+            DECLARE $chat_id AS Int64;
+
+            DELETE FROM {TableName} WHERE chat_id = $chat_id;
+        ", new Dictionary<string, YdbValue?>
+        {
+            {"$chat_id", YdbValue.MakeInt64(chatId)}
         });
     }
 
-    public async Task<DateTime?> FindLastMessageDateTime(long chatId)
+    public async Task<string?> GetCurrentKey(long chatId)
     {
-        var rows = await botDatabase.ExecuteFind($@"
+        var scenarioId = await GetScenarioIdByChatId(chatId);
+        if (scenarioId is null)
+            return null;
+
+        var index = await GetIndexByChatId(chatId);
+
+        return await _scenariosRepo.GetKeyByIndex(scenarioId.Value, index!.Value);
+    }
+    
+    public async Task<long?> GetScenarioIdByChatId(long chatId)
+    {
+        var rows = await _botDatabase.ExecuteFind($@"
             DECLARE $chat_id AS Int64;
 
-            SELECT last_message_date
+            SELECT scenario_id
             FROM {TableName}
             WHERE chat_id = $chat_id
         ", new Dictionary<string, YdbValue>
         {
             {"$chat_id", YdbValue.MakeInt64(chatId)}
         });
-
-        if (rows is null || !rows.Any())
+        
+        if (rows is null)
         {
             return null;
         }
         
-        return rows.First()["last_message_date"].GetOptionalDatetime();
+        var rowsArray = rows as ResultSet.Row[] ?? rows.ToArray();
+
+        return !rowsArray.Any() 
+            ? null 
+            : rowsArray.First()["scenario_id"].GetInt64();
+    }
+
+    private async Task<int?> GetIndexByChatId(long chatId)
+    {
+        var rows = await _botDatabase.ExecuteFind($@"
+            DECLARE $chat_id AS Int64;
+
+            SELECT index
+            FROM {TableName}
+            WHERE chat_id = $chat_id
+        ", new Dictionary<string, YdbValue>
+        {
+            {"$chat_id", YdbValue.MakeInt64(chatId)}
+        });
+        
+        if (rows is null)
+        {
+            return null;
+        }
+        
+        var rowsArray = rows as ResultSet.Row[] ?? rows.ToArray();
+
+        return !rowsArray.Any() 
+            ? null 
+            : rowsArray.First()["index"].GetOptionalInt32();
     }
 
     public async Task ClearAll()
     {
-        await botDatabase.ExecuteScheme($@"
+        await _botDatabase.ExecuteScheme($@"
             DROP TABLE {TableName};
         ");
     }
 
     public async Task CreateTable()
     {
-        await botDatabase.ExecuteScheme($@"
+        await _botDatabase.ExecuteScheme($@"
             CREATE TABLE {TableName} (
                 chat_id Int64 NOT NULL,
-                scenario_id Int32,
+                scenario_id Int64 NOT NULL,
                 index Int32,
                 PRIMARY KEY (chat_id)
             )

@@ -10,5 +10,5 @@ public interface IBotDatabase
     Task<IEnumerable<ResultSet.Row>?> ExecuteFind(
         string query, Dictionary<string, YdbValue> parameters);
 
-    Task ExecuteModify(string query, Dictionary<string, YdbValue> parameters);
+    Task ExecuteModify(string query, Dictionary<string, YdbValue?> parameters);
 }

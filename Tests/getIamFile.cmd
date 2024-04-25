@@ -1,1 +1,0 @@
-yc iam key create --service-account-name <SERVICE_ACCOUNT_NAME> --output iamfile.txt

@@ -1,23 +1,23 @@
-using BotTemplate.Services.YDB;
+﻿using BotTemplate.Services.YDB;
 using BotTemplate.Services.YDB.Repo;
 
 namespace BotTemplate.Services.Telegram.Commands;
 
-public class StartCommandHandler : IChatCommandHandler
+public class GetAnswersCommandHandler : IChatCommandHandler
 {
-    public string Command => "/start";
+    public string Command => "/get_all_answers";
     private readonly IRepo _repo;
 
-    public StartCommandHandler(IRepo repo)
+    public GetAnswersCommandHandler(IRepo repo)
     {
         _repo = repo;
     }
 
     public async Task<string?> HandlePlainText(long fromChatId)
     {
-        if (_repo is not CurrentScenarioRepo currentScenarioRepo)
+        if (_repo is not UserAnswersRepo userAnswersRepo)
             throw new ArgumentException("Передан неверный тип репозитория");
-
-        return await currentScenarioRepo.StartNewScenarioAndGetMessage(fromChatId, 0);
+        
+        return string.Join('\n', await userAnswersRepo.GetAll(fromChatId));
     }
 }

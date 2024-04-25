@@ -9,92 +9,101 @@ namespace BotTemplate.Services.Telegram;
 
 public class HandleUpdateService
 {
-    private readonly IMessageView messageView;
-    private readonly IChatCommandHandler[] commands;
-    private readonly IMessageDetailsBucket messageDetailsBucket;
-    private readonly IBotDatabase botDatabase;
+    private readonly IMessageView _messageView;
+    private readonly IBotDatabase _botDatabase;
+    
+    private IChatCommandHandler[] _commands;
+    private CurrentScenarioRepo _currentScenarioRepo;
+    private UserAnswersRepo _userAnswersRepo;
 
     public HandleUpdateService(
-        IMessageView messageView, 
-        IChatCommandHandler[] commands,
-        IMessageDetailsBucket messageDetailsBucket,
+        IMessageView messageView,
         IBotDatabase botDatabase)
     {
-        this.messageView = messageView;
-        this.commands = commands;
-        this.messageDetailsBucket = messageDetailsBucket;
-        this.botDatabase = botDatabase;
+        _messageView = messageView;
+        _botDatabase = botDatabase;
     }
 
     public async Task Handle(Update update)
     {
-        var messageDateTable = await CurrentScenarioRepo.InitWithDatabase(botDatabase);
+        var scenariosRepo = await ScenariosRepo.InitWithDatabase(_botDatabase);
+        _currentScenarioRepo = await CurrentScenarioRepo.InitWithDatabase(_botDatabase, scenariosRepo);
+        _userAnswersRepo = await UserAnswersRepo.InitWithDatabase(_botDatabase);
+        
+        _commands = new IChatCommandHandler[]
+        {
+            new StartCommandHandler(_currentScenarioRepo),
+            new GetAnswersCommandHandler(_userAnswersRepo)
+        };
+        
         var handler = update.Type switch
         {
-            UpdateType.Message => HandleMessage(update.Message!, messageDateTable),
-            _ => HandleDefaultUpdate()
+            UpdateType.Message => HandleMessage(update.Message!),
+            _ => HandleDefaultUpdate(update.Message!.Chat.Id)
         };
 
         await handler;
     }
 
-    private async Task HandleMessage(Message message, CurrentScenarioRepo currentScenarioRepo)
+    private async Task HandleMessage(Message message)
     {
-        await messageDetailsBucket.AddMessage(message.Chat.Id, message);
         if (message.Type == MessageType.Text)
         {
-            await HandlePlainText(message.Text!, message.Chat.Id, currentScenarioRepo);
-            currentScenarioRepo.UpdateOrInsertDateTime(message.Chat.Id);
+            await HandlePlainText(message.Text!, message.Chat.Id);
             return;
         }
 
-        await HandleNonCommandMessage(message.Chat.Id, currentScenarioRepo);
-        currentScenarioRepo.UpdateOrInsertDateTime(message.Chat.Id);
+        await HandleNonCommandMessage(message.Chat.Id, message.Text!);
     }
 
-    private async Task HandlePlainText(string text, long fromChatId, CurrentScenarioRepo currentScenarioRepo)
+    private async Task HandlePlainText(string text, long fromChatId)
     {
-        var command = commands.FirstOrDefault(c => text.StartsWith(c.Command));
+        var command = _commands.FirstOrDefault(c => text.StartsWith(c.Command));
 
         if (command is null)
         {
-            await HandleNonCommandMessage(fromChatId, currentScenarioRepo);
+            await HandleNonCommandMessage(fromChatId, text);
             return;
         }
 
-        await command.HandlePlainText(text, fromChatId);
-    }
-
-    private async Task HandleNonCommandMessage(long fromChatId, CurrentScenarioRepo currentScenarioRepo)
-    {
-        await messageView.Say(
-            await GetGreetingMessage(fromChatId, currentScenarioRepo),
-            fromChatId
-        );
+        await HandleCommandMessage(fromChatId, command);
     }
     
-    private Task HandleDefaultUpdate()
+    private async Task HandleCommandMessage(long fromChatId, IChatCommandHandler command)
     {
-        return Task.CompletedTask;
+        var scenarioId = await _currentScenarioRepo.GetScenarioIdByChatId(fromChatId);
+        if (scenarioId is not null)
+            await SendMessage(fromChatId, "Ответьте на вопросы, прежде чем вызывать новую команду");
+        else
+        {
+            var message = await command.HandlePlainText(fromChatId);
+            await SendMessage(fromChatId, message);
+            
+        }
     }
 
-    private async Task<string> GetGreetingMessage(long fromChatId, CurrentScenarioRepo currentScenarioRepo)
+    private async Task HandleNonCommandMessage(long fromChatId, string text)
     {
-        var lastMessageDateTime = await currentScenarioRepo.FindLastMessageDateTime(fromChatId);
-        var separationInterval = DateTime.Now - lastMessageDateTime;
-        var usersOverWeek = await currentScenarioRepo.GetPastWeekUsersCount();
+        var key = await _currentScenarioRepo.GetCurrentKey(fromChatId);
+        if (key == null) 
+            return;
+        
+        await _userAnswersRepo.SaveAnswer(fromChatId, key, text);
+        var message = await _currentScenarioRepo.IncreaseAndGetNewMessage(fromChatId);
 
-        var peopleCountPlural = ((long) usersOverWeek).PluralizeLong(
-            "человеком|людьми|людьми"
-        );
+        await SendMessage(fromChatId, message);
+    }
+    
+    private async Task HandleDefaultUpdate(long fromChatId)
+    {
+        await SendMessage(fromChatId, "Я пока не умею поддерживать стикеры, картинки и прочие нетекстовые сообщения!");
+    }
 
-        var dayCountPlural = separationInterval is null
-            ? "никогда"
-            : separationInterval.Value.Days.Pluralize(
-                "день|дня|дней"
-            );
-
-        return $"Давно не виделись! А именно {dayCountPlural}! " +
-               $"Я пообщался уже с {peopleCountPlural} за эту неделю.";
+    private async Task SendMessage(long fromChatId, string? text)
+    {
+        if (text is null)
+            return;
+        
+        await _messageView.Say(text, fromChatId);
     }
 }
