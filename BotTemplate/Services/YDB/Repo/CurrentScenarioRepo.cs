@@ -70,16 +70,44 @@ public class CurrentScenarioRepo : IRepo
             {"$scenario_id", YdbValue.MakeInt64(scenarioId.Value)},
             {"$new_index", YdbValue.MakeInt32(newIndex)}
         });
-
-        var key = await _scenariosRepo.GetKeyByIndex(scenarioId!.Value, newIndex);
-        if (key is null)
-            await EndScenario(chatId);
         
         return message;
     }
     
-    public async Task EndScenario(long chatId)
+    public async Task DecreaseIndex(long chatId)
     {
+        var oldIndex = await GetIndexByChatId(chatId);
+        if (oldIndex is null)
+            return;
+        
+        var scenarioId = await GetScenarioIdByChatId(chatId);
+        var newIndex = oldIndex.Value - 1;
+        
+        await _botDatabase.ExecuteModify($@"
+            DECLARE $chat_id AS Int64;
+            DECLARE $scenario_id AS Int64;
+            DECLARE $new_index AS Int32;
+
+            UPDATE {TableName}
+            SET index = $new_index, scenario_id = $scenario_id
+            WHERE chat_id = $chat_id;
+        ", new Dictionary<string, YdbValue?>
+        {
+            {"$chat_id", YdbValue.MakeInt64(chatId)},
+            {"$scenario_id", YdbValue.MakeInt64(scenarioId!.Value)},
+            {"$new_index", YdbValue.MakeInt32(newIndex)}
+        });
+    }
+    
+    public async Task TryEndScenario(long chatId)
+    {
+        var scenarioId = await GetScenarioIdByChatId(chatId);
+        var oldIndex = await GetIndexByChatId(chatId);
+        if (oldIndex is null)
+            return;
+        var key = await _scenariosRepo.GetKeyByIndex(scenarioId!.Value, oldIndex.Value);
+        if (key is not null)
+            return;
         await _botDatabase.ExecuteModify($@"
             DECLARE $chat_id AS Int64;
 

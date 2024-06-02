@@ -1,5 +1,6 @@
 using BotTemplate.Services.S3Storage;
 using BotTemplate.Services.Telegram.Commands;
+using BotTemplate.Services.Telegram.MessageCommands;
 using BotTemplate.Services.YDB;
 using BotTemplate.Services.YDB.Repo;
 using Telegram.Bot.Types;
@@ -13,6 +14,8 @@ public class HandleUpdateService
     private readonly IBotDatabase _botDatabase;
     
     private IChatCommandHandler[] _commands;
+    private IMessageCommand[] _messageCommands;
+    
     private CurrentScenarioRepo _currentScenarioRepo;
     private UserAnswersRepo _userAnswersRepo;
 
@@ -33,7 +36,14 @@ public class HandleUpdateService
         _commands = new IChatCommandHandler[]
         {
             new StartCommandHandler(_currentScenarioRepo),
-            new GetAnswersCommandHandler(_userAnswersRepo)
+            new GetAnswersCommandHandler(_userAnswersRepo),
+            new GetButtonsScenarioHandler(_currentScenarioRepo)
+        };
+        
+        _messageCommands = new IMessageCommand[]
+        {
+            new SendStateMessage(),
+            new HandleStateResponse()
         };
         
         var handler = update.Type switch
@@ -77,6 +87,12 @@ public class HandleUpdateService
         else
         {
             var message = await command.HandlePlainText(fromChatId);
+            if (message != null && message.StartsWith('/'))
+            {
+                var messageCommand = _messageCommands.FirstOrDefault(messageCommand => message.StartsWith(messageCommand.Command));
+                await messageCommand!.Handle(_messageView, fromChatId, null);
+                return;
+            }
             await SendMessage(fromChatId, message);
             
         }
@@ -90,7 +106,18 @@ public class HandleUpdateService
         
         await _userAnswersRepo.SaveAnswer(fromChatId, key, text);
         var message = await _currentScenarioRepo.IncreaseAndGetNewMessage(fromChatId);
-
+        if (message != null && message.StartsWith('/'))
+        {
+            var messageCommand = _messageCommands.FirstOrDefault(messageCommand => message.StartsWith(messageCommand.Command));
+            var result = await messageCommand!.Handle(_messageView, fromChatId, text);
+            if (!result.IsSuccessful())
+                await _currentScenarioRepo.DecreaseIndex(fromChatId);
+            else
+                await _currentScenarioRepo.TryEndScenario(fromChatId);
+            return;
+        }
+        
+        await _currentScenarioRepo.TryEndScenario(fromChatId);
         await SendMessage(fromChatId, message);
     }
     
