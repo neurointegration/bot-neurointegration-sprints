@@ -49,6 +49,7 @@ public class HandleUpdateService
         var handler = update.Type switch
         {
             UpdateType.Message => HandleMessage(update.Message!),
+            UpdateType.CallbackQuery => HandlePlainText(update.CallbackQuery!.Data!, update.CallbackQuery!.Message!.Chat.Id),
             _ => HandleDefaultUpdate(update.Message!.Chat.Id)
         };
 

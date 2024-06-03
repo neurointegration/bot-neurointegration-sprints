@@ -28,13 +28,16 @@ public class SendStateMessage : IMessageCommand
         blueButton.CallbackData = "Пассивность";
         purpleButton.CallbackData = "Апатия";
     
-        var buttons = new[] { new[] { redButton }, 
+        var buttons = new[] 
+        { 
+            new[] { redButton }, 
             new[] { orangeButton }, 
             new[] { yellowButton }, 
             new[] { greenButton },
             new[] { lightBlueButton },
             new[] { blueButton },
-            new[] { purpleButton } };
+            new[] { purpleButton } 
+        };
     
         // Keyboard markup
         var inline = new InlineKeyboardMarkup(buttons);
