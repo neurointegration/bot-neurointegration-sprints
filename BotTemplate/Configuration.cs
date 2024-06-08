@@ -10,6 +10,8 @@ public class Configuration
     public string YdbEndpoint => appSettings[nameof(YdbEndpoint)]!;
     public string YdbPath => appSettings[nameof(YdbPath)]!;
     public string? IamTokenPath => appSettings[nameof(IamTokenPath)];
+    public string? BackendApiKey => appSettings[nameof(BackendApiKey)];
+    public string? BackendBaseUrl  => appSettings[nameof(BackendBaseUrl)];
 
     private readonly IConfigurationSection appSettings;
 
