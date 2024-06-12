@@ -9,7 +9,7 @@ public class BackendApiClient : IBackendApiClient
 
     public BackendApiClient(Configuration configuration)
     {
-        baseUrl = configuration.BackendBaseUrl ?? "http://localhost";
+        baseUrl = configuration.BackendBaseUrl ?? "http://localhost:7145";
         client = new HttpClient().WithDefaultAuthorization(configuration.BackendApiKey ?? "");
     }
 
@@ -27,6 +27,14 @@ public class BackendApiClient : IBackendApiClient
         return await response.ParseContent<List<Question>>();
     }
 
+    public async Task<ApiUser?> GetUserAsync(long userId)
+    {
+        var response = await client.GetAsync($"{baseUrl}/user/{userId}");
+        await response.EnsureSuccess();
+        
+        return await response.ParseContent<ApiUser>();
+    }
+    
     public async Task<ApiUser?> CreateUserAsync(CreateUser createUser)
     {
         var response = await client.PostAsync($"{baseUrl}/user", ClientHelper.BuildContent(createUser));
@@ -63,6 +71,14 @@ public class BackendApiClient : IBackendApiClient
     public async Task<List<ApiUser>?> GetPublicCoachsAsync()
     {
         var response = await client.GetAsync($"{baseUrl}/user/coach");
+        await response.EnsureSuccess();
+
+        return await response.ParseContent<List<ApiUser>>();
+    }
+    
+    public async Task<List<ApiUser>?> GetCoachStudentsAsync(long coachId)
+    {
+        var response = await client.GetAsync($"{baseUrl}/coach/{coachId}/students");
         await response.EnsureSuccess();
 
         return await response.ParseContent<List<ApiUser>>();

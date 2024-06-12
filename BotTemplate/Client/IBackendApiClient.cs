@@ -29,6 +29,12 @@ public interface IBackendApiClient
     Task<ApiUser?> UpdateUserAsync(UpdateUser updateUser);
 
     /// <summary>
+    /// Достать информацию о пользователе
+    /// </summary>
+    /// <param name="userId">Id пользователя</param>
+    Task<ApiUser?> GetUserAsync(long userId);
+
+    /// <summary>
     /// Достать гугл таблицы пользователя
     /// </summary>
     /// <param name="ownerId">id чьи гугл таблицы хотим достать</param>
@@ -43,7 +49,13 @@ public interface IBackendApiClient
     Task GrantedAccessToUserInfoAsync(long ownerId, long grantedUserId);
 
     /// <summary>
-    /// Получить список доступных пользователей
+    /// Получить список доступных тренеров
     /// </summary>
     Task<List<ApiUser>?> GetPublicCoachsAsync();
+
+    /// <summary>
+    /// Получить список тренеруемых пользователей
+    /// </summary>
+    /// <param name="coachId">id тренера</param>
+    Task<List<ApiUser>?> GetCoachStudentsAsync(long coachId);
 }

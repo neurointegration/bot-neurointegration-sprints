@@ -10,6 +10,6 @@ public class CreateUser
     public TimeSpan? EveningStandUpTime { get; set; }
     public TimeSpan? MessageStartTime { get; set; }
     public TimeSpan? MessageEndTime { get; set; }
-    public int? ReflectionDay { get; set; }
+    public DateTime? FirstReflectionDate { get; set; }
     public DateTime? SprintStartDate { get; set; }
 }

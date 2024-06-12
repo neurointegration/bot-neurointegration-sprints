@@ -9,5 +9,6 @@ public class UpdateUser
     public TimeSpan? EveningStandUpTime { get; set; }
     public TimeSpan? MessageStartTime { get; set; }
     public TimeSpan? MessageEndTime { get; set; }
-    public int? ReflectionDay { get; set; }
+    public DateTime? ReflectionDate { get; set; }
+    public DateTime? SprintStartDate { get; set; }
 }

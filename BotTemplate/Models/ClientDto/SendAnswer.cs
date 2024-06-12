@@ -6,6 +6,7 @@ public class SendAnswer
     public DateOnly Date { get; set; }
     public string Answer { get; set; }
     public ScenarioType ScenarioType { get; set; }
-    public bool ReplaceValue { get; set; } = false;
     public int AnswerNumber { get; set; }
+    public int SprintNumber { get; set; }
+    public int SprintReplyNumber { get; set; }
 }
