@@ -37,7 +37,9 @@ public class HandleUpdateService
         {
             new StartCommandHandler(_currentScenarioRepo),
             new GetAnswersCommandHandler(_userAnswersRepo),
-            new GetButtonsScenarioHandler(_currentScenarioRepo)
+            new GetButtonsScenarioHandler(_currentScenarioRepo),
+            new EveningStandUpCommandHandler(_currentScenarioRepo),
+            new WeeklyReflectionCommandHandler(_currentScenarioRepo)
         };
         
         _messageCommands = new IMessageCommand[]
