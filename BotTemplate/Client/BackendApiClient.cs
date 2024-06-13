@@ -61,12 +61,17 @@ public class BackendApiClient : IBackendApiClient
 
     public async Task GrantedAccessToUserInfoAsync(long ownerId, long grantedUserId)
     {
-        //затестить
         var response =
-            await client.PutAsync($"{baseUrl}/user/{ownerId}/access", ClientHelper.BuildContent(grantedUserId));
+            await client.PutAsync($"{baseUrl}/user/{grantedUserId}/{ownerId}/access", new StringContent(""));
         await response.EnsureSuccess();
     }
 
+    public async Task DeleteAccessToUserInfoAsync(long ownerId, long grantedUserId)
+    {
+        var response =
+            await client.DeleteAsync($"{baseUrl}/user/{grantedUserId}/{ownerId}/access");
+        await response.EnsureSuccess();
+    }
 
     public async Task<List<ApiUser>?> GetPublicCoachsAsync()
     {

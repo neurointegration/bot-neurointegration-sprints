@@ -49,6 +49,13 @@ public interface IBackendApiClient
     Task GrantedAccessToUserInfoAsync(long ownerId, long grantedUserId);
 
     /// <summary>
+    /// Забрать права пользавателя к информации другого пользователя
+    /// </summary>
+    /// <param name="ownerId">id того к данным кого был доступ</param>
+    /// <param name="grantedUserId">id того, у кого эти права забрать</param>
+    Task DeleteAccessToUserInfoAsync(long ownerId, long grantedUserId);
+
+    /// <summary>
     /// Получить список доступных тренеров
     /// </summary>
     Task<List<ApiUser>?> GetPublicCoachsAsync();
