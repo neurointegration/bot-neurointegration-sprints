@@ -9,6 +9,7 @@ public class ApiUser
     public long UserId { get; set; }
     
     public string Email { get; set; }
+    public string Username { get; set; }
     public bool IAmCoach { get; set; }
     public bool SendRegularMessages { get; set; }
     

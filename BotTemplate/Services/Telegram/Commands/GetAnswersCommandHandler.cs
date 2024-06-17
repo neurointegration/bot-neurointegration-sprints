@@ -18,6 +18,6 @@ public class GetAnswersCommandHandler : IChatCommandHandler
         if (_repo is not UserAnswersRepo userAnswersRepo)
             throw new ArgumentException("Передан неверный тип репозитория");
         
-        return string.Join('\n', await userAnswersRepo.GetAll(fromChatId));
+        return string.Join('\n', (await userAnswersRepo.GetAllWithKeys(fromChatId)).Select(userAnswer => userAnswer.Answer));
     }
 }

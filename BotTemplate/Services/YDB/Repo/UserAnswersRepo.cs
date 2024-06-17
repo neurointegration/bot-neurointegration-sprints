@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using BotTemplate.Models.Telegram;
 using Ydb.Sdk.Value;
 
 namespace BotTemplate.Services.YDB.Repo;
@@ -69,6 +70,31 @@ public class UserAnswersRepo : IRepo
         return !rowsArray.Any() 
             ? Array.Empty<string>() 
             : rowsArray.Select(message => message["answer"].GetUtf8()).ToArray();
+    }
+    
+    public async Task<UserAnswer[]> GetAllWithKeys(long chatId)
+    {
+        var rows = await botDatabase.ExecuteFind($@"
+            DECLARE $chat_id AS Int64;
+
+            SELECT answer, key
+            FROM {TableName}
+            WHERE chat_id = $chat_id
+        ", new Dictionary<string, YdbValue>
+        {
+            {"$chat_id", YdbValue.MakeInt64(chatId)}
+        });
+        
+        if (rows is null)
+        {
+            return Array.Empty<UserAnswer>();
+        }
+        
+        var rowsArray = rows as ResultSet.Row[] ?? rows.ToArray();
+
+        return !rowsArray.Any() 
+            ? Array.Empty<UserAnswer>() 
+            : rowsArray.Select(message => new UserAnswer(message["answer"].GetUtf8(), message["key"].GetUtf8())).ToArray();
     }
 
     private async Task<long?> GetUserAnswerIdOrNull()

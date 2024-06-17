@@ -2,6 +2,7 @@
 
 public enum ScenarioType
 {
-    Greeting = 0,
-    DailyState = 1
+    Status = 1,
+    EveningStandUp = 2,
+    Reflection = 3
 }

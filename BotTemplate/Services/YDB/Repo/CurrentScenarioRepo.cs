@@ -117,6 +117,21 @@ public class CurrentScenarioRepo : IRepo
             {"$chat_id", YdbValue.MakeInt64(chatId)}
         });
     }
+    
+    public async Task EndScenarioNoMatterWhat(long chatId)
+    {
+        var oldIndex = await GetIndexByChatId(chatId);
+        if (oldIndex is null)
+            return;
+        await _botDatabase.ExecuteModify($@"
+            DECLARE $chat_id AS Int64;
+
+            DELETE FROM {TableName} WHERE chat_id = $chat_id;
+        ", new Dictionary<string, YdbValue?>
+        {
+            {"$chat_id", YdbValue.MakeInt64(chatId)}
+        });
+    }
 
     public async Task<string?> GetCurrentKey(long chatId)
     {
@@ -154,7 +169,7 @@ public class CurrentScenarioRepo : IRepo
             : rowsArray.First()["scenario_id"].GetInt64();
     }
 
-    private async Task<int?> GetIndexByChatId(long chatId)
+    public async Task<int?> GetIndexByChatId(long chatId)
     {
         var rows = await _botDatabase.ExecuteFind($@"
             DECLARE $chat_id AS Int64;
@@ -192,6 +207,8 @@ public class CurrentScenarioRepo : IRepo
             CREATE TABLE {TableName} (
                 chat_id Int64 NOT NULL,
                 scenario_id Int64 NOT NULL,
+                current_sprint_number Int32,
+                sprint_reply_number Int32,
                 index Int32,
                 PRIMARY KEY (chat_id)
             )

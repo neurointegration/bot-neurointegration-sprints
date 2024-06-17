@@ -1,6 +1,11 @@
+using System.Globalization;
+using BotTemplate.Models.ClientDto;
 using BotTemplate.Services.S3Storage;
 using BotTemplate.Services.Telegram.Commands;
 using BotTemplate.Services.Telegram.MessageCommands;
+using BotTemplate.Services.Telegram.Messages;
+using BotTemplate.Services.Telegram.Messages.Register;
+using BotTemplate.Services.Telegram.Validators;
 using BotTemplate.Services.YDB;
 using BotTemplate.Services.YDB.Repo;
 using Telegram.Bot.Types;
@@ -35,7 +40,6 @@ public class HandleUpdateService
         
         _commands = new IChatCommandHandler[]
         {
-            new StartCommandHandler(_currentScenarioRepo),
             new GetAnswersCommandHandler(_userAnswersRepo),
             new GetButtonsScenarioHandler(_currentScenarioRepo),
             new EveningStandUpCommandHandler(_currentScenarioRepo),
@@ -60,6 +64,14 @@ public class HandleUpdateService
 
     private async Task HandleMessage(Message message)
     {
+        var scenarioId = await _currentScenarioRepo.GetScenarioIdByChatId(message.Chat.Id);
+        
+        if (message.Text! == "/start" || scenarioId is 0)
+        {
+            await HandleRegister(message.Chat.Id, message);
+            return;
+        }
+        
         if (message.Type == MessageType.Text)
         {
             await HandlePlainText(message.Text!, message.Chat.Id);
@@ -72,7 +84,6 @@ public class HandleUpdateService
     private async Task HandlePlainText(string text, long fromChatId)
     {
         var command = _commands.FirstOrDefault(c => text.StartsWith(c.Command));
-
         if (command is null)
         {
             await HandleNonCommandMessage(fromChatId, text);
@@ -135,5 +146,155 @@ public class HandleUpdateService
             return;
         
         await _messageView.Say(text, fromChatId);
+    }
+
+    private async Task HandleRegister(long fromChatId, Message message)
+    {
+        var text = message.Text;
+        var index = await _currentScenarioRepo.GetIndexByChatId(fromChatId);
+        if (index is null)
+        {
+            await _currentScenarioRepo.StartNewScenarioAndGetMessage(fromChatId, 0);
+            index = -1;
+        }
+        else
+            await _currentScenarioRepo.IncreaseAndGetNewMessage(fromChatId);
+
+        index++;
+        Models.Telegram.Message? messageToSend = null;
+        
+        switch (index!.Value)
+        {
+            case 0:
+                messageToSend = WriteYourEmailMessage.GetMessage();
+                break;
+            case 1:
+                messageToSend = AreYouACoachMessage.GetMessage();
+                await _userAnswersRepo.SaveAnswer(fromChatId, "Email", text!);
+                await _userAnswersRepo.SaveAnswer(fromChatId, "Username", message.From?.Username ?? text!);
+                break;
+            case 2:
+                if (text == "Да")
+                {
+                    messageToSend = DoYouWantToCompleteSprintsMessage.GetMessage();
+                    await _userAnswersRepo.SaveAnswer(fromChatId, "IAmCoach", true.ToString());
+                }
+                else
+                {
+                    await _userAnswersRepo.SaveAnswer(fromChatId, "IAmCoach", false.ToString());
+                    await HandleRegister(fromChatId, null);
+                }
+                break;
+            case 3:
+                if (text is "Нет")
+                {
+                    await _userAnswersRepo.SaveAnswer(fromChatId, "SendRegularMessages", false.ToString());
+                    await _currentScenarioRepo.EndScenarioNoMatterWhat(fromChatId);
+                    await RegisterUser(fromChatId);
+                }
+                else
+                {
+                    messageToSend = StatusTimeMessage.GetMessage();
+                    await _userAnswersRepo.SaveAnswer(fromChatId, "SendRegularMessages", true.ToString());
+                }
+                
+                break;
+            case 4:
+                var timeRangeValidator = new TimeRangeValidator();
+                if (!timeRangeValidator.IsValid(text))
+                {
+                    messageToSend = new Models.Telegram.Message("Неправильный формат. Нужно ввести интервал в формете 9:00-18:00");
+                    await _currentScenarioRepo.DecreaseIndex(fromChatId);
+                }
+                else
+                {
+                    messageToSend = EveningStandUpTimeMessage.GetMessage();
+                    
+                    var trimmedText = text!.Trim();
+                    var timeSpanStrings = trimmedText.Split('-');
+
+                    var messageStartTime = TimeSpan.Parse(timeSpanStrings[0]).Subtract(TimeSpan.FromHours(3));
+                    if (messageStartTime < TimeSpan.FromHours(0))
+                        messageStartTime = messageStartTime.Add(TimeSpan.FromHours(24));
+                    
+                    var messageEndTime = TimeSpan.Parse(timeSpanStrings[1]) - TimeSpan.FromHours(3);
+                    if (messageEndTime < TimeSpan.FromHours(0))
+                        messageEndTime = messageEndTime.Add(TimeSpan.FromHours(24));
+                    
+                    await _userAnswersRepo.SaveAnswer(fromChatId, "MessageStartTime", messageStartTime.ToString());
+                    await _userAnswersRepo.SaveAnswer(fromChatId, "MessageEndTime", messageEndTime.ToString());
+                }
+                
+                break;
+            case 5:
+                var timeValidator = new TimeValidator();
+                if (!timeValidator.IsValid(text))
+                {
+                    messageToSend = new Models.Telegram.Message("Неправильный формат. Нужно ввести время в формете 9:00");
+                    await _currentScenarioRepo.DecreaseIndex(fromChatId);
+                }
+                else
+                {
+                    messageToSend = CurrentStandUpDateStart.GetMessage();
+                    var trimmedText = text!.Trim();
+                    
+                    var eveningStandUpTime = TimeSpan.Parse(trimmedText).Subtract(TimeSpan.FromHours(3));
+                    if (eveningStandUpTime < TimeSpan.FromHours(0))
+                        eveningStandUpTime = eveningStandUpTime.Add(TimeSpan.FromHours(24));
+
+                    await _userAnswersRepo.SaveAnswer(fromChatId, "EveningStandUpTime", eveningStandUpTime.ToString());
+                }
+                
+                break;
+            case 6:
+                var dateValidator = new DateValidator();
+                if (text!.Trim() == "Новый спринт")
+                {
+                    messageToSend = SelectCoachMessage.GetMessage(new List<ApiUser> { new() { UserId = 228, Username = "Test" } });
+                    var sprintStartDate = DateTime.UtcNow.Date;
+                    var firstReflectionDate = DateTime.UtcNow.Date.Add(TimeSpan.FromDays(6));
+
+                    await _userAnswersRepo.SaveAnswer(fromChatId, "SprintStartDate", sprintStartDate.ToString(CultureInfo.InvariantCulture));
+                    await _userAnswersRepo.SaveAnswer(fromChatId, "FirstReflectionDate", firstReflectionDate.ToString(CultureInfo.InvariantCulture));
+                }
+                else if (!dateValidator.IsValid(text))
+                {
+                    messageToSend = new Models.Telegram.Message("Неправильный формат. Нужно ввести дату в формете 31.01.2024");
+                    await _currentScenarioRepo.DecreaseIndex(fromChatId);
+                }
+                else
+                {
+                    messageToSend = SelectCoachMessage.GetMessage(new List<ApiUser> { new() { UserId = 228, Username = "Test" } } );
+                    var sprintStartDate = DateTime.Parse(text.Trim());
+                    var firstReflectionDate = sprintStartDate.Add(TimeSpan.FromDays(6));
+
+                    await _userAnswersRepo.SaveAnswer(fromChatId, "SprintStartDate", sprintStartDate.ToString(CultureInfo.InvariantCulture));
+                    await _userAnswersRepo.SaveAnswer(fromChatId, "FirstReflectionDate", firstReflectionDate.ToString(CultureInfo.InvariantCulture));
+                }
+                
+                break;
+            case 7:
+                var telegramUserIdValidator = new TelegramUserIdValidator();
+                if (!telegramUserIdValidator.IsValid(text))
+                {
+                    messageToSend = new Models.Telegram.Message("Нажми на одну из кнопок");
+                    await _currentScenarioRepo.DecreaseIndex(fromChatId);
+                }
+                else
+                {
+                    messageToSend = RegisteredMessage.GetMessage();
+                    await _userAnswersRepo.SaveAnswer(fromChatId, "Coach", text!);
+                    await _currentScenarioRepo.EndScenarioNoMatterWhat(fromChatId);
+                }
+                
+                break;
+        }
+
+        if (messageToSend is not null)
+            await _messageView.SayWithMarkup(messageToSend.Text, fromChatId, messageToSend.ReplyMarkup);
+    }
+
+    private async Task RegisterUser(long fromChatId)
+    {
     }
 }

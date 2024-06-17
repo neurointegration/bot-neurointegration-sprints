@@ -9,7 +9,7 @@ namespace BotTemplate.Services.Telegram;
 public interface IMessageView
 {
     Task Say(string text, long chatId);
-    Task SayWithMarkup(string text, long chatId, IReplyMarkup replyMarkup);
+    Task SayWithMarkup(string text, long chatId, IReplyMarkup? replyMarkup);
     Task ShowHelp(long chatId);
     Task SendFile(long chatId, byte[] content, string filename, string caption);
     Task SendPicture(long chatId, byte[] picture, string caption);
@@ -34,8 +34,11 @@ public class HtmlMessageView : IMessageView
         );
     }
 
-    public async Task SayWithMarkup(string text, long chatId, IReplyMarkup replyMarkup)
+    public async Task SayWithMarkup(string text, long chatId, IReplyMarkup? replyMarkup)
     {
+        if (replyMarkup is null)
+            await Say(text, chatId);
+        
         await botClient.SendTextMessageAsync(
             chatId,
             text,

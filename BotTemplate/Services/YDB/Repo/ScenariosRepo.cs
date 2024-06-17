@@ -1,5 +1,4 @@
-﻿using System.Text;
-using Ydb.Sdk.Value;
+﻿using Ydb.Sdk.Value;
 
 namespace BotTemplate.Services.YDB.Repo;
 
@@ -100,36 +99,6 @@ public class ScenariosRepo : IRepo
             : rowsArray.First()["answer_key"].GetOptionalUtf8();
     }
 
-    public async void AddNewScenario(string[] messages, string[] keys)
-    {
-        var maxId = await GetMaxScenarioIdOrNull();
-        var scenarioId = maxId is not null 
-            ? maxId.Value + 1 
-            : 1;
-        
-        for (var i = 0; i < messages.Length; i++)
-        {
-            await botDatabase.ExecuteModify($@"
-            DECLARE $scenario_id AS Int64;
-            DECLARE $message_index AS Int32;
-            DECLARE $message AS text;
-            DECLARE $answer_key AS text;
-
-            INSERT INTO {TableName} ( scenario_id, message_index, message, answer_key )
-            VALUES ( $scenario_id, $message_index, $message, $answer_key )
-        ", new Dictionary<string, YdbValue?>
-            {
-                { "$scenario_id", YdbValue.MakeInt64(scenarioId) },
-                { "$message_index", YdbValue.MakeInt32(i) },
-                { "$date_time", YdbValue.MakeString(Encoding.Default.GetBytes(messages[i])) },
-                { "$answer_key", i != messages.Length - 1 
-                    ? YdbValue.MakeUtf8(keys[i])
-                    : null
-                }
-            });
-        }
-    }
-
     private async Task<long?> GetMaxScenarioIdOrNull()
     {
         var rows = await botDatabase.ExecuteFind($@"
@@ -190,11 +159,7 @@ public class ScenariosRepo : IRepo
         {
             await botDatabase.ExecuteModify($@"
             INSERT INTO {TableName} ( scenario_id, message_index, message, answer_key )
-            VALUES ( 0, 0, 'Привет! Меня зовут Эмилия. Я буду помогать тебе в прохождении спринтов нейроинтеграции. Подробнее про нейтроитеграции можно узнать здесь - https://ru.neurointegration.org/science Прежде чем начать нашу работу я задам тебе пару вопросов. Напиши, пожалуйста, временной промежуток, когда тебе можно отправлять уведомления? Укажи время через - , например, 9:00-18:00', 'key1' ),
-                   ( 0, 1, 'Отлично! Буду писать только в это время. А во сколько поставить уведомление о вечернем стендапе? Укажи только время. К примеру, 19:00', 'key2' ),
-                   ( 0, 2, 'Супер! И последний вопрос. У тебя есть тренер? Если да, напиши его ник телеграма. Например, @superpupertrener', 'key3' ),
-                   ( 0, 3, 'Спасибо за твои ответы! Я буду отправлять три раза в день в неожиданное для тебя время вопрос “Как ты себя сейчас чувствуешь?” с вариантами ответа. Также буду напоминать заполнить вечерний стендап и рефлексию. Отвечая на мои вопросы, я создам персональную exsel-табличку, где буду хранить твои ответы. Была рада знакомству!', null ),
-                   ( 1, 0, '/stateMessage', 'key1' ),
+            VALUES ( 1, 0, '/stateMessage', 'key1' ),
                    ( 1, 1, '/handleStateResponse', null ),
                    ( 2, 0, 'Время заполнять стендап! Какие победы были сегодня?', 'key1' ),
                    ( 2, 1, 'Отлично! Какой лайв берешь на ближайшие сутки?', 'key2' ),
