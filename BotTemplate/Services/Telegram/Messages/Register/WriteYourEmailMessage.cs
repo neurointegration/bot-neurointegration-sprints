@@ -12,6 +12,6 @@ public static class WriteYourEmailMessage
     
     public static Message GetMessage()
     {
-        return new Message(Text, null);
+        return new Message(Text);
     }
 }

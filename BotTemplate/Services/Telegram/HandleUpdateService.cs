@@ -1,17 +1,17 @@
 using System.Globalization;
+using BotTemplate.Client;
 using BotTemplate.Models.ClientDto;
 using BotTemplate.Models.Telegram;
-using BotTemplate.Services.S3Storage;
 using BotTemplate.Services.Telegram.Commands;
 using BotTemplate.Services.Telegram.MessageCommands;
-using BotTemplate.Services.Telegram.Messages;
+using BotTemplate.Services.Telegram.Messages.Bottom;
 using BotTemplate.Services.Telegram.Messages.Register;
+using BotTemplate.Services.Telegram.Messages.Settings;
 using BotTemplate.Services.Telegram.Validators;
 using BotTemplate.Services.YDB;
 using BotTemplate.Services.YDB.Repo;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using Message = Telegram.Bot.Types.Message;
 
 namespace BotTemplate.Services.Telegram;
 
@@ -19,19 +19,27 @@ public class HandleUpdateService
 {
     private readonly IMessageView _messageView;
     private readonly IBotDatabase _botDatabase;
+    private readonly IBackendApiClient _backendApiClient;
+    private readonly string _telegramBotUrl;
+    private readonly HttpClient _client = new();
     
     private IChatCommandHandler[] _commands;
     private IMessageCommand[] _messageCommands;
     
     private CurrentScenarioRepo _currentScenarioRepo;
     private UserAnswersRepo _userAnswersRepo;
+    private UsersRepo _usersRepo;
 
     public HandleUpdateService(
         IMessageView messageView,
-        IBotDatabase botDatabase)
+        IBotDatabase botDatabase,
+        IBackendApiClient backendApiClient,
+        string telegramBotUrl)
     {
         _messageView = messageView;
         _botDatabase = botDatabase;
+        _backendApiClient = backendApiClient;
+        _telegramBotUrl = telegramBotUrl;
     }
 
     public async Task Handle(Update update)
@@ -39,6 +47,7 @@ public class HandleUpdateService
         var scenariosRepo = await ScenariosRepo.InitWithDatabase(_botDatabase);
         _currentScenarioRepo = await CurrentScenarioRepo.InitWithDatabase(_botDatabase, scenariosRepo);
         _userAnswersRepo = await UserAnswersRepo.InitWithDatabase(_botDatabase);
+        _usersRepo = await UsersRepo.InitWithDatabase(_botDatabase);
         
         _commands = new IChatCommandHandler[]
         {
@@ -72,6 +81,12 @@ public class HandleUpdateService
             },
             _ => null
         };
+        
+
+        if (update.Type is UpdateType.CallbackQuery)
+        {
+            await _client.GetAsync($"{_telegramBotUrl}/answerCallbackQuery?callback_query_id={update.CallbackQuery!.Id}");
+        }
 
         if (telegramEvent is null)
         {
@@ -88,7 +103,20 @@ public class HandleUpdateService
         
         if (telegramEvent.Text == "/start" || scenarioId is 0)
         {
-            await HandleRegister(telegramEvent.ChatId, telegramEvent);
+            var isRegistered = await _usersRepo.IsRegistered(telegramEvent.ChatId);
+            if (!isRegistered)
+                await HandleRegister(telegramEvent.ChatId, telegramEvent);
+            else
+                await SendMessage(telegramEvent.ChatId, "Ты уже зарегистрирован.");
+            return;
+        }
+
+        if (telegramEvent.Text == "Настройки" || scenarioId is 100)
+        {
+            if (scenarioId != null && scenarioId != 100)
+                await _messageView.Say("Закночи другой сценарий прежде чем открыть настройки.", telegramEvent.ChatId);
+            else
+                await HandleSettings(telegramEvent.ChatId, telegramEvent);
             return;
         }
         
@@ -199,7 +227,7 @@ public class HandleUpdateService
                 {
                     messageToSend = AreYouACoachMessage.GetMessage(text!);
                     await _userAnswersRepo.SaveAnswer(fromChatId, "Email", text);
-                    await _userAnswersRepo.SaveAnswer(fromChatId, "Username", telegramEvent?.Username ?? text!);
+                    await _userAnswersRepo.SaveAnswer(fromChatId, "Username", $"@{telegramEvent?.Username}" ?? text!);
                 }
                 
                 break;
@@ -283,9 +311,9 @@ public class HandleUpdateService
                 {
                     messageToSend = SelectCoachMessage.GetMessage(new List<ApiUser> { new() { UserId = 228, Username = "Test" } });
                     var sprintStartDate = DateTime.UtcNow.Date;
-                    var firstReflectionDate = DateTime.UtcNow.Date.Add(TimeSpan.FromDays(6));
-
                     await _userAnswersRepo.SaveAnswer(fromChatId, "SprintStartDate", sprintStartDate.ToString(CultureInfo.InvariantCulture));
+                    
+                    var firstReflectionDate = DateTime.UtcNow.Date.Add(TimeSpan.FromDays(6));
                     await _userAnswersRepo.SaveAnswer(fromChatId, "FirstReflectionDate", firstReflectionDate.ToString(CultureInfo.InvariantCulture));
                 }
                 else if (!dateValidator.IsValid(text))
@@ -297,9 +325,9 @@ public class HandleUpdateService
                 {
                     messageToSend = SelectCoachMessage.GetMessage(new List<ApiUser> { new() { UserId = 228, Username = "Test" } } );
                     var sprintStartDate = DateTime.ParseExact(text.Trim(), "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None);
-                    var firstReflectionDate = sprintStartDate.Add(TimeSpan.FromDays(6));
-
                     await _userAnswersRepo.SaveAnswer(fromChatId, "SprintStartDate", sprintStartDate.ToString(CultureInfo.InvariantCulture));
+                    
+                    var firstReflectionDate = sprintStartDate.Add(TimeSpan.FromDays(6));
                     await _userAnswersRepo.SaveAnswer(fromChatId, "FirstReflectionDate", firstReflectionDate.ToString(CultureInfo.InvariantCulture));
                 }
                 
@@ -314,8 +342,11 @@ public class HandleUpdateService
                 else
                 {
                     messageToSend = RegisteredMessage.GetMessage();
+                    var buttons = BottomMessage.GetMessage();
+                    messageToSend.ReplyMarkup = buttons.ReplyMarkup;
                     await _userAnswersRepo.SaveAnswer(fromChatId, "Coach", text!);
                     await _currentScenarioRepo.EndScenarioNoMatterWhat(fromChatId);
+                    await RegisterUser(fromChatId);
                 }
                 
                 break;
@@ -327,5 +358,222 @@ public class HandleUpdateService
 
     private async Task RegisterUser(long fromChatId)
     {
+        var userAnswers = await _userAnswersRepo.GetAllWithKeys(fromChatId);
+        var createUser = new CreateUser
+        {
+            UserId = fromChatId
+        };
+        foreach (var userAnswer in userAnswers)
+        {
+            switch (userAnswer.Key)
+            {
+                case "Email":
+                    createUser.Email = userAnswer.Answer;
+                    break;
+                case "Username":
+                    createUser.Username = userAnswer.Answer;
+                    break;
+                case "IAmCoach":
+                    createUser.IAmCoach = bool.Parse(userAnswer.Answer);
+                    break;
+                case "SendRegularMessages":
+                    createUser.SendRegularMessages = bool.Parse(userAnswer.Answer);
+                    break;
+                case "EveningStandUpTime":
+                    createUser.EveningStandUpTime = TimeSpan.Parse(userAnswer.Answer);
+                    break;
+                case "MessageStartTime":
+                    createUser.MessageStartTime = TimeSpan.Parse(userAnswer.Answer);
+                    break;
+                case "MessageEndTime":
+                    createUser.MessageEndTime = TimeSpan.Parse(userAnswer.Answer);
+                    break;
+                case "FirstReflectionDate":
+                    createUser.FirstReflectionDate = DateTime.Parse(userAnswer.Answer);
+                    break;
+                case "SprintStartDate":
+                    createUser.SprintStartDate = DateTime.Parse(userAnswer.Answer);
+                    break;
+            }
+        }
+        
+        await _usersRepo.RegisterUser(fromChatId, createUser.IAmCoach, createUser.SendRegularMessages);
+        // await _backendApiClient.CreateUserAsync(createUser);
+        await _userAnswersRepo.ClearByChatId(fromChatId);
+    }
+    
+    private async Task HandleSettings(long fromChatId, TelegramEvent? telegramEvent)
+    {
+        var text = telegramEvent?.Text;
+        var index = await _currentScenarioRepo.GetIndexByChatId(fromChatId);
+        if (index is null)
+        {
+            await _currentScenarioRepo.StartNewScenarioAndGetMessage(fromChatId, 100);
+            index = -1;
+        }
+        else
+            await _currentScenarioRepo.IncreaseAndGetNewMessage(fromChatId);
+
+        index++;
+
+        var iAmCoach = await _usersRepo.AmICoach(fromChatId);
+        var sendRegularMessages = await _usersRepo.SendRegularMessages(fromChatId);
+        
+        switch (index!.Value)
+        {
+            case 0:
+                var message = ShowSettingsMessage.GetMessage(iAmCoach, sendRegularMessages);
+                await _messageView.SayWithMarkup(message.Text, fromChatId, message.ReplyMarkup);
+                break;
+            case 1:
+                switch (text)
+                {
+                    case "Почта":
+                        await _messageView.Say(ChangeEmailMessage.GetMessage().Text, fromChatId);
+                        break;
+                    case "Не тренер":
+                        await _usersRepo.ChangeIAmCoach(fromChatId, false);
+                        // await _backendApiClient.UpdateUserAsync(new UpdateUser { UserId = fromChatId, IAmCoach = false });
+                        await _currentScenarioRepo.EndScenarioNoMatterWhat(fromChatId);
+                        await _messageView.SayWithMarkup("Теперь ты не тренер", fromChatId, BottomMessage.GetMessage().ReplyMarkup);
+                        break;
+                    case "Тренер":
+                        await _usersRepo.ChangeIAmCoach(fromChatId, true);
+                        // await _backendApiClient.UpdateUserAsync(new UpdateUser { UserId = fromChatId, IAmCoach = true });
+                        await _currentScenarioRepo.EndScenarioNoMatterWhat(fromChatId);
+                        await _messageView.SayWithMarkup("Теперь ты тренер", fromChatId, BottomMessage.GetMessage(true).ReplyMarkup);
+                        break;
+                    case "Не проходить":
+                        await _usersRepo.ChangeSendRegularMessages(fromChatId, false);
+                        // await _backendApiClient.UpdateUserAsync(new UpdateUser { UserId = fromChatId, SendRegularMessages = false });
+                        await _currentScenarioRepo.EndScenarioNoMatterWhat(fromChatId);
+                        await _messageView.Say("Теперь ты не тренер", fromChatId);
+                        break;
+                    case "Проходить":
+                        await _usersRepo.ChangeSendRegularMessages(fromChatId, true);
+                        // await _backendApiClient.UpdateUserAsync(new UpdateUser { UserId = fromChatId, SendRegularMessages = true });
+                        await _currentScenarioRepo.EndScenarioNoMatterWhat(fromChatId);
+                        await _messageView.Say("Теперь ты проходишь спринты. Обязательно укажи в настройках остальные данные для спринтов", fromChatId);
+                        break;
+                    case "Вечерний стендап":
+                        await _messageView.Say(ChangeEveningStandUpTimeMessage.GetMessage().Text, fromChatId);
+                        for (var i = 0; i < 1; i++)
+                            await _currentScenarioRepo.IncreaseAndGetNewMessage(fromChatId);
+                        break;
+                    case "Состояние":
+                        await _messageView.Say(ChangeStatusTimeMessage.GetMessage().Text, fromChatId);
+                        for (var i = 0; i < 2; i++)
+                            await _currentScenarioRepo.IncreaseAndGetNewMessage(fromChatId);
+                        break;
+                    case "Начало спринта":
+                        await _messageView.Say(ChangeCurrentStandUpDateMessage.GetMessage().Text, fromChatId);
+                        for (var i = 0; i < 3; i++)
+                            await _currentScenarioRepo.IncreaseAndGetNewMessage(fromChatId);
+                        break;
+                }
+                break;
+            case 2: // изменить почту
+                var emailUpdateUser = new UpdateUser
+                {
+                    UserId = fromChatId
+                };
+                var emailValidator = new EmailValidator();
+                if (!emailValidator.IsValid(text))
+                {
+                    await _messageView.Say("Неправильный формат почты.", fromChatId);
+                    await _currentScenarioRepo.DecreaseIndex(fromChatId);
+                }
+                else
+                {
+                    emailUpdateUser.Email = text;
+                    // await _backendApiClient.UpdateUserAsync(emailUpdateUser);
+                    await _currentScenarioRepo.EndScenarioNoMatterWhat(fromChatId);
+                    await _messageView.Say("Почта изменена.", fromChatId);
+                }
+
+                break;
+            case 3: // изменить время веч. стендапа
+                var eveningStandUpUpdateUser = new UpdateUser
+                {
+                    UserId = fromChatId
+                };
+                var timeValidator = new TimeValidator();
+                if (!timeValidator.IsValid(text))
+                {
+                    await _messageView.Say("Неправильный формат. Нужно ввести время в формете 9:00", fromChatId);
+                    await _currentScenarioRepo.DecreaseIndex(fromChatId);
+                }
+                else
+                {
+                    var trimmedText = text!.Trim();
+                    
+                    var eveningStandUpTime = TimeSpan.Parse(trimmedText).Subtract(TimeSpan.FromHours(3));
+                    if (eveningStandUpTime < TimeSpan.FromHours(0))
+                        eveningStandUpTime = eveningStandUpTime.Add(TimeSpan.FromHours(24));
+
+                    eveningStandUpUpdateUser.EveningStandUpTime = eveningStandUpTime;
+                    // await _backendApiClient.UpdateUserAsync(eveningStandUpUpdateUser);
+                    await _currentScenarioRepo.EndScenarioNoMatterWhat(fromChatId);
+                    await _messageView.Say("Время вечернего стендапа изменено.", fromChatId);
+                }
+                break;
+            case 4: // изменить интервал
+                var timeRangeValidator = new TimeRangeValidator();
+                var timeRangeUpdateUser = new UpdateUser
+                {
+                    UserId = fromChatId
+                };
+                if (!timeRangeValidator.IsValid(text))
+                {
+                    await _messageView.Say("Неправильный формат. Нужно ввести интервал в формете 9:00-18:00", fromChatId);
+                    await _currentScenarioRepo.DecreaseIndex(fromChatId);
+                }
+                else
+                {
+                    var trimmedText = text!.Trim();
+                    var timeSpanStrings = trimmedText.Split('-');
+
+                    var messageStartTime = TimeSpan.Parse(timeSpanStrings[0]).Subtract(TimeSpan.FromHours(3));
+                    if (messageStartTime < TimeSpan.FromHours(0))
+                        messageStartTime = messageStartTime.Add(TimeSpan.FromHours(24));
+
+                    var messageEndTime = TimeSpan.Parse(timeSpanStrings[1]) - TimeSpan.FromHours(3);
+                    if (messageEndTime < TimeSpan.FromHours(0))
+                        messageEndTime = messageEndTime.Add(TimeSpan.FromHours(24));
+
+                    timeRangeUpdateUser.MessageStartTime = messageStartTime;
+                    timeRangeUpdateUser.MessageEndTime = messageEndTime;
+                    
+                    // await _backendApiClient.UpdateUserAsync(timeRangeUpdateUser);
+                    await _currentScenarioRepo.EndScenarioNoMatterWhat(fromChatId);
+                    await _messageView.Say("Интервал опроса состояний изменен.", fromChatId);
+                }
+
+                break;
+            case 5: // изменить дату начала спринта
+                var sprintDateUpdateUser = new UpdateUser
+                {
+                    UserId = fromChatId
+                };
+                var dateValidator = new DateValidator();
+                if (!dateValidator.IsValid(text))
+                {
+                    await _messageView.Say("Неправильный формат. Нужно ввести дату в формете 31.01.2024", fromChatId);
+                    await _currentScenarioRepo.DecreaseIndex(fromChatId);
+                }
+                else
+                {
+                    var sprintStartDate = DateTime.ParseExact(text.Trim(), "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None);
+                    sprintDateUpdateUser.SprintStartDate = sprintStartDate;
+                    
+                    var firstReflectionDate = sprintStartDate.Add(TimeSpan.FromDays(6));
+                    sprintDateUpdateUser.ReflectionDate = firstReflectionDate;
+                    
+                    // await _backendApiClient.UpdateUserAsync(sprintDateUpdateUser);
+                    await _currentScenarioRepo.EndScenarioNoMatterWhat(fromChatId);
+                    await _messageView.Say("Дата начала спринта стендапа изменено.", fromChatId);
+                }
+                break;
+        }
     }
 }

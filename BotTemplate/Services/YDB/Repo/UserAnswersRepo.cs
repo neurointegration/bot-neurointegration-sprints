@@ -116,6 +116,18 @@ public class UserAnswersRepo : IRepo
             : rowsArray.First()["max_pk"].GetOptionalInt64();
     }
 
+    public async Task ClearByChatId(long chatId)
+    {
+        await botDatabase.ExecuteModify($@"
+            DECLARE $chat_id AS Int64;
+            
+            DELETE FROM {TableName} WHERE chat_id = $chat_id;
+        ", new Dictionary<string, YdbValue>
+        {
+            {"$chat_id", YdbValue.MakeInt64(chatId) }
+        });
+    }
+
     public async Task ClearAll()
     {
         await botDatabase.ExecuteScheme($@"

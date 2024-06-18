@@ -1,4 +1,5 @@
-﻿using BotTemplate.Services.S3Storage;
+﻿using BotTemplate.Client;
+using BotTemplate.Services.S3Storage;
 using BotTemplate.Services.Telegram;
 using BotTemplate.Services.Telegram.Commands;
 using BotTemplate.Services.YDB;
@@ -47,12 +48,14 @@ public class TelegramHandler : YcFunction<string, Response>
     {
         var configuration = Configuration.FromJson(CodePath + "settings.json");
         var tgClient = new TelegramBotClient(configuration.TelegramToken);
+        var telegramBotUrl = $"https://api.telegram.org/bot{configuration.TelegramToken}";
         var body = JObject.Parse(request).GetValue("body")!.Value<string>()!;
         var update = JsonConvert.DeserializeObject<Update>(body)!;
         var view = new HtmlMessageView(tgClient);
         var botDatabase = new BotDatabase(configuration);
+        var backendApiClient = new BackendApiClient(configuration);
 
-        var updateService = new HandleUpdateService(view, botDatabase);
+        var updateService = new HandleUpdateService(view, botDatabase, backendApiClient, telegramBotUrl);
         await updateService.Handle(update);
     }
 }
