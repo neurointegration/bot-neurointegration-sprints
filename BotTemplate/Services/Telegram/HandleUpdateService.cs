@@ -447,7 +447,7 @@ public class HandleUpdateService
                         await _usersRepo.ChangeSendRegularMessages(fromChatId, false);
                         // await _backendApiClient.UpdateUserAsync(new UpdateUser { UserId = fromChatId, SendRegularMessages = false });
                         await _currentScenarioRepo.EndScenarioNoMatterWhat(fromChatId);
-                        await _messageView.Say("Теперь ты не тренер", fromChatId);
+                        await _messageView.Say("Теперь ты больше не проходишь спринты", fromChatId);
                         break;
                     case "Проходить":
                         await _usersRepo.ChangeSendRegularMessages(fromChatId, true);

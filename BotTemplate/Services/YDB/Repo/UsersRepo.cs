@@ -129,7 +129,7 @@ public class UsersRepo : IRepo
     {
         await _botDatabase.ExecuteModify($@"
             DECLARE $chat_id AS Int64;
-            DECLARE $i_am_coach AS Text;
+            DECLARE $send_regular_messages AS Text;
 
             UPDATE {TableName}
             SET send_regular_messages = $send_regular_messages
