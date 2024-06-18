@@ -9,6 +9,6 @@ public class TimeValidator : IValidator
         
         var trimmedText = text.Trim(' ');
         
-        return !TimeSpan.TryParse(trimmedText, out _);
+        return TimeSpan.TryParse(trimmedText, out _);
     }
 }

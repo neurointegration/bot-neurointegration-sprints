@@ -1,5 +1,6 @@
 using System.Globalization;
 using BotTemplate.Models.ClientDto;
+using BotTemplate.Models.Telegram;
 using BotTemplate.Services.S3Storage;
 using BotTemplate.Services.Telegram.Commands;
 using BotTemplate.Services.Telegram.MessageCommands;
@@ -10,6 +11,7 @@ using BotTemplate.Services.YDB;
 using BotTemplate.Services.YDB.Repo;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Message = Telegram.Bot.Types.Message;
 
 namespace BotTemplate.Services.Telegram;
 
@@ -51,34 +53,52 @@ public class HandleUpdateService
             new SendStateMessage(),
             new HandleStateResponse()
         };
-        
-        var handler = update.Type switch
+
+        var telegramEvent = update.Type switch
         {
-            UpdateType.Message => HandleMessage(update.Message!),
-            UpdateType.CallbackQuery => HandlePlainText(update.CallbackQuery!.Data!, update.CallbackQuery!.Message!.Chat.Id),
-            _ => HandleDefaultUpdate(update.Message!.Chat.Id)
+            UpdateType.Message => new TelegramEvent
+            {
+                ChatId = update.Message!.Chat.Id,
+                Text = update.Message.Text!,
+                Username = update.Message.From!.Username!,
+                MessageType = update.Message.Type
+            },
+                UpdateType.CallbackQuery => new TelegramEvent
+            {
+                ChatId = update.CallbackQuery!.Message!.Chat.Id,
+                Text = update.CallbackQuery.Data!,
+                Username = update.CallbackQuery.From.Username!,
+                MessageType = update.CallbackQuery.Message.Type
+            },
+            _ => null
         };
 
-        await handler;
+        if (telegramEvent is null)
+        {
+            await HandleDefaultUpdate(update.Message!.Chat.Id);
+            return;
+        }
+
+        await HandleMessage(telegramEvent);
     }
 
-    private async Task HandleMessage(Message message)
+    private async Task HandleMessage(TelegramEvent telegramEvent)
     {
-        var scenarioId = await _currentScenarioRepo.GetScenarioIdByChatId(message.Chat.Id);
+        var scenarioId = await _currentScenarioRepo.GetScenarioIdByChatId(telegramEvent.ChatId);
         
-        if (message.Text! == "/start" || scenarioId is 0)
+        if (telegramEvent.Text == "/start" || scenarioId is 0)
         {
-            await HandleRegister(message.Chat.Id, message);
+            await HandleRegister(telegramEvent.ChatId, telegramEvent);
             return;
         }
         
-        if (message.Type == MessageType.Text)
+        if (telegramEvent.MessageType is MessageType.Text)
         {
-            await HandlePlainText(message.Text!, message.Chat.Id);
+            await HandlePlainText(telegramEvent.Text, telegramEvent.ChatId);
             return;
         }
 
-        await HandleNonCommandMessage(message.Chat.Id, message.Text!);
+        await HandleNonCommandMessage(telegramEvent.ChatId, telegramEvent.Text);
     }
 
     private async Task HandlePlainText(string text, long fromChatId)
@@ -148,9 +168,9 @@ public class HandleUpdateService
         await _messageView.Say(text, fromChatId);
     }
 
-    private async Task HandleRegister(long fromChatId, Message message)
+    private async Task HandleRegister(long fromChatId, TelegramEvent? telegramEvent)
     {
-        var text = message.Text;
+        var text = telegramEvent?.Text;
         var index = await _currentScenarioRepo.GetIndexByChatId(fromChatId);
         if (index is null)
         {
@@ -169,9 +189,19 @@ public class HandleUpdateService
                 messageToSend = WriteYourEmailMessage.GetMessage();
                 break;
             case 1:
-                messageToSend = AreYouACoachMessage.GetMessage();
-                await _userAnswersRepo.SaveAnswer(fromChatId, "Email", text!);
-                await _userAnswersRepo.SaveAnswer(fromChatId, "Username", message.From?.Username ?? text!);
+                var emailValidator = new EmailValidator();
+                if (!emailValidator.IsValid(text))
+                {
+                    messageToSend = new Models.Telegram.Message("Неправильный формат почты.");
+                    await _currentScenarioRepo.DecreaseIndex(fromChatId);
+                }
+                else
+                {
+                    messageToSend = AreYouACoachMessage.GetMessage(text!);
+                    await _userAnswersRepo.SaveAnswer(fromChatId, "Email", text);
+                    await _userAnswersRepo.SaveAnswer(fromChatId, "Username", telegramEvent?.Username ?? text!);
+                }
+                
                 break;
             case 2:
                 if (text == "Да")
@@ -188,6 +218,7 @@ public class HandleUpdateService
             case 3:
                 if (text is "Нет")
                 {
+                    messageToSend = RegisterNoSprintsMessage.GetMessage();
                     await _userAnswersRepo.SaveAnswer(fromChatId, "SendRegularMessages", false.ToString());
                     await _currentScenarioRepo.EndScenarioNoMatterWhat(fromChatId);
                     await RegisterUser(fromChatId);
@@ -265,7 +296,7 @@ public class HandleUpdateService
                 else
                 {
                     messageToSend = SelectCoachMessage.GetMessage(new List<ApiUser> { new() { UserId = 228, Username = "Test" } } );
-                    var sprintStartDate = DateTime.Parse(text.Trim());
+                    var sprintStartDate = DateTime.ParseExact(text.Trim(), "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None);
                     var firstReflectionDate = sprintStartDate.Add(TimeSpan.FromDays(6));
 
                     await _userAnswersRepo.SaveAnswer(fromChatId, "SprintStartDate", sprintStartDate.ToString(CultureInfo.InvariantCulture));

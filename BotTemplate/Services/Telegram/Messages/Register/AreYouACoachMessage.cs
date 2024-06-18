@@ -7,8 +7,10 @@ public static class AreYouACoachMessage
 {
     private const string Text = "Ты - тренер?";
     
-    public static Message GetMessage()
+    public static Message GetMessage(string email)
     {
+        var text = $"Отлично! Я выдам доступ к таблицам Google аккаунту с почтой {email}. {Text}";
+        
         // Buttons
         var yesButton = new InlineKeyboardButton("Да");
         var noButton = new InlineKeyboardButton("Нет");
@@ -21,6 +23,6 @@ public static class AreYouACoachMessage
         // Keyboard markup
         var inline = new InlineKeyboardMarkup(buttons);
 
-        return new Message(Text, inline);
+        return new Message(text, inline);
     }
 }

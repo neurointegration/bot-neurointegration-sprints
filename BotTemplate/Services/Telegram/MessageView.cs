@@ -36,9 +36,6 @@ public class HtmlMessageView : IMessageView
 
     public async Task SayWithMarkup(string text, long chatId, IReplyMarkup? replyMarkup)
     {
-        if (replyMarkup is null)
-            await Say(text, chatId);
-        
         await botClient.SendTextMessageAsync(
             chatId,
             text,

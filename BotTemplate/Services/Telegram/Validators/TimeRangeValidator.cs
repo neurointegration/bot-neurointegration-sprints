@@ -17,10 +17,10 @@ public class TimeRangeValidator : IValidator
 
         var timeSpanStrings = trimmedText.Split('-');
 
-        if (TimeSpan.TryParse(timeSpanStrings[0], out _))
+        if (!TimeSpan.TryParse(timeSpanStrings[0], out _))
             return false;
         
-        if (TimeSpan.TryParse(timeSpanStrings[1], out _))
+        if (!TimeSpan.TryParse(timeSpanStrings[1], out _))
             return false;
 
         return true;
