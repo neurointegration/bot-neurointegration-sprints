@@ -114,9 +114,40 @@ public class HandleUpdateService
         if (telegramEvent.Text == "Настройки" || scenarioId is 100)
         {
             if (scenarioId != null && scenarioId != 100)
-                await _messageView.Say("Закночи другой сценарий прежде чем открыть настройки.", telegramEvent.ChatId);
+                await _messageView.Say("Закночи другой сценарий, прежде чем открыть настройки.", telegramEvent.ChatId);
             else
                 await HandleSettings(telegramEvent.ChatId, telegramEvent);
+            return;
+        }
+        
+        if (telegramEvent.Text == "Таблица результатов")
+        {
+            if (scenarioId != null)
+                await _messageView.Say("Закночи другой сценарий, прежде чем получать таблицу результатов.",
+                    telegramEvent.ChatId);
+            else
+            {
+                // var spreadSheets = await _backendApiClient.GetUserSpreadSheetsAsync(telegramEvent.ChatId, telegramEvent.ChatId);
+                var spreadSheets = new List<string> { "www.link1.com" };
+                if (spreadSheets is null || spreadSheets.Count == 0)
+                {
+                    await _messageView.Say("У тебя пока нету таблиц.",
+                        telegramEvent.ChatId);
+                    return;
+                }
+
+                if (spreadSheets.Count == 1)
+                {
+                    await _messageView.Say($"Таблица твоих результатов и ответов:\n{spreadSheets}",
+                        telegramEvent.ChatId);
+                    return;
+                }
+
+                var message = spreadSheets.Aggregate("Таблицы твоих результатов и ответов:\n", (current, spreadSheet) => current + (spreadSheet + '\n'));
+                await _messageView.Say(message,
+                    telegramEvent.ChatId);
+            }
+
             return;
         }
         
@@ -323,7 +354,9 @@ public class HandleUpdateService
                 }
                 else
                 {
-                    messageToSend = SelectCoachMessage.GetMessage(new List<ApiUser> { new() { UserId = 228, Username = "Test" } } );
+                    // var coaches = await _backendApiClient.GetPublicCoachsAsync();
+                    var coaches = new List<ApiUser> { new() { UserId = 228, Username = "Test" } };
+                    messageToSend = SelectCoachMessage.GetMessage(coaches);
                     var sprintStartDate = DateTime.ParseExact(text.Trim(), "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None);
                     await _userAnswersRepo.SaveAnswer(fromChatId, "SprintStartDate", sprintStartDate.ToString(CultureInfo.InvariantCulture));
                     
@@ -363,6 +396,7 @@ public class HandleUpdateService
         {
             UserId = fromChatId
         };
+        long coachId;
         foreach (var userAnswer in userAnswers)
         {
             switch (userAnswer.Key)
@@ -394,11 +428,15 @@ public class HandleUpdateService
                 case "SprintStartDate":
                     createUser.SprintStartDate = DateTime.Parse(userAnswer.Answer);
                     break;
+                case "Coach":
+                    coachId = long.Parse(userAnswer.Answer);
+                    break;
             }
         }
         
         await _usersRepo.RegisterUser(fromChatId, createUser.IAmCoach, createUser.SendRegularMessages);
         // await _backendApiClient.CreateUserAsync(createUser);
+        // await _backendApiClient.GrantedAccessToUserInfoAsync(createUser.UserId, coachId);
         await _userAnswersRepo.ClearByChatId(fromChatId);
     }
     

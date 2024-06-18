@@ -10,9 +10,9 @@ using Yandex.Cloud.Functions;
 
 namespace BotTemplate;
 
-public class TelegramHandler : YcFunction<string, Response>
+public class TriggerHandler : YcFunction<string, Response>
 {
-    private const string CodePath = "/function/code/";
+    private const string CodePath = "/function/trigger/";
     
     public Response FunctionHandler(string request, Context context)
     {
@@ -29,7 +29,7 @@ public class TelegramHandler : YcFunction<string, Response>
             return new Response(500, $"Error {e}");
         }
     }
-
+    
     private async Task HandleRequest(string request, Context context)
     {
         var configuration = Configuration.FromJson(CodePath + "settings.json");
@@ -45,4 +45,3 @@ public class TelegramHandler : YcFunction<string, Response>
         await updateService.Handle(update);
     }
 }
-
