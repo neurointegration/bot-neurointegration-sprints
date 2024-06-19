@@ -19,12 +19,12 @@ public class UsersRepo : IRepo
         await model.CreateTable();
         return model;
     }
-    
+
     public async Task RegisterUser(long chatId, bool iAmCoach, bool sendRegularMessages)
     {
         if (await IsRegistered(chatId))
             return;
-        
+
         await _botDatabase.ExecuteModify($@"
             DECLARE $chat_id AS Int64;
             DECLARE $i_am_coach AS Text;
@@ -39,7 +39,7 @@ public class UsersRepo : IRepo
             { "$send_regular_messages", YdbValue.MakeUtf8(sendRegularMessages.ToString()) }
         });
     }
-    
+
     public async Task<bool> IsRegistered(long chatId)
     {
         var rows = await _botDatabase.ExecuteFind($@"
@@ -50,19 +50,19 @@ public class UsersRepo : IRepo
             WHERE chat_id = $chat_id
         ", new Dictionary<string, YdbValue>
         {
-            {"$chat_id", YdbValue.MakeInt64(chatId)}
+            { "$chat_id", YdbValue.MakeInt64(chatId) }
         });
-        
+
         if (rows is null)
         {
             return false;
         }
-        
+
         var rowsArray = rows as ResultSet.Row[] ?? rows.ToArray();
 
         return rowsArray.Any();
     }
-    
+
     public async Task<bool> AmICoach(long chatId)
     {
         var rows = await _botDatabase.ExecuteFind($@"
@@ -73,19 +73,19 @@ public class UsersRepo : IRepo
             WHERE chat_id = $chat_id
         ", new Dictionary<string, YdbValue>
         {
-            {"$chat_id", YdbValue.MakeInt64(chatId)}
+            { "$chat_id", YdbValue.MakeInt64(chatId) }
         });
-        
+
         if (rows is null)
         {
             return false;
         }
-        
+
         var rowsArray = rows as ResultSet.Row[] ?? rows.ToArray();
 
         return rowsArray.Any(row => bool.Parse(row["i_am_coach"].GetUtf8()));
     }
-    
+
     public async Task ChangeIAmCoach(long chatId, bool value)
     {
         await _botDatabase.ExecuteModify($@"
@@ -101,7 +101,7 @@ public class UsersRepo : IRepo
             { "$i_am_coach", YdbValue.MakeUtf8(value.ToString()) }
         });
     }
-    
+
     public async Task<bool> SendRegularMessages(long chatId)
     {
         var rows = await _botDatabase.ExecuteFind($@"
@@ -112,19 +112,19 @@ public class UsersRepo : IRepo
             WHERE chat_id = $chat_id
         ", new Dictionary<string, YdbValue>
         {
-            {"$chat_id", YdbValue.MakeInt64(chatId)}
+            { "$chat_id", YdbValue.MakeInt64(chatId) }
         });
-        
+
         if (rows is null)
         {
             return false;
         }
-        
+
         var rowsArray = rows as ResultSet.Row[] ?? rows.ToArray();
 
         return rowsArray.Any(row => bool.Parse(row["send_regular_messages"].GetUtf8()));
     }
-    
+
     public async Task ChangeSendRegularMessages(long chatId, bool value)
     {
         await _botDatabase.ExecuteModify($@"
@@ -140,7 +140,7 @@ public class UsersRepo : IRepo
             { "$send_regular_messages", YdbValue.MakeUtf8(value.ToString()) }
         });
     }
-    
+
     public async Task ClearAll()
     {
         await _botDatabase.ExecuteScheme($@"
@@ -150,7 +150,9 @@ public class UsersRepo : IRepo
 
     public async Task CreateTable()
     {
-        await _botDatabase.ExecuteScheme($@"
+        try
+        {
+            await _botDatabase.ExecuteScheme($@"
             CREATE TABLE {TableName} (
                 chat_id Int64 NOT NULL,
                 i_am_coach Text NOT NULL,
@@ -158,5 +160,10 @@ public class UsersRepo : IRepo
                 PRIMARY KEY (chat_id)
             )
         ");
+        }
+        catch (Exception)
+        {
+            // ignored
+        }
     }
 }

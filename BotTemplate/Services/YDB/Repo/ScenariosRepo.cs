@@ -144,7 +144,9 @@ public class ScenariosRepo : IRepo
 
     public async Task CreateTable()
     {
-        await botDatabase.ExecuteScheme($@"
+        try
+        {
+            await botDatabase.ExecuteScheme($@"
             CREATE TABLE {TableName} (
                 scenario_id Int64 NOT NULL,
                 message_index Int32 NOT NULL,
@@ -153,6 +155,11 @@ public class ScenariosRepo : IRepo
                 PRIMARY KEY (scenario_id, message_index)
             )
         ");
+        }
+        catch (Exception)
+        {
+            // ignored
+        }
 
         var isThereAnyScenarios = await IsThereAnyScenarios();
         if (!isThereAnyScenarios)

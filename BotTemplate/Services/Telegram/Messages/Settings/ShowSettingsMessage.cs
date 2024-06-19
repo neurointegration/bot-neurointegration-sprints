@@ -41,12 +41,10 @@ public static class ShowSettingsMessage
 
             var buttons = new List<InlineKeyboardButton[]>
             {
-                changeEmailButton,
                 changeIAmCoachButton,
                 changeSendRegularMessages,
                 changeEveningStandUpTime,
                 changeMessageRangeTime,
-                changeSprintStartDate,
                 back
             };
             
