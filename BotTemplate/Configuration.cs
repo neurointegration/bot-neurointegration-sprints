@@ -12,6 +12,7 @@ public class Configuration
     public string? IamTokenPath => appSettings[nameof(IamTokenPath)];
     public string? BackendApiKey => appSettings[nameof(BackendApiKey)];
     public string? BackendBaseUrl  => appSettings[nameof(BackendBaseUrl)];
+    public string? TriggerFrequencyMinutes => appSettings[nameof(TriggerFrequencyMinutes)];
 
     private readonly IConfigurationSection appSettings;
 

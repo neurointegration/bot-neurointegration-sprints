@@ -34,9 +34,9 @@ public static class ShowSettingsMessage
             {
                 CallbackData = "Начало спринта"
             } };
-            var deleteCoaches = new[] { new InlineKeyboardButton("Удалить тренеров")
+            var back = new[] { new InlineKeyboardButton("Отмена")
             {
-                CallbackData = "Удалить тренеров"
+                CallbackData = "Отмена"
             } };
 
             var buttons = new List<InlineKeyboardButton[]>
@@ -46,7 +46,8 @@ public static class ShowSettingsMessage
                 changeSendRegularMessages,
                 changeEveningStandUpTime,
                 changeMessageRangeTime,
-                changeSprintStartDate
+                changeSprintStartDate,
+                back
             };
             
             // Keyboard markup

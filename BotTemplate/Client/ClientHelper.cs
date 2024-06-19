@@ -7,7 +7,7 @@ public static class ClientHelper
 {
     public static StringContent BuildContent<T>(T obj)
     {
-        var jsonObject = JsonConvert.SerializeObject(obj, new Newtonsoft.Json.Converters.StringEnumConverter());
+        var jsonObject = JsonConvert.SerializeObject(obj);
         return new StringContent(jsonObject, Encoding.UTF8, "application/json");
     }
 

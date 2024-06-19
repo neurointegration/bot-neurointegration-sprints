@@ -1,3 +1,4 @@
+using BotTemplate.Models.Telegram;
 using BotTemplate.Services.YDB.Repo;
 using Ydb.Sdk.Value;
 
@@ -24,7 +25,7 @@ public class CurrentScenarioRepo : IRepo
         return model;
     }
 
-    public async Task<string?> StartNewScenarioAndGetMessage(long chatId, long scenarioId)
+    public async Task<string?> StartNewScenarioAndGetMessage(long chatId, long scenarioId, long currentSprintNumber = 0, int sprintReplyNumber = 0)
     {
         var curIndex = await GetIndexByChatId(chatId);
         if (curIndex is not null)
@@ -33,13 +34,17 @@ public class CurrentScenarioRepo : IRepo
         await _botDatabase.ExecuteModify($@"
             DECLARE $chat_id AS Int64;
             DECLARE $scenario_id AS Int64;
+            DECLARE $current_sprint_number AS Int64;
+            DECLARE $sprint_reply_number AS Int32;
 
-            INSERT INTO {TableName} ( chat_id, scenario_id, index )
-            VALUES ( $chat_id, $scenario_id, 0 )
+            INSERT INTO {TableName} ( chat_id, scenario_id, current_sprint_number, sprint_reply_number, index )
+            VALUES ( $chat_id, $scenario_id, $current_sprint_number, $sprint_reply_number, 0 )
         ", new Dictionary<string, YdbValue?>
         {
             {"$chat_id", YdbValue.MakeInt64(chatId)},
             {"$scenario_id", YdbValue.MakeInt64(scenarioId)},
+            {"$current_sprint_number", YdbValue.MakeInt64(currentSprintNumber)},
+            {"$sprint_reply_number", YdbValue.MakeInt32(sprintReplyNumber)}
         });
 
         var message = await _scenariosRepo.GetMessageByScenarioIdAndMessageIndex(scenarioId, 0);
@@ -193,6 +198,38 @@ public class CurrentScenarioRepo : IRepo
             ? null 
             : rowsArray.First()["index"].GetOptionalInt32();
     }
+    
+    public async Task<CurrentScenarioInfo?> GetInfoByChatId(long chatId)
+    {
+        var rows = await _botDatabase.ExecuteFind($@"
+            DECLARE $chat_id AS Int64;
+
+            SELECT scenario_id, current_sprint_number, sprint_reply_number, index
+            FROM {TableName}
+            WHERE chat_id = $chat_id
+        ", new Dictionary<string, YdbValue>
+        {
+            {"$chat_id", YdbValue.MakeInt64(chatId)}
+        });
+        
+        if (rows is null)
+        {
+            return null;
+        }
+        
+        var rowsArray = rows as ResultSet.Row[] ?? rows.ToArray();
+
+        return !rowsArray.Any()
+            ? null
+            : new CurrentScenarioInfo
+            {
+                ChatId = chatId,
+                ScenarioId = rowsArray.First()["scenario_id"].GetInt64(),
+                CurrentSprintNumber = rowsArray.First()["current_sprint_number"].GetOptionalInt64(),
+                SprintReplyNumber = rowsArray.First()["sprint_reply_number"].GetOptionalInt32(),
+                Index = rowsArray.First()["index"].GetOptionalInt32()
+            };
+    }
 
     public async Task ClearAll()
     {
@@ -207,7 +244,7 @@ public class CurrentScenarioRepo : IRepo
             CREATE TABLE {TableName} (
                 chat_id Int64 NOT NULL,
                 scenario_id Int64 NOT NULL,
-                current_sprint_number Int32,
+                current_sprint_number Int64,
                 sprint_reply_number Int32,
                 index Int32,
                 PRIMARY KEY (chat_id)
