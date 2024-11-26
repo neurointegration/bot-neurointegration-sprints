@@ -3,10 +3,7 @@ using BotTemplate.Models.Telegram;
 using BotTemplate.Services.Telegram;
 using BotTemplate.Services.YDB;
 using Grpc.Core.Logging;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Telegram.Bot;
-using Telegram.Bot.Types;
 using Yandex.Cloud.Functions;
 
 namespace BotTemplate;
@@ -33,12 +30,12 @@ public class TriggerHandler : YcFunction<string, Response>
     
     private async Task HandleRequest(string request, Context context)
     {
-        var configuration = Configuration.FromJson(CodePath + "settings.json");
+        var configuration = Configuration.FromEnvironment();
         var tgClient = new TelegramBotClient(configuration.TelegramToken);
         var telegramBotUrl = $"https://api.telegram.org/bot{configuration.TelegramToken}";
         var view = new HtmlMessageView(tgClient);
         var botDatabase = new BotDatabase(configuration);
-        var backendApiClient = new BackendApiClient(configuration);
+        var backendApiClient = InitializeLocalClient.Init();
         var triggerFrequencyMinutes = int.Parse(configuration.TriggerFrequencyMinutes!);
 
         var updateService = new TriggerService(view, botDatabase, backendApiClient, telegramBotUrl, triggerFrequencyMinutes);

@@ -1,4 +1,5 @@
-﻿using BotTemplate.Models.ClientDto;
+﻿using Neurointegration.Api.DataModels.Dto;
+using Neurointegration.Api.DataModels.Models;
 
 namespace BotTemplate.Client;
 
@@ -14,32 +15,40 @@ public interface IBackendApiClient
     /// Достать список вопросов
     /// </summary>
     /// <param name="timePeriod">Промежуток за который взять вопросы</param>
-    Task<List<Question>?> GetQuestionsAsync(int timePeriod);
+    Task<List<Question>> GetQuestionsAsync(int timePeriod);
 
     /// <summary>
     /// Создать пользователя
     /// </summary>
     /// <param name="createUser">Данные пользователя</param>
-    Task<ApiUser?> CreateUserAsync(CreateUser createUser);
+    Task<User> CreateUserAsync(CreateUser createUser);
 
     /// <summary>
     /// Обновить пользователя, указываются только обновляемые поля, если поле обновлять не надо, то оно указывается как null
     /// </summary>
     /// <param name="updateUser">Новые данные пользователя</param>
-    Task<ApiUser?> UpdateUserAsync(UpdateUser updateUser);
+    Task<User?> UpdateUserAsync(UpdateUser updateUser);
 
     /// <summary>
     /// Достать информацию о пользователе
     /// </summary>
     /// <param name="userId">Id пользователя</param>
-    Task<ApiUser?> GetUserAsync(long userId);
+    Task<User> GetUserAsync(long userId);
 
     /// <summary>
-    /// Достать гугл таблицы пользователя
+    /// Получить все спринты пользователя
     /// </summary>
-    /// <param name="ownerId">id чьи гугл таблицы хотим достать</param>
-    /// <param name="grantedUserId">id запрашивающего таблицы</param>
-    Task<List<string>?> GetUserSpreadSheetsAsync(long ownerId, long grantedUserId);
+    /// <param name="ownerId">id чьи спринты хотим достать</param>
+    /// <param name="grantedUserId">id запрашивающего</param>
+    /// <returns></returns>
+    Task<List<Sprint>> GetUserSprintsAsync(long ownerId, long grantedUserId);
+
+    // /// <summary>
+    // /// Достать гугл таблицы пользователя
+    // /// </summary>
+    // /// <param name="ownerId">id чьи гугл таблицы хотим достать</param>
+    // /// <param name="grantedUserId">id запрашивающего таблицы</param>
+    // Task<List<string>?> GetUserSpreadSheetsAsync(long ownerId, long grantedUserId);
 
     /// <summary>
     /// Выдать права пользавателю к информации другого пользователя
@@ -58,11 +67,11 @@ public interface IBackendApiClient
     /// <summary>
     /// Получить список доступных тренеров
     /// </summary>
-    Task<List<ApiUser>?> GetPublicCoachsAsync();
+    Task<List<User>> GetPublicCoachsAsync();
 
     /// <summary>
     /// Получить список тренеруемых пользователей
     /// </summary>
     /// <param name="coachId">id тренера</param>
-    Task<List<ApiUser>?> GetCoachStudentsAsync(long coachId);
+    Task<List<User>> GetCoachStudentsAsync(long coachId);
 }

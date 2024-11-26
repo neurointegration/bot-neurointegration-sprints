@@ -18,7 +18,7 @@ public class UserAnswersRepo : IRepo
     public static async Task<UserAnswersRepo> InitWithDatabase(IBotDatabase botDatabase)
     {
         var model = new UserAnswersRepo(botDatabase);
-        await model.CreateTable();
+        // await model.CreateTable();
         return model;
     }
     

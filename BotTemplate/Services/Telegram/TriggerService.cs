@@ -1,11 +1,9 @@
 ﻿using BotTemplate.Client;
-using BotTemplate.Models.ClientDto;
 using BotTemplate.Services.Telegram;
-using BotTemplate.Services.Telegram.Commands;
 using BotTemplate.Services.Telegram.MessageCommands;
 using BotTemplate.Services.YDB;
 using BotTemplate.Services.YDB.Repo;
-using Telegram.Bot.Types;
+using Neurointegration.Api.DataModels.Models;
 
 namespace BotTemplate.Models.Telegram;
 
@@ -52,9 +50,6 @@ public class TriggerService
         };
         
         var updates = await _backendApiClient.GetQuestionsAsync(_triggerFrequencyMinutes);
-
-        if (updates is null)
-            return;
 
         foreach (var update in updates)
         {

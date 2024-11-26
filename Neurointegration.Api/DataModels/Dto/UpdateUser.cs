@@ -1,4 +1,4 @@
-﻿namespace BotTemplate.Models.ClientDto;
+﻿namespace Neurointegration.Api.DataModels.Dto;
 
 public class UpdateUser
 {

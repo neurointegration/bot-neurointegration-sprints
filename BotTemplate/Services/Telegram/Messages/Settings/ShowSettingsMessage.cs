@@ -1,5 +1,4 @@
-﻿using BotTemplate.Models.ClientDto;
-using BotTemplate.Models.Telegram;
+﻿using BotTemplate.Models.Telegram;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace BotTemplate.Services.Telegram.Messages.Settings;

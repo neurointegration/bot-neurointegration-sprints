@@ -20,7 +20,7 @@ public class CurrentScenarioRepo : IRepo
     public static async Task<CurrentScenarioRepo> InitWithDatabase(IBotDatabase botDatabase, ScenariosRepo scenariosRepo)
     {
         var model = new CurrentScenarioRepo(botDatabase, scenariosRepo);
-        await model.CreateTable();
+        // await model.CreateTable();
 
         return model;
     }

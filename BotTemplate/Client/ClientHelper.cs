@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Neurointegration.Api.Excpetions;
 using Newtonsoft.Json;
 
 namespace BotTemplate.Client;
@@ -28,7 +29,7 @@ public static class ClientHelper
 
     public static HttpClient WithDefaultAuthorization(this HttpClient client, string apiKey)
     {
-        client.DefaultRequestHeaders.Add("Authorization", apiKey);
+        client.DefaultRequestHeaders.Add("X-Neuro-Apikey", apiKey);
         return client;
     }
 }

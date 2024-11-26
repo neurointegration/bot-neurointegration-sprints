@@ -1,6 +1,8 @@
-﻿namespace BotTemplate.Models.ClientDto;
+﻿using Neurointegration.Api.DataModels.Models;
 
-public class SendAnswer
+namespace Neurointegration.Api.DataModels.Dto;
+
+public record SendAnswer
 {
     public long UserId { get; set; }
     public DateOnly Date { get; set; }

@@ -13,7 +13,7 @@ namespace BotTemplate;
 public class TelegramHandler : YcFunction<string, Response>
 {
     private const string CodePath = "/function/code/";
-    
+
     public Response FunctionHandler(string request, Context context)
     {
         var logger = new ConsoleLogger();
@@ -32,17 +32,16 @@ public class TelegramHandler : YcFunction<string, Response>
 
     private async Task HandleRequest(string request, Context context)
     {
-        var configuration = Configuration.FromJson(CodePath + "settings.json");
+        var configuration = Configuration.FromEnvironment();
         var tgClient = new TelegramBotClient(configuration.TelegramToken);
         var telegramBotUrl = $"https://api.telegram.org/bot{configuration.TelegramToken}";
         var body = JObject.Parse(request).GetValue("body")!.Value<string>()!;
         var update = JsonConvert.DeserializeObject<Update>(body)!;
         var view = new HtmlMessageView(tgClient);
         var botDatabase = new BotDatabase(configuration);
-        var backendApiClient = new BackendApiClient(configuration);
+        var backendApiClient = InitializeLocalClient.Init();
 
         var updateService = new HandleUpdateService(view, botDatabase, backendApiClient, telegramBotUrl);
         await updateService.Handle(update);
     }
 }
-

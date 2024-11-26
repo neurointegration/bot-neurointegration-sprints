@@ -1,0 +1,33 @@
+﻿variables: 
+  REGISTRY_ID: 123
+  CONTAINER_NAME: neurointegration_api:$CI_PIPELINE_IID
+
+stages:
+  - init
+  - check
+  - container
+    
+Download YC:
+  stage: init 
+  when: manual
+  script: 
+    - curl -sSL https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
+    - yc init
+    - $YANDEX_OAUTH_TOKEN
+    - 
+    - n
+
+Check registry:
+  stage: check
+  needs: [Download YC]
+  script: 
+    - yc container registry update --id $REGISTRY_ID --new-name my-registry &&  yc container registry configure-docker
+
+Push api container:
+  stage: container
+  needs: [Check registry]
+  script: 
+    - cd Neurointegration.Api/ 
+    - docker build . -t cr.yandex/$REGISTRY_ID/$CONTAINER_NAME
+    - docker push cr.yandex/$REGISTRY_ID/$CONTAINER_NAME
+ 

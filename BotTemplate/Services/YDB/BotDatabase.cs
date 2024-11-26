@@ -1,7 +1,6 @@
-using System.Collections.Generic;
 using Ydb.Sdk;
 using Ydb.Sdk.Auth;
-using Ydb.Sdk.Table;
+using Ydb.Sdk.Services.Table;
 using Ydb.Sdk.Value;
 using Ydb.Sdk.Yc;
 

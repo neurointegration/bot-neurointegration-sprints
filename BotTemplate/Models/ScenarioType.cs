@@ -1,8 +1,8 @@
-﻿namespace BotTemplate.Models;
-
-public enum ScenarioType
-{
-    EveningStandUp,
-    Reflection,
-    Status
-}
+﻿// namespace BotTemplate.Models;
+//
+// public enum ScenarioType
+// {
+//     EveningStandUp,
+//     Reflection,
+//     Status
+// }
