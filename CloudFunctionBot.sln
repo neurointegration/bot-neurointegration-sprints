@@ -6,8 +6,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ns-api", "ns-api", "{91E78C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Neurointegration.Api", "Neurointegration.Api\Neurointegration.Api.csproj", "{BD7EF5AF-559C-4187-A28B-D60B0C26C903}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleTestApp", "ConsoleTestApp\ConsoleTestApp.csproj", "{0C83C717-1D02-44BB-A163-1DF539C1C5A2}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -22,10 +20,6 @@ Global
 		{BD7EF5AF-559C-4187-A28B-D60B0C26C903}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BD7EF5AF-559C-4187-A28B-D60B0C26C903}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BD7EF5AF-559C-4187-A28B-D60B0C26C903}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0C83C717-1D02-44BB-A163-1DF539C1C5A2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0C83C717-1D02-44BB-A163-1DF539C1C5A2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0C83C717-1D02-44BB-A163-1DF539C1C5A2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0C83C717-1D02-44BB-A163-1DF539C1C5A2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{BD7EF5AF-559C-4187-A28B-D60B0C26C903} = {91E78CCC-BA94-43C9-B563-10321EE87482}
