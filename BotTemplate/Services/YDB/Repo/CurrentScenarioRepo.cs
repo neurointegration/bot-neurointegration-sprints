@@ -240,7 +240,9 @@ public class CurrentScenarioRepo : IRepo
 
     public async Task CreateTable()
     {
-        await _botDatabase.ExecuteScheme($@"
+        try
+        {
+            await _botDatabase.ExecuteScheme($@"
             CREATE TABLE {TableName} (
                 chat_id Int64 NOT NULL,
                 scenario_id Int64 NOT NULL,
@@ -250,5 +252,10 @@ public class CurrentScenarioRepo : IRepo
                 PRIMARY KEY (chat_id)
             )
         ");
+        }
+        catch (Exception)
+        {
+            // ignored
+        }
     }
 }

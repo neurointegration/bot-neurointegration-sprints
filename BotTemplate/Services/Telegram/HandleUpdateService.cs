@@ -84,20 +84,13 @@ public class HandleUpdateService
             _ => null
         };
 
-
-        if (update.Type is UpdateType.CallbackQuery)
-        {
-            await _client.GetAsync(
-                $"{_telegramBotUrl}/answerCallbackQuery?callback_query_id={update.CallbackQuery!.Id}");
-        }
-
         if (telegramEvent is null)
-        {
             await HandleDefaultUpdate(update.Message!.Chat.Id);
-            return;
-        }
-
-        await HandleMessage(telegramEvent);
+        else
+            await HandleMessage(telegramEvent);
+        
+        if (update.Type is UpdateType.CallbackQuery)
+            await _client.GetAsync($"{_telegramBotUrl}/answerCallbackQuery?callback_query_id={update.CallbackQuery!.Id}");
     }
 
     private async Task HandleMessage(TelegramEvent telegramEvent)
@@ -150,9 +143,43 @@ public class HandleUpdateService
                 var message = sprints
                     .OrderByDescending(sprint => sprint.SprintNumber)
                     .Aggregate("Таблицы твоих результатов и ответов:\n",
-                        (current, spreadSheet) => current + (spreadSheet.SheetId + '\n'));
-                await _messageView.Say(message,
+                        (current, spreadSheet) => current + 
+                                                  $"<a href='https://docs.google.com/spreadsheets/d/{spreadSheet.SheetId}'>Таблица твоих результатов и ответов</a>\n");
+                await _messageView.Say(message, telegramEvent.ChatId);
+            }
+
+            return;
+        }
+        
+        if (telegramEvent.Text == "Мои ученики")
+        {
+            if (scenarioId != null)
+                await _messageView.Say("Закночи другой сценарий, прежде чем получать таблицы результатов твоих учеников.",
                     telegramEvent.ChatId);
+            else
+            {
+                await _messageView.Say("Загружаю твоих учеников. Подожди", telegramEvent.ChatId);
+                var students = await _backendApiClient.GetCoachStudentsAsync(telegramEvent.ChatId);
+                if (students is null || students.Count == 0)
+                {
+                    await _messageView.Say("У тебя пока нету учеников.",
+                        telegramEvent.ChatId);
+                    return;
+                }
+                var studentsSheets = new List<string>();
+                foreach (var student in students)
+                {
+                    var studentSheet = (await _backendApiClient.GetUserSpreadSheetsAsync(student.UserId, telegramEvent.ChatId))!.First();
+                    studentsSheets.Add(studentSheet);
+                }
+
+                var message = "Таблица результатов и ответов твоих учеников:\n";
+                for (var i = 0; i < students.Count; i++)
+                {
+                    message += $"<a href='https://docs.google.com/spreadsheets/d/{studentsSheets[i]}'>{students[i].Username}</a>\n";
+                }
+                
+                await _messageView.Say(message, telegramEvent.ChatId);
             }
 
             return;
@@ -374,8 +401,8 @@ public class HandleUpdateService
                 var dateValidator = new DateValidator();
                 if (text!.Trim() == "Новый спринт")
                 {
-                    messageToSend = SelectCoachMessage.GetMessage(new List<User>
-                        {new() {UserId = 228, Username = "Test"}});
+                    var coaches = await _backendApiClient.GetPublicCoachsAsync();
+                    messageToSend = SelectCoachMessage.GetMessage(coaches);
                     var sprintStartDate = DateTime.UtcNow.Date;
                     await _userAnswersRepo.SaveAnswer(fromChatId, "SprintStartDate",
                         sprintStartDate.ToString(CultureInfo.InvariantCulture));
@@ -473,11 +500,12 @@ public class HandleUpdateService
                     break;
             }
         }
-
-        await _usersRepo.RegisterUser(fromChatId, createUser.IAmCoach, createUser.SendRegularMessages);
+        
+        await _userAnswersRepo.ClearByChatId(fromChatId);
+        await _messageView.Say("Создаю пользователя и таблицу. Подожди", fromChatId);
         await _backendApiClient.CreateUserAsync(createUser);
         await _backendApiClient.GrantedAccessToUserInfoAsync(createUser.UserId, coachId);
-        await _userAnswersRepo.ClearByChatId(fromChatId);
+        await _usersRepo.RegisterUser(fromChatId, createUser.IAmCoach, createUser.SendRegularMessages);
     }
 
     private async Task HandleSettings(long fromChatId, TelegramEvent? telegramEvent)
@@ -511,33 +539,27 @@ public class HandleUpdateService
                         break;
                     case "Не тренер":
                         await _usersRepo.ChangeIAmCoach(fromChatId, false);
-                        await _backendApiClient.UpdateUserAsync(new UpdateUser {UserId = fromChatId, IAmCoach = false});
                         await _currentScenarioRepo.EndScenarioNoMatterWhat(fromChatId);
-                        await _messageView.SayWithMarkup("Теперь ты не тренер", fromChatId,
-                            BottomMessage.GetMessage().ReplyMarkup);
+                        await _backendApiClient.UpdateUserAsync(new UpdateUser { UserId = fromChatId, IAmCoach = false });
+                        await _messageView.SayWithMarkup("Теперь ты не тренер", fromChatId, BottomMessage.GetMessage().ReplyMarkup);
                         break;
                     case "Тренер":
                         await _usersRepo.ChangeIAmCoach(fromChatId, true);
-                        await _backendApiClient.UpdateUserAsync(new UpdateUser {UserId = fromChatId, IAmCoach = true});
                         await _currentScenarioRepo.EndScenarioNoMatterWhat(fromChatId);
-                        await _messageView.SayWithMarkup("Теперь ты тренер", fromChatId,
-                            BottomMessage.GetMessage(true).ReplyMarkup);
+                        await _backendApiClient.UpdateUserAsync(new UpdateUser { UserId = fromChatId, IAmCoach = true });
+                        await _messageView.SayWithMarkup("Теперь ты тренер", fromChatId, BottomMessage.GetMessage(true).ReplyMarkup);
                         break;
                     case "Не проходить":
                         await _usersRepo.ChangeSendRegularMessages(fromChatId, false);
-                        await _backendApiClient.UpdateUserAsync(new UpdateUser
-                            {UserId = fromChatId, SendRegularMessages = false});
                         await _currentScenarioRepo.EndScenarioNoMatterWhat(fromChatId);
+                        await _backendApiClient.UpdateUserAsync(new UpdateUser { UserId = fromChatId, SendRegularMessages = false });
                         await _messageView.Say("Теперь ты больше не проходишь спринты", fromChatId);
                         break;
                     case "Проходить":
                         await _usersRepo.ChangeSendRegularMessages(fromChatId, true);
-                        await _backendApiClient.UpdateUserAsync(new UpdateUser
-                            {UserId = fromChatId, SendRegularMessages = true});
                         await _currentScenarioRepo.EndScenarioNoMatterWhat(fromChatId);
-                        await _messageView.Say(
-                            "Теперь ты проходишь спринты. Обязательно укажи в настройках остальные данные для спринтов",
-                            fromChatId);
+                        await _backendApiClient.UpdateUserAsync(new UpdateUser { UserId = fromChatId, SendRegularMessages = true });
+                        await _messageView.Say("Теперь ты проходишь спринты. Обязательно укажи в настройках остальные данные для спринтов", fromChatId);
                         break;
                     case "Вечерний стендап":
                         await _messageView.Say(ChangeEveningStandUpTimeMessage.GetMessage().Text, fromChatId);
@@ -574,7 +596,6 @@ public class HandleUpdateService
                 else
                 {
                     emailUpdateUser.Email = text;
-                    await _backendApiClient.UpdateUserAsync(emailUpdateUser);
                     await _currentScenarioRepo.EndScenarioNoMatterWhat(fromChatId);
                     await _messageView.Say("Почта изменена.", fromChatId);
                 }
@@ -600,8 +621,8 @@ public class HandleUpdateService
                         eveningStandUpTime = eveningStandUpTime.Add(TimeSpan.FromHours(24));
 
                     eveningStandUpUpdateUser.EveningStandUpTime = eveningStandUpTime;
-                    await _backendApiClient.UpdateUserAsync(eveningStandUpUpdateUser);
                     await _currentScenarioRepo.EndScenarioNoMatterWhat(fromChatId);
+                    await _backendApiClient.UpdateUserAsync(eveningStandUpUpdateUser);
                     await _messageView.Say("Время вечернего стендапа изменено.", fromChatId);
                 }
 
@@ -633,9 +654,9 @@ public class HandleUpdateService
 
                     timeRangeUpdateUser.MessageStartTime = messageStartTime;
                     timeRangeUpdateUser.MessageEndTime = messageEndTime;
-
-                    await _backendApiClient.UpdateUserAsync(timeRangeUpdateUser);
+                    
                     await _currentScenarioRepo.EndScenarioNoMatterWhat(fromChatId);
+                    await _backendApiClient.UpdateUserAsync(timeRangeUpdateUser);
                     await _messageView.Say("Интервал опроса состояний изменен.", fromChatId);
                 }
 
@@ -659,8 +680,7 @@ public class HandleUpdateService
 
                     var firstReflectionDate = sprintStartDate.Add(TimeSpan.FromDays(6));
                     sprintDateUpdateUser.ReflectionDate = firstReflectionDate;
-
-                    await _backendApiClient.UpdateUserAsync(sprintDateUpdateUser);
+                    
                     await _currentScenarioRepo.EndScenarioNoMatterWhat(fromChatId);
                     await _messageView.Say("Дата начала спринта стендапа изменено.", fromChatId);
                 }

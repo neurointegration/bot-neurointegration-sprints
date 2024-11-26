@@ -21,7 +21,7 @@ public class UserAnswersRepo : IRepo
         // await model.CreateTable();
         return model;
     }
-    
+
     public async Task SaveAnswer(long chatId, string key, string text)
     {
         var newId = await GetUserAnswerIdOrNull();
@@ -29,7 +29,7 @@ public class UserAnswersRepo : IRepo
             newId = 1;
         else
             newId++;
-        
+
         await botDatabase.ExecuteModify($@"
             DECLARE $pk AS Int64;
             DECLARE $chat_id AS Int64;
@@ -40,13 +40,13 @@ public class UserAnswersRepo : IRepo
             VALUES ( $pk, $chat_id, $key, $answer )
         ", new Dictionary<string, YdbValue?>
         {
-            {"$pk", YdbValue.MakeInt64(newId!.Value)},
-            {"$chat_id", YdbValue.MakeInt64(chatId)},
-            {"$key", YdbValue.MakeUtf8(key)},
-            {"$answer", YdbValue.MakeUtf8(text)}
+            { "$pk", YdbValue.MakeInt64(newId!.Value) },
+            { "$chat_id", YdbValue.MakeInt64(chatId) },
+            { "$key", YdbValue.MakeUtf8(key) },
+            { "$answer", YdbValue.MakeUtf8(text) }
         });
     }
-    
+
     public async Task<string[]> GetAll(long chatId)
     {
         var rows = await botDatabase.ExecuteFind($@"
@@ -57,21 +57,21 @@ public class UserAnswersRepo : IRepo
             WHERE chat_id = $chat_id
         ", new Dictionary<string, YdbValue>
         {
-            {"$chat_id", YdbValue.MakeInt64(chatId)}
+            { "$chat_id", YdbValue.MakeInt64(chatId) }
         });
-        
+
         if (rows is null)
         {
             return Array.Empty<string>();
         }
-        
+
         var rowsArray = rows as ResultSet.Row[] ?? rows.ToArray();
 
-        return !rowsArray.Any() 
-            ? Array.Empty<string>() 
+        return !rowsArray.Any()
+            ? Array.Empty<string>()
             : rowsArray.Select(message => message["answer"].GetUtf8()).ToArray();
     }
-    
+
     public async Task<UserAnswer[]> GetAllWithKeys(long chatId)
     {
         var rows = await botDatabase.ExecuteFind($@"
@@ -82,19 +82,20 @@ public class UserAnswersRepo : IRepo
             WHERE chat_id = $chat_id
         ", new Dictionary<string, YdbValue>
         {
-            {"$chat_id", YdbValue.MakeInt64(chatId)}
+            { "$chat_id", YdbValue.MakeInt64(chatId) }
         });
-        
+
         if (rows is null)
         {
             return Array.Empty<UserAnswer>();
         }
-        
+
         var rowsArray = rows as ResultSet.Row[] ?? rows.ToArray();
 
-        return !rowsArray.Any() 
-            ? Array.Empty<UserAnswer>() 
-            : rowsArray.Select(message => new UserAnswer(message["answer"].GetUtf8(), message["key"].GetUtf8())).ToArray();
+        return !rowsArray.Any()
+            ? Array.Empty<UserAnswer>()
+            : rowsArray.Select(message => new UserAnswer(message["answer"].GetUtf8(), message["key"].GetUtf8()))
+                .ToArray();
     }
 
     private async Task<long?> GetUserAnswerIdOrNull()
@@ -103,16 +104,16 @@ public class UserAnswersRepo : IRepo
             SELECT MAX(pk) max_pk
             FROM {TableName}
         ", new Dictionary<string, YdbValue>());
-        
+
         if (rows is null)
         {
             return null;
         }
-        
+
         var rowsArray = rows as ResultSet.Row[] ?? rows.ToArray();
 
-        return !rowsArray.Any() 
-            ? null 
+        return !rowsArray.Any()
+            ? null
             : rowsArray.First()["max_pk"].GetOptionalInt64();
     }
 
@@ -124,7 +125,7 @@ public class UserAnswersRepo : IRepo
             DELETE FROM {TableName} WHERE chat_id = $chat_id;
         ", new Dictionary<string, YdbValue>
         {
-            {"$chat_id", YdbValue.MakeInt64(chatId) }
+            { "$chat_id", YdbValue.MakeInt64(chatId) }
         });
     }
 
@@ -137,7 +138,9 @@ public class UserAnswersRepo : IRepo
 
     public async Task CreateTable()
     {
-        await botDatabase.ExecuteScheme($@"
+        try
+        {
+            await botDatabase.ExecuteScheme($@"
             CREATE TABLE {TableName} (
                 pk Int64 NOT NULL,
                 chat_id Int64 NOT NULL,
@@ -146,5 +149,10 @@ public class UserAnswersRepo : IRepo
                 PRIMARY KEY (pk)
             )
         ");
+        }
+        catch (Exception)
+        {
+            // ignored
+        }
     }
 }

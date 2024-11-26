@@ -12,15 +12,11 @@ public class TriggerService
     private readonly IMessageView _messageView;
     private readonly IBotDatabase _botDatabase;
     private readonly IBackendApiClient _backendApiClient;
-    private readonly string _telegramBotUrl;
-    private readonly HttpClient _client = new();
     private readonly int _triggerFrequencyMinutes;
     
     private IMessageCommand[] _messageCommands;
     
     private CurrentScenarioRepo _currentScenarioRepo;
-    private UserAnswersRepo _userAnswersRepo;
-    private UsersRepo _usersRepo;
 
     public TriggerService(
         IMessageView messageView,
@@ -32,7 +28,6 @@ public class TriggerService
         _messageView = messageView;
         _botDatabase = botDatabase;
         _backendApiClient = backendApiClient;
-        _telegramBotUrl = telegramBotUrl;
         _triggerFrequencyMinutes = triggerFrequencyMinutes;
     }
 
@@ -40,8 +35,8 @@ public class TriggerService
     {
         var scenariosRepo = await ScenariosRepo.InitWithDatabase(_botDatabase);
         _currentScenarioRepo = await CurrentScenarioRepo.InitWithDatabase(_botDatabase, scenariosRepo);
-        _userAnswersRepo = await UserAnswersRepo.InitWithDatabase(_botDatabase);
-        _usersRepo = await UsersRepo.InitWithDatabase(_botDatabase);
+        await UserAnswersRepo.InitWithDatabase(_botDatabase);
+        await UsersRepo.InitWithDatabase(_botDatabase);
 
         _messageCommands = new IMessageCommand[]
         {
@@ -81,7 +76,7 @@ public class TriggerService
                 var messageCommand =
                     _messageCommands.FirstOrDefault(messageCommand => message.StartsWith(messageCommand.Command));
                 await messageCommand!.Handle(_messageView, update.UserId, null);
-                return;
+                continue;
             }
 
             await _messageView.Say(message!, update.UserId);
