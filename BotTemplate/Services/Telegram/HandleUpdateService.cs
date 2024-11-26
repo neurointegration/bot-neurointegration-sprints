@@ -169,8 +169,8 @@ public class HandleUpdateService
                 var studentsSheets = new List<string>();
                 foreach (var student in students)
                 {
-                    var studentSheet = (await _backendApiClient.GetUserSpreadSheetsAsync(student.UserId, telegramEvent.ChatId))!.First();
-                    studentsSheets.Add(studentSheet);
+                    var studentSheet = (await _backendApiClient.GetUserSprintsAsync(student.UserId, telegramEvent.ChatId)).MaxBy(sprint=>sprint.SprintNumber);
+                    studentsSheets.Add(studentSheet.SheetId);
                 }
 
                 var message = "Таблица результатов и ответов твоих учеников:\n";
