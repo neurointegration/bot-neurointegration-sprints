@@ -13,10 +13,16 @@ public class UsersRepo : IRepo
         _botDatabase = botDatabase;
     }
 
-    public static async Task<UsersRepo> InitWithDatabase(IBotDatabase botDatabase)
+    public static async Task<UsersRepo> Init(IBotDatabase botDatabase)
     {
         var model = new UsersRepo(botDatabase);
-        // await model.CreateTable();
+        return model;
+    }
+    
+    public static async Task<UsersRepo> InitWithCreate(BotDatabase botDatabase)
+    {
+        var model = new UsersRepo(botDatabase);
+        await model.CreateTable();
         return model;
     }
 

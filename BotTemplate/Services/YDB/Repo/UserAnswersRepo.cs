@@ -15,10 +15,16 @@ public class UserAnswersRepo : IRepo
         this.botDatabase = botDatabase;
     }
 
-    public static async Task<UserAnswersRepo> InitWithDatabase(IBotDatabase botDatabase)
+    public static async Task<UserAnswersRepo> Init(IBotDatabase botDatabase)
     {
         var model = new UserAnswersRepo(botDatabase);
-        // await model.CreateTable();
+        return model;
+    }
+
+    public static async Task<UserAnswersRepo> InitWithCreate(BotDatabase botDatabase)
+    {
+        var model = new UserAnswersRepo(botDatabase);
+        await model.CreateTable();
         return model;
     }
 
@@ -40,10 +46,10 @@ public class UserAnswersRepo : IRepo
             VALUES ( $pk, $chat_id, $key, $answer )
         ", new Dictionary<string, YdbValue?>
         {
-            { "$pk", YdbValue.MakeInt64(newId!.Value) },
-            { "$chat_id", YdbValue.MakeInt64(chatId) },
-            { "$key", YdbValue.MakeUtf8(key) },
-            { "$answer", YdbValue.MakeUtf8(text) }
+            {"$pk", YdbValue.MakeInt64(newId!.Value)},
+            {"$chat_id", YdbValue.MakeInt64(chatId)},
+            {"$key", YdbValue.MakeUtf8(key)},
+            {"$answer", YdbValue.MakeUtf8(text)}
         });
     }
 
@@ -57,7 +63,7 @@ public class UserAnswersRepo : IRepo
             WHERE chat_id = $chat_id
         ", new Dictionary<string, YdbValue>
         {
-            { "$chat_id", YdbValue.MakeInt64(chatId) }
+            {"$chat_id", YdbValue.MakeInt64(chatId)}
         });
 
         if (rows is null)
@@ -82,7 +88,7 @@ public class UserAnswersRepo : IRepo
             WHERE chat_id = $chat_id
         ", new Dictionary<string, YdbValue>
         {
-            { "$chat_id", YdbValue.MakeInt64(chatId) }
+            {"$chat_id", YdbValue.MakeInt64(chatId)}
         });
 
         if (rows is null)
@@ -125,7 +131,7 @@ public class UserAnswersRepo : IRepo
             DELETE FROM {TableName} WHERE chat_id = $chat_id;
         ", new Dictionary<string, YdbValue>
         {
-            { "$chat_id", YdbValue.MakeInt64(chatId) }
+            {"$chat_id", YdbValue.MakeInt64(chatId)}
         });
     }
 

@@ -33,10 +33,10 @@ public class TriggerService
 
     public async Task Handle()
     {
-        var scenariosRepo = await ScenariosRepo.InitWithDatabase(_botDatabase);
-        _currentScenarioRepo = await CurrentScenarioRepo.InitWithDatabase(_botDatabase, scenariosRepo);
-        await UserAnswersRepo.InitWithDatabase(_botDatabase);
-        await UsersRepo.InitWithDatabase(_botDatabase);
+        var scenariosRepo = await ScenariosRepo.Init(_botDatabase);
+        _currentScenarioRepo = await CurrentScenarioRepo.Init(_botDatabase, scenariosRepo);
+        await UserAnswersRepo.Init(_botDatabase);
+        await UsersRepo.Init(_botDatabase);
 
         _messageCommands = new IMessageCommand[]
         {

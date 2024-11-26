@@ -2,6 +2,7 @@
 using BotTemplate.Services.Telegram;
 using BotTemplate.Services.YDB;
 using Grpc.Core.Logging;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Telegram.Bot;
@@ -12,8 +13,6 @@ namespace BotTemplate;
 
 public class TelegramHandler : YcFunction<string, Response>
 {
-    private const string CodePath = "/function/code/";
-
     public Response FunctionHandler(string request, Context context)
     {
         var logger = new ConsoleLogger();
@@ -39,7 +38,7 @@ public class TelegramHandler : YcFunction<string, Response>
         var update = JsonConvert.DeserializeObject<Update>(body)!;
         var view = new HtmlMessageView(tgClient);
         var botDatabase = new BotDatabase(configuration);
-        var backendApiClient = InitializeLocalClient.Init();
+        var backendApiClient = InitializeLocalClient.Init().GetService<IBackendApiClient>() ?? throw new ArgumentException("Не задан клиент бэкенда");
 
         var updateService = new HandleUpdateService(view, botDatabase, backendApiClient, telegramBotUrl);
         await updateService.Handle(update);

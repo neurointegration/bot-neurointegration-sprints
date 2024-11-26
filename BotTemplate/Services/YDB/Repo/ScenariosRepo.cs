@@ -13,13 +13,20 @@ public class ScenariosRepo : IRepo
         this.botDatabase = botDatabase;
     }
 
-    public static async Task<ScenariosRepo> InitWithDatabase(IBotDatabase botDatabase)
+    public static async Task<ScenariosRepo> Init(IBotDatabase botDatabase)
     {
         var model = new ScenariosRepo(botDatabase);
-        // await model.CreateTable();
+
         return model;
     }
-    
+
+    public static async Task<ScenariosRepo> InitWithCreate(IBotDatabase botDatabase)
+    {
+        var model = new ScenariosRepo(botDatabase);
+        await model.CreateTable();
+        return model;
+    }
+
     public async Task<string?> GetMessageByScenarioIdAndMessageIndex(long scenarioId, int messageIndex)
     {
         var rows = await botDatabase.ExecuteFind($@"
@@ -34,19 +41,19 @@ public class ScenariosRepo : IRepo
             {"$scenario_id", YdbValue.MakeInt64(scenarioId)},
             {"$message_index", YdbValue.MakeInt32(messageIndex)}
         });
-        
+
         if (rows is null)
         {
             return null;
         }
-        
+
         var rowsArray = rows as ResultSet.Row[] ?? rows.ToArray();
 
-        return !rowsArray.Any() 
-            ? null 
+        return !rowsArray.Any()
+            ? null
             : rowsArray.First()["message"].GetOptionalUtf8();
     }
-    
+
     public async Task<string?[]> GetAllMessagesByScenarioId(long scenarioId)
     {
         var rows = await botDatabase.ExecuteFind($@"
@@ -59,16 +66,16 @@ public class ScenariosRepo : IRepo
         {
             {"$scenario_id", YdbValue.MakeInt64(scenarioId)}
         });
-        
+
         if (rows is null)
         {
             return Array.Empty<string>();
         }
-        
+
         var rowsArray = rows as ResultSet.Row[] ?? rows.ToArray();
 
-        return !rowsArray.Any() 
-            ? Array.Empty<string>() 
+        return !rowsArray.Any()
+            ? Array.Empty<string>()
             : rowsArray.Select(message => message["message"].GetOptionalUtf8()).ToArray();
     }
 
@@ -86,12 +93,12 @@ public class ScenariosRepo : IRepo
             {"$scenario_id", YdbValue.MakeInt64(scenarioId)},
             {"$message_index", YdbValue.MakeInt32(messageIndex)}
         });
-        
+
         if (rows is null)
         {
             return null;
         }
-        
+
         var rowsArray = rows as ResultSet.Row[] ?? rows.ToArray();
 
         return !rowsArray.Any()
@@ -105,16 +112,16 @@ public class ScenariosRepo : IRepo
             SELECT MAX(scenario_id) max_scenario_id
             FROM {TableName}
         ", new Dictionary<string, YdbValue>());
-        
+
         if (rows is null)
         {
             return null;
         }
-        
+
         var rowsArray = rows as ResultSet.Row[] ?? rows.ToArray();
 
-        return !rowsArray.Any() 
-            ? null 
+        return !rowsArray.Any()
+            ? null
             : rowsArray.First()["max_scenario_id"].GetOptionalInt64();
     }
 
@@ -124,12 +131,12 @@ public class ScenariosRepo : IRepo
             SELECT DISTINCT (scenario_id)
             FROM {TableName}
         ", new Dictionary<string, YdbValue>());
-        
+
         if (rows is null)
         {
             return false;
         }
-        
+
         var rowsArray = rows as ResultSet.Row[] ?? rows.ToArray();
 
         return rowsArray.Any();

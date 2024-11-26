@@ -46,10 +46,10 @@ public class HandleUpdateService
 
     public async Task Handle(Update update)
     {
-        var scenariosRepo = await ScenariosRepo.InitWithDatabase(_botDatabase);
-        _currentScenarioRepo = await CurrentScenarioRepo.InitWithDatabase(_botDatabase, scenariosRepo);
-        _userAnswersRepo = await UserAnswersRepo.InitWithDatabase(_botDatabase);
-        _usersRepo = await UsersRepo.InitWithDatabase(_botDatabase);
+        var scenariosRepo = await ScenariosRepo.Init(_botDatabase);
+        _currentScenarioRepo = await CurrentScenarioRepo.Init(_botDatabase, scenariosRepo);
+        _userAnswersRepo = await UserAnswersRepo.Init(_botDatabase);
+        _usersRepo = await UsersRepo.Init(_botDatabase);
 
         _commands = new IChatCommandHandler[]
         {
