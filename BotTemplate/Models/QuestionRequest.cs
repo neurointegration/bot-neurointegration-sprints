@@ -6,15 +6,15 @@ namespace BotTemplate.Models;
 
 public record QuestionRequest
 {
-    [JsonProperty("time", Required = Required.AllowNull)]
+    [JsonProperty("time")]
     public int? Time { get; set; }
     
     [JsonConverter(typeof(StringEnumConverter))]
-    [JsonProperty("scenario_type", Required = Required.AllowNull)]
+    [JsonProperty("scenario_type")]
     public ScenarioType? ScenarioType { get; set; }
 
+    // обязателен для корректной дессериализации
     public QuestionRequest()
     {
-        
     }
 }

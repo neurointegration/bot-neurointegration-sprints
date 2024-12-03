@@ -1,13 +1,10 @@
 ﻿using BotTemplate.Client;
+using BotTemplate.DI;
 using BotTemplate.Models;
 using BotTemplate.Models.Telegram;
-using BotTemplate.Services.Telegram;
-using BotTemplate.Services.YDB;
-using Grpc.Core.Logging;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Telegram.Bot;
 using Yandex.Cloud.Functions;
 
 namespace BotTemplate;
@@ -16,7 +13,6 @@ public class TriggerHandler : YcFunction<string, Response>
 {
     public Response FunctionHandler(string request, Context context)
     {
-
         try
         {
             var countQuestions = HandleRequest(request).GetAwaiter().GetResult();
@@ -27,23 +23,48 @@ public class TriggerHandler : YcFunction<string, Response>
             return new Response(500, $"Error {e}");
         }
     }
-    
+
     private async Task<int> HandleRequest(string request)
     {
-        var logger = new ConsoleLogger();
-        logger.ForType<string>().Info(request);
         var configuration = Configuration.FromEnvironment();
-        var tgClient = new TelegramBotClient(configuration.TelegramToken);
-        var view = new HtmlMessageView(tgClient);
-        var botDatabase = new BotDatabase(configuration);
-        var backendApiClient = InitializeLocalClient.Init().GetService<IBackendApiClient>() ?? throw new ArgumentException("Не задан клиент бэкенда");
-        var triggerFrequencyMinutes = int.Parse(configuration.TriggerFrequencyMinutes!);
-        
-        var questionRequest = JsonConvert.DeserializeObject<QuestionRequest>(request)!;
-        questionRequest.Time ??= triggerFrequencyMinutes;
-        logger.ForType<string>().Info(questionRequest.ToString());
+        var provider = BuildDeps(configuration);
 
-        var questionService = new QuestionService(view, botDatabase, backendApiClient);
-        return await questionService.AskQuestions(questionRequest);
+        var questionService = provider.GetRequiredService<QuestionService>();
+
+        var logger = provider.GetRequiredService<ILogger>();
+        logger.LogInformation($"Accept request = {request}");
+        var parsedRequest = ParseRequest(request, configuration, logger);
+
+
+        return await questionService.AskQuestions(parsedRequest);
+    }
+
+    private IServiceProvider BuildDeps(Configuration configuration)
+    {
+        var service = new ServiceCollection();
+        using var factory = LoggerFactory.Create(builder => builder.AddSimpleConsole());
+
+        return service
+            .AddSingleton<ILogger>(factory.CreateLogger("TriggerHandler"))
+            .AddBackend()
+            .AddTgClient(configuration.TelegramToken)
+            .AddMessageView()
+            .AddBotDb(configuration)
+            .AddSingleton<QuestionService>()
+            .BuildServiceProvider();
+    }
+
+    private QuestionRequest ParseRequest(string request, Configuration configuration, ILogger logger)
+    {
+        var triggerFrequencyMinutes = int.Parse(configuration.TriggerFrequencyMinutes!);
+        var questionRequest = JsonConvert.DeserializeObject<QuestionRequest>(request);
+        if (questionRequest == null)
+            questionRequest = new QuestionRequest();
+
+        questionRequest.Time ??= triggerFrequencyMinutes;
+
+        logger.LogInformation($"Parsed request = {questionRequest}");
+
+        return questionRequest;
     }
 }

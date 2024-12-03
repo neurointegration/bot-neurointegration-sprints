@@ -16,4 +16,14 @@ public static class InitializeLocalClient
             .AddSingleton<IBackendApiClient, LocalBackendApiClient>()
             .BuildServiceProvider();
     }
+    
+    public static IServiceCollection AddBackend(this IServiceCollection serviceCollection)
+    {
+        var settings = ApiSecretSettings.FromEnvironment();
+        serviceCollection
+            .AddInternalDependencies(settings)
+            .AddSingleton<IBackendApiClient, LocalBackendApiClient>();
+
+        return serviceCollection;
+    }
 }
