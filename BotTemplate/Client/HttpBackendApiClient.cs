@@ -20,7 +20,7 @@ public class HttpBackendApiClient : IBackendApiClient
         await response.EnsureSuccess();
     }
 
-    public async Task<List<Question>> GetQuestionsAsync(int timePeriod)
+    public async Task<List<Question>> GetQuestionsAsync(int timePeriod, ScenarioType? scenarioType)
     {
         var response = await client.GetAsync($"{baseUrl}/question/{timePeriod}");
         await response.EnsureSuccess();

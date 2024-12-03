@@ -22,9 +22,9 @@ public class LocalBackendApiClient : IBackendApiClient
         await answersService.Save(sendAnswer);
     }
 
-    public async Task<List<Question>> GetQuestionsAsync(int timePeriod)
+    public async Task<List<Question>> GetQuestionsAsync(int timePeriod, ScenarioType? scenarioType)
     {
-        var questionsActionResult = await questionService.Get(timePeriod);
+        var questionsActionResult = await questionService.Get(timePeriod, scenarioType);
 
         return questionsActionResult;
     }

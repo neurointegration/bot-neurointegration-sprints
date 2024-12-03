@@ -12,22 +12,21 @@ public class QuestionService
     private readonly IMessageView messageView;
     private readonly IBotDatabase botDatabase;
     private readonly IBackendApiClient backendApiClient;
-    private readonly int triggerFrequencyMinutes;
-    
+
+    private const int defaultRequestTimeMinutes = 2;
+
 
     public QuestionService(
         IMessageView messageView,
         IBotDatabase botDatabase,
-        IBackendApiClient backendApiClient,
-        int triggerFrequencyMinutes)
+        IBackendApiClient backendApiClient)
     {
         this.messageView = messageView;
         this.botDatabase = botDatabase;
         this.backendApiClient = backendApiClient;
-        this.triggerFrequencyMinutes = triggerFrequencyMinutes;
     }
 
-    public async Task<int> AskQuestions()
+    public async Task<int> AskQuestions(QuestionRequest questionRequest)
     {
         var scenariosRepository = await ScenariosRepository.Init(botDatabase);
         var currentScenarioRepository = await CurrentScenarioRepository.Init(botDatabase, scenariosRepository);
@@ -39,8 +38,8 @@ public class QuestionService
             new SendStateMessage(),
             new HandleStateResponse()
         };
-        
-        var questions = await backendApiClient.GetQuestionsAsync(triggerFrequencyMinutes);
+
+        var questions = await backendApiClient.GetQuestionsAsync(questionRequest.Time ?? defaultRequestTimeMinutes, questionRequest.ScenarioType);
 
         foreach (var question in questions)
         {

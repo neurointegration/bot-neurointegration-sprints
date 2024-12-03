@@ -30,9 +30,9 @@ public class QuestionService : IQuestionService
         await questionStorage.AddOrReplace(question);
     }
 
-    public async Task<List<Question>> Get(int time)
+    public async Task<List<Question>> Get(int time, ScenarioType? scenarioType)
     {
-        var questions = await questionStorage.Get(DateTime.UtcNow.AddMinutes(time));
+        var questions = await questionStorage.Get(DateTime.UtcNow.AddMinutes(time), scenarioType);
         var sendUsers = new HashSet<long>();
         var resultQuestion = new List<Question>();
 

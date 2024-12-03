@@ -1,9 +1,12 @@
 ﻿using BotTemplate.Client;
+using BotTemplate.Models;
 using BotTemplate.Models.Telegram;
 using BotTemplate.Services.Telegram;
 using BotTemplate.Services.YDB;
 using Grpc.Core.Logging;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Telegram.Bot;
 using Yandex.Cloud.Functions;
 
@@ -13,8 +16,7 @@ public class TriggerHandler : YcFunction<string, Response>
 {
     public Response FunctionHandler(string request, Context context)
     {
-        var logger = new ConsoleLogger();
-        logger.ForType<string>().Info(request);
+
         try
         {
             var countQuestions = HandleRequest(request).GetAwaiter().GetResult();
@@ -22,24 +24,26 @@ public class TriggerHandler : YcFunction<string, Response>
         }
         catch (Exception e)
         {
-            logger.ForType<Exception>().Error(e, "Error");
             return new Response(500, $"Error {e}");
         }
     }
     
     private async Task<int> HandleRequest(string request)
     {
+        var logger = new ConsoleLogger();
+        logger.ForType<string>().Info(request);
         var configuration = Configuration.FromEnvironment();
         var tgClient = new TelegramBotClient(configuration.TelegramToken);
         var view = new HtmlMessageView(tgClient);
         var botDatabase = new BotDatabase(configuration);
         var backendApiClient = InitializeLocalClient.Init().GetService<IBackendApiClient>() ?? throw new ArgumentException("Не задан клиент бэкенда");
         var triggerFrequencyMinutes = int.Parse(configuration.TriggerFrequencyMinutes!);
-        var successParse = int.TryParse(request, out var time);
-        if (!successParse)
-            time = triggerFrequencyMinutes;
+        
+        var questionRequest = JsonConvert.DeserializeObject<QuestionRequest>(request)!;
+        questionRequest.Time ??= triggerFrequencyMinutes;
+        logger.ForType<string>().Info(questionRequest.ToString());
 
-        var questionService = new QuestionService(view, botDatabase, backendApiClient, time);
-        return await questionService.AskQuestions();
+        var questionService = new QuestionService(view, botDatabase, backendApiClient);
+        return await questionService.AskQuestions(questionRequest);
     }
 }

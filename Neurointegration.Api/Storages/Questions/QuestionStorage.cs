@@ -44,8 +44,11 @@ public class QuestionStorage : IQuestionStorage
             });
     }
 
-    public async Task<IEnumerable<Question?>> Get(DateTime dateTime)
+    public async Task<IEnumerable<Question?>> Get(DateTime dateTime, ScenarioType? scenarioType = null)
     {
+        if (scenarioType != null)
+            return await GetByScenario(dateTime, scenarioType.Value);
+        
         var rows = await ydbClient.ExecuteFind($@"
             DECLARE ${QuestionDbSettings.DateField} AS DATETIME;
 
@@ -62,6 +65,29 @@ public class QuestionStorage : IQuestionStorage
 
         return rows.Select(row => questionMapper.ToQuestionEntity(row));
     }
+    
+    public async Task<IEnumerable<Question?>> GetByScenario(DateTime dateTime, ScenarioType scenarioType)
+    {
+        var rows = await ydbClient.ExecuteFind($@"
+            DECLARE ${QuestionDbSettings.DateField} AS DATETIME;
+            DECLARE ${QuestionDbSettings.ScenarioTypeField} AS Utf8;
+
+            SELECT *
+            FROM {QuestionDbSettings.TableName}
+            WHERE {QuestionDbSettings.DateField} <= ${QuestionDbSettings.DateField}
+                    AND {QuestionDbSettings.ScenarioTypeField} = ${QuestionDbSettings.ScenarioTypeField}",
+            new Dictionary<string, YdbValue>
+            {
+                {$"${QuestionDbSettings.DateField}", YdbValue.MakeDatetime(dateTime)},
+                {$"${QuestionDbSettings.ScenarioTypeField}", YdbValue.MakeUtf8(scenarioType.ToString())}
+            });
+
+        if (rows is null)
+            return new List<Question?>();
+
+        return rows.Select(row => questionMapper.ToQuestionEntity(row));
+    }
+
 
     public async Task<Question?> Get(long userId, ScenarioType scenarioType)
     {
