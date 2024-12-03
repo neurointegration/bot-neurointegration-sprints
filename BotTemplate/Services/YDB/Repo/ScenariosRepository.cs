@@ -2,27 +2,27 @@
 
 namespace BotTemplate.Services.YDB.Repo;
 
-public class ScenariosRepo : IRepo
+public class ScenariosRepository : IRepo
 {
     protected virtual string TableName => "scenarios";
 
     private readonly IBotDatabase botDatabase;
 
-    private ScenariosRepo(IBotDatabase botDatabase)
+    private ScenariosRepository(IBotDatabase botDatabase)
     {
         this.botDatabase = botDatabase;
     }
 
-    public static async Task<ScenariosRepo> Init(IBotDatabase botDatabase)
+    public static async Task<ScenariosRepository> Init(IBotDatabase botDatabase)
     {
-        var model = new ScenariosRepo(botDatabase);
+        var model = new ScenariosRepository(botDatabase);
 
         return model;
     }
 
-    public static async Task<ScenariosRepo> InitWithCreate(IBotDatabase botDatabase)
+    public static async Task<ScenariosRepository> InitWithCreate(IBotDatabase botDatabase)
     {
-        var model = new ScenariosRepo(botDatabase);
+        var model = new ScenariosRepository(botDatabase);
         await model.CreateTable();
         return model;
     }

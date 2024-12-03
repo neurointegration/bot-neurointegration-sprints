@@ -15,7 +15,7 @@ public class StartCommandHandler : IChatCommandHandler
 
     public async Task<string?> HandlePlainText(long fromChatId)
     {
-        if (_repo is not CurrentScenarioRepo currentScenarioRepo)
+        if (_repo is not CurrentScenarioRepository currentScenarioRepo)
             throw new ArgumentException("Передан неверный тип репозитория");
 
         return await currentScenarioRepo.StartNewScenarioAndGetMessage(fromChatId, 0);

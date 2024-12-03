@@ -21,10 +21,10 @@ public class DbMigrateHandler : YcFunction<string, Response>
     {
         var configuration = Configuration.FromEnvironment();
         var botDatabase = new BotDatabase(configuration);
-        var scenariosRepo = await ScenariosRepo.InitWithCreate(botDatabase);
-        await CurrentScenarioRepo.InitWithCreate(botDatabase, scenariosRepo);
-        await UserAnswersRepo.InitWithCreate(botDatabase);
-        await UsersRepo.InitWithCreate(botDatabase);
+        var scenariosRepo = await ScenariosRepository.InitWithCreate(botDatabase);
+        await CurrentScenarioRepository.InitWithCreate(botDatabase, scenariosRepo);
+        await UserAnswersRepository.InitWithCreate(botDatabase);
+        await UsersRepository.InitWithCreate(botDatabase);
 
         var secretSettings = ApiSecretSettings.FromEnvironment();
         var service = new ServiceCollection()

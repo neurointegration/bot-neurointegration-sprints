@@ -15,7 +15,7 @@ public class GetAnswersCommandHandler : IChatCommandHandler
 
     public async Task<string?> HandlePlainText(long fromChatId)
     {
-        if (_repo is not UserAnswersRepo userAnswersRepo)
+        if (_repo is not UserAnswersRepository userAnswersRepo)
             throw new ArgumentException("Передан неверный тип репозитория");
 
         var answers = (await userAnswersRepo.GetAllWithKeys(fromChatId)).Select(userAnswer => userAnswer.Answer).ToList();

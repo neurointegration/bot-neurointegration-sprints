@@ -17,8 +17,8 @@ public class TriggerHandler : YcFunction<string, Response>
         logger.ForType<string>().Info(request);
         try
         {
-            HandleRequest(request, context).Wait();
-            return new Response(200, "ok");
+            var countQuestions = HandleRequest(request).GetAwaiter().GetResult();
+            return new Response(200, $"{countQuestions}");
         }
         catch (Exception e)
         {
@@ -27,17 +27,19 @@ public class TriggerHandler : YcFunction<string, Response>
         }
     }
     
-    private async Task HandleRequest(string request, Context context)
+    private async Task<int> HandleRequest(string request)
     {
         var configuration = Configuration.FromEnvironment();
         var tgClient = new TelegramBotClient(configuration.TelegramToken);
-        var telegramBotUrl = $"https://api.telegram.org/bot{configuration.TelegramToken}";
         var view = new HtmlMessageView(tgClient);
         var botDatabase = new BotDatabase(configuration);
         var backendApiClient = InitializeLocalClient.Init().GetService<IBackendApiClient>() ?? throw new ArgumentException("Не задан клиент бэкенда");
         var triggerFrequencyMinutes = int.Parse(configuration.TriggerFrequencyMinutes!);
+        var successParse = int.TryParse(request, out var time);
+        if (!successParse)
+            time = triggerFrequencyMinutes;
 
-        var updateService = new TriggerService(view, botDatabase, backendApiClient, telegramBotUrl, triggerFrequencyMinutes);
-        await updateService.Handle();
+        var questionService = new QuestionService(view, botDatabase, backendApiClient, time);
+        return await questionService.AskQuestions();
     }
 }

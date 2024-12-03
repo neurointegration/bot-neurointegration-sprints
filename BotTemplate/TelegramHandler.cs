@@ -35,12 +35,12 @@ public class TelegramHandler : YcFunction<string, Response>
         var tgClient = new TelegramBotClient(configuration.TelegramToken);
         var telegramBotUrl = $"https://api.telegram.org/bot{configuration.TelegramToken}";
         var body = JObject.Parse(request).GetValue("body")!.Value<string>()!;
-        var update = JsonConvert.DeserializeObject<Update>(body)!;
+        var message = JsonConvert.DeserializeObject<Update>(body)!;
         var view = new HtmlMessageView(tgClient);
         var botDatabase = new BotDatabase(configuration);
         var backendApiClient = InitializeLocalClient.Init().GetService<IBackendApiClient>() ?? throw new ArgumentException("Не задан клиент бэкенда");
 
-        var updateService = new HandleUpdateService(view, botDatabase, backendApiClient, telegramBotUrl);
-        await updateService.Handle(update);
+        var userMessagesService = new UserMessagesService(view, botDatabase, backendApiClient, telegramBotUrl);
+        await userMessagesService.HandleMessage(message);
     }
 }
