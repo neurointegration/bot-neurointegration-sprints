@@ -25,7 +25,7 @@ public static class ShowSettingsMessage
             {
                 CallbackData = "Вечерний стендап"
             } };
-            var changeMessageRangeTime = new[] { new InlineKeyboardButton("Изменить интервал ежедневных сообщений о состоянии")
+            var changeMessageRangeTime = new[] { new InlineKeyboardButton("Изменить интервал ежедневных\nсообщений о состоянии")
             {
                 CallbackData = "Состояние"
             } };
