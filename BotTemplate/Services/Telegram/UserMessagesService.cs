@@ -134,7 +134,7 @@ public class UserMessagesService
 
                 if (sprints.Count == 1)
                 {
-                    await _messageView.Say($"<a href='https://docs.google.com/spreadsheets/d/{sprints.First().SheetId}'>Таблица твоих результатов и ответов</a>",
+                    await messageView.Say($"<a href='https://docs.google.com/spreadsheets/d/{sprints.First().SheetId}'>Таблица твоих результатов и ответов</a>",
                         telegramEvent.ChatId);
                     return;
                 }
@@ -352,7 +352,7 @@ public class UserMessagesService
                 {
                     messageToSend =
                         new Models.Telegram.Message("Неправильный формат. Нужно ввести интервал в формете 9:00-18:00");
-                    await _currentScenarioRepo.DecreaseIndex(fromChatId);
+                    await currentScenarioRepository.DecreaseIndex(fromChatId);
                 }
                 else
                 {
@@ -380,7 +380,7 @@ public class UserMessagesService
                 {
                     messageToSend =
                         new Models.Telegram.Message("Неправильный формат. Нужно ввести время в формете 9:00");
-                    await _currentScenarioRepo.DecreaseIndex(fromChatId);
+                    await currentScenarioRepository.DecreaseIndex(fromChatId);
                 }
                 else
                 {
@@ -607,8 +607,8 @@ public class UserMessagesService
                 var timeValidator = new TimeValidator();
                 if (!timeValidator.IsValid(text))
                 {
-                    await _messageView.Say("Неправильный формат. Нужно ввести время в формете 9:00", fromChatId);
-                    await _currentScenarioRepo.DecreaseIndex(fromChatId);
+                    await messageView.Say("Неправильный формат. Нужно ввести время по МСК в формете 9:00", fromChatId);
+                    await currentScenarioRepository.DecreaseIndex(fromChatId);
                 }
                 else
                 {
@@ -633,7 +633,7 @@ public class UserMessagesService
                 };
                 if (!timeRangeValidator.IsValid(text))
                 {
-                    await _messageView.Say("Неправильный формат. Нужно ввести интервал в формете 9:00-18:00",
+                    await messageView.Say("Неправильный формат. Нужно ввести интервал по МСК в формете 9:00-18:00",
                         fromChatId);
                     await currentScenarioRepository.DecreaseIndex(fromChatId);
                 }
@@ -667,8 +667,8 @@ public class UserMessagesService
                 var dateValidator = new DateValidator();
                 if (!dateValidator.IsValid(text))
                 {
-                    await _messageView.Say("Неправильный формат. Нужно ввести дату в формете 31.01.2024", fromChatId);
-                    await _currentScenarioRepo.DecreaseIndex(fromChatId);
+                    await messageView.Say("Неправильный формат. Нужно ввести дату в формете 06.12.2024", fromChatId);
+                    await currentScenarioRepository.DecreaseIndex(fromChatId);
                 }
                 else
                 {
