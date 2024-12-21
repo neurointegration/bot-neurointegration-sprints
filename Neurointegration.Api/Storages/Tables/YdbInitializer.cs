@@ -15,7 +15,7 @@ public class YdbInitializer
     {
         foreach (var tableInitializer in initializers)
         {
-            // await tableInitializer.CreateTable();
+            await tableInitializer.CreateTable();
         }
     }
 }

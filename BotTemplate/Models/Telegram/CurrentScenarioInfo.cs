@@ -7,4 +7,5 @@ public class CurrentScenarioInfo
     public long? CurrentSprintNumber { get; set; }
     public int? SprintReplyNumber { get; set; }
     public int? Index { get; set; }
+    public DateTime? Date { get; set; }
 }

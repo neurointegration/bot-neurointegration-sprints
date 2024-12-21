@@ -4,50 +4,59 @@ using Ydb.Sdk.Value;
 
 namespace BotTemplate.Services.YDB;
 
-public class CurrentScenarioRepo : IRepo
+public class CurrentScenarioRepository : IRepo
 {
     public virtual string TableName => "current_scenarios";
 
     private readonly IBotDatabase _botDatabase;
-    private readonly ScenariosRepo _scenariosRepo;
+    private readonly ScenariosRepository scenariosRepository;
 
-    private CurrentScenarioRepo(IBotDatabase botDatabase, ScenariosRepo scenariosRepo)
+    private CurrentScenarioRepository(IBotDatabase botDatabase, ScenariosRepository scenariosRepository)
     {
         _botDatabase = botDatabase;
-        _scenariosRepo = scenariosRepo;
+        this.scenariosRepository = scenariosRepository;
     }
 
-    public static async Task<CurrentScenarioRepo> InitWithDatabase(IBotDatabase botDatabase, ScenariosRepo scenariosRepo)
+    public static async Task<CurrentScenarioRepository> Init(IBotDatabase botDatabase,
+        ScenariosRepository scenariosRepository)
     {
-        var model = new CurrentScenarioRepo(botDatabase, scenariosRepo);
-        // await model.CreateTable();
-
+        var model = new CurrentScenarioRepository(botDatabase, scenariosRepository);
         return model;
     }
 
-    public async Task<string?> StartNewScenarioAndGetMessage(long chatId, long scenarioId, long currentSprintNumber = 0, int sprintReplyNumber = 0)
+    public static async Task<CurrentScenarioRepository> InitWithCreate(BotDatabase botDatabase, ScenariosRepository scenariosRepository)
+    {
+        var model = new CurrentScenarioRepository(botDatabase, scenariosRepository);
+        await model.CreateTable();
+        return model;
+    }
+
+    public async Task<string?> StartNewScenarioAndGetMessage(long chatId, long scenarioId, DateTime? date = null, long currentSprintNumber = 0,
+        int sprintReplyNumber = 0)
     {
         var curIndex = await GetIndexByChatId(chatId);
         if (curIndex is not null)
             return null;
-        
+
         await _botDatabase.ExecuteModify($@"
             DECLARE $chat_id AS Int64;
             DECLARE $scenario_id AS Int64;
             DECLARE $current_sprint_number AS Int64;
             DECLARE $sprint_reply_number AS Int32;
+            DECLARE $date AS DATETIME?;
 
-            INSERT INTO {TableName} ( chat_id, scenario_id, current_sprint_number, sprint_reply_number, index )
-            VALUES ( $chat_id, $scenario_id, $current_sprint_number, $sprint_reply_number, 0 )
+            INSERT INTO {TableName} ( chat_id, scenario_id, current_sprint_number, sprint_reply_number, index, date )
+            VALUES ( $chat_id, $scenario_id, $current_sprint_number, $sprint_reply_number, 0, $date )
         ", new Dictionary<string, YdbValue?>
         {
             {"$chat_id", YdbValue.MakeInt64(chatId)},
             {"$scenario_id", YdbValue.MakeInt64(scenarioId)},
             {"$current_sprint_number", YdbValue.MakeInt64(currentSprintNumber)},
-            {"$sprint_reply_number", YdbValue.MakeInt32(sprintReplyNumber)}
+            {"$sprint_reply_number", YdbValue.MakeInt32(sprintReplyNumber)},
+            {"$date", YdbValue.MakeOptionalDatetime(date)}
         });
 
-        var message = await _scenariosRepo.GetMessageByScenarioIdAndMessageIndex(scenarioId, 0);
+        var message = await scenariosRepository.GetMessageByScenarioIdAndMessageIndex(scenarioId, 0);
         return message;
     }
 
@@ -56,11 +65,11 @@ public class CurrentScenarioRepo : IRepo
         var oldIndex = await GetIndexByChatId(chatId);
         if (oldIndex is null)
             return null;
-        
+
         var scenarioId = await GetScenarioIdByChatId(chatId);
         var newIndex = oldIndex.Value + 1;
-        var message = await _scenariosRepo.GetMessageByScenarioIdAndMessageIndex(scenarioId!.Value, newIndex);
-        
+        var message = await scenariosRepository.GetMessageByScenarioIdAndMessageIndex(scenarioId!.Value, newIndex);
+
         await _botDatabase.ExecuteModify($@"
             DECLARE $chat_id AS Int64;
             DECLARE $scenario_id AS Int64;
@@ -75,19 +84,19 @@ public class CurrentScenarioRepo : IRepo
             {"$scenario_id", YdbValue.MakeInt64(scenarioId.Value)},
             {"$new_index", YdbValue.MakeInt32(newIndex)}
         });
-        
+
         return message;
     }
-    
+
     public async Task DecreaseIndex(long chatId)
     {
         var oldIndex = await GetIndexByChatId(chatId);
         if (oldIndex is null)
             return;
-        
+
         var scenarioId = await GetScenarioIdByChatId(chatId);
         var newIndex = oldIndex.Value - 1;
-        
+
         await _botDatabase.ExecuteModify($@"
             DECLARE $chat_id AS Int64;
             DECLARE $scenario_id AS Int64;
@@ -103,14 +112,14 @@ public class CurrentScenarioRepo : IRepo
             {"$new_index", YdbValue.MakeInt32(newIndex)}
         });
     }
-    
+
     public async Task TryEndScenario(long chatId)
     {
         var scenarioId = await GetScenarioIdByChatId(chatId);
         var oldIndex = await GetIndexByChatId(chatId);
         if (oldIndex is null)
             return;
-        var key = await _scenariosRepo.GetKeyByIndex(scenarioId!.Value, oldIndex.Value);
+        var key = await scenariosRepository.GetKeyByIndex(scenarioId!.Value, oldIndex.Value);
         if (key is not null)
             return;
         await _botDatabase.ExecuteModify($@"
@@ -122,7 +131,7 @@ public class CurrentScenarioRepo : IRepo
             {"$chat_id", YdbValue.MakeInt64(chatId)}
         });
     }
-    
+
     public async Task EndScenarioNoMatterWhat(long chatId)
     {
         var oldIndex = await GetIndexByChatId(chatId);
@@ -146,9 +155,9 @@ public class CurrentScenarioRepo : IRepo
 
         var index = await GetIndexByChatId(chatId);
 
-        return await _scenariosRepo.GetKeyByIndex(scenarioId.Value, index!.Value);
+        return await scenariosRepository.GetKeyByIndex(scenarioId.Value, index!.Value);
     }
-    
+
     public async Task<long?> GetScenarioIdByChatId(long chatId)
     {
         var rows = await _botDatabase.ExecuteFind($@"
@@ -161,16 +170,16 @@ public class CurrentScenarioRepo : IRepo
         {
             {"$chat_id", YdbValue.MakeInt64(chatId)}
         });
-        
+
         if (rows is null)
         {
             return null;
         }
-        
+
         var rowsArray = rows as ResultSet.Row[] ?? rows.ToArray();
 
-        return !rowsArray.Any() 
-            ? null 
+        return !rowsArray.Any()
+            ? null
             : rowsArray.First()["scenario_id"].GetInt64();
     }
 
@@ -186,37 +195,37 @@ public class CurrentScenarioRepo : IRepo
         {
             {"$chat_id", YdbValue.MakeInt64(chatId)}
         });
-        
+
         if (rows is null)
         {
             return null;
         }
-        
+
         var rowsArray = rows as ResultSet.Row[] ?? rows.ToArray();
 
-        return !rowsArray.Any() 
-            ? null 
+        return !rowsArray.Any()
+            ? null
             : rowsArray.First()["index"].GetOptionalInt32();
     }
-    
+
     public async Task<CurrentScenarioInfo?> GetInfoByChatId(long chatId)
     {
         var rows = await _botDatabase.ExecuteFind($@"
             DECLARE $chat_id AS Int64;
 
-            SELECT scenario_id, current_sprint_number, sprint_reply_number, index
+            SELECT scenario_id, current_sprint_number, sprint_reply_number, index, date
             FROM {TableName}
             WHERE chat_id = $chat_id
         ", new Dictionary<string, YdbValue>
         {
             {"$chat_id", YdbValue.MakeInt64(chatId)}
         });
-        
+
         if (rows is null)
         {
             return null;
         }
-        
+
         var rowsArray = rows as ResultSet.Row[] ?? rows.ToArray();
 
         return !rowsArray.Any()
@@ -227,7 +236,8 @@ public class CurrentScenarioRepo : IRepo
                 ScenarioId = rowsArray.First()["scenario_id"].GetInt64(),
                 CurrentSprintNumber = rowsArray.First()["current_sprint_number"].GetOptionalInt64(),
                 SprintReplyNumber = rowsArray.First()["sprint_reply_number"].GetOptionalInt32(),
-                Index = rowsArray.First()["index"].GetOptionalInt32()
+                Index = rowsArray.First()["index"].GetOptionalInt32(),
+                Date = rowsArray.First()["date"].GetOptionalDatetime(),
             };
     }
 
@@ -249,6 +259,7 @@ public class CurrentScenarioRepo : IRepo
                 current_sprint_number Int64,
                 sprint_reply_number Int32,
                 index Int32,
+                date DATETIME,
                 PRIMARY KEY (chat_id)
             )
         ");

@@ -1,8 +1,10 @@
-﻿using FluentValidation;
+﻿using Common.Ydb;
+using FluentValidation;
 using Neurointegration.Api.DataModels.Models;
 using Neurointegration.Api.Google;
 using Neurointegration.Api.Helpers;
 using Neurointegration.Api.Services;
+using Neurointegration.Api.Services.Decorators;
 using Neurointegration.Api.Settings;
 using Neurointegration.Api.Storages;
 using Neurointegration.Api.Storages.Answers;
@@ -17,7 +19,7 @@ public static class InternalDependencies
     public static IServiceCollection AddInternalDependencies(this IServiceCollection service,
         ApiSecretSettings secretSettings)
     {
-        service.AddTransient(_ => new YdbClient(secretSettings));
+        service.AddTransient(provider => new YdbClient(secretSettings.YdbSecretSettings));
         service.AddTransient(_ => new GoogleSheetClient(secretSettings));
         service.AddTransient(_ => new GoogleDriveClient(secretSettings));
 
@@ -34,11 +36,15 @@ public static class InternalDependencies
         service.AddTransient<IQuestionStorage, QuestionStorage>();
         service.AddTransient<ISprintStorage, SprintStorage>();
         service.AddTransient<IGoogleStorage, GoogleStorage>();
+        service.AddTransient<IAnswerStorage, AnswerStorage>();
 
         service.AddTransient<ISprintService, SprintService>();
         service.AddTransient<IUserService, UserService>();
         service.AddTransient<IQuestionService, QuestionService>();
         service.AddTransient<IAnswersService, AnswersService>();
+
+        service.Decorate<IQuestionService, QuestionServiceDecorator>();
+        service.Decorate<IAnswersService, AnswerServiceDecorator>();
 
         return service;
     }

@@ -43,7 +43,7 @@ public class GoogleStorage : IGoogleStorage
     
     private async Task SetStatusDates(string spreadsheetId, DateOnly startDate)
     {
-        for (var i = 0; i < 28; i++)
+        for (var i = 0; i < SprintConstants.SprintDaysCount; i++)
         {
             await sheetClient.Write(
                 spreadsheetId,

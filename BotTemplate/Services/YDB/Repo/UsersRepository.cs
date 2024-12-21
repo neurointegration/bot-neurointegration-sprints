@@ -2,21 +2,27 @@
 
 namespace BotTemplate.Services.YDB.Repo;
 
-public class UsersRepo : IRepo
+public class UsersRepository : IRepo
 {
     protected virtual string TableName => "users_repo";
 
     private readonly IBotDatabase _botDatabase;
 
-    private UsersRepo(IBotDatabase botDatabase)
+    private UsersRepository(IBotDatabase botDatabase)
     {
         _botDatabase = botDatabase;
     }
 
-    public static async Task<UsersRepo> InitWithDatabase(IBotDatabase botDatabase)
+    public static async Task<UsersRepository> Init(IBotDatabase botDatabase)
     {
-        var model = new UsersRepo(botDatabase);
-        // await model.CreateTable();
+        var model = new UsersRepository(botDatabase);
+        return model;
+    }
+    
+    public static async Task<UsersRepository> InitWithCreate(BotDatabase botDatabase)
+    {
+        var model = new UsersRepository(botDatabase);
+        await model.CreateTable();
         return model;
     }
 

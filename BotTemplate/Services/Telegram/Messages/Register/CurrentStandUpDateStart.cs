@@ -6,7 +6,7 @@ namespace BotTemplate.Services.Telegram.Messages.Register;
 public static class CurrentStandUpDateStart
 {
     private const string Text = "Хорошо, а что насчет текущего спринта? " +
-                                "Если в данный момент ты уже проходишь спринт, то напиши дату его начала в формате 31.01.2024";
+                                "Если в данный момент ты уже проходишь спринт, то напиши дату его начала в формате 06.12.2024";
     
     public static Message GetMessage()
     {

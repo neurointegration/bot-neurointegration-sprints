@@ -20,7 +20,7 @@ public class HttpBackendApiClient : IBackendApiClient
         await response.EnsureSuccess();
     }
 
-    public async Task<List<Question>> GetQuestionsAsync(int timePeriod)
+    public async Task<List<Question>> GetQuestionsAsync(int timePeriod, ScenarioType? scenarioType)
     {
         var response = await client.GetAsync($"{baseUrl}/question/{timePeriod}");
         await response.EnsureSuccess();
@@ -60,6 +60,11 @@ public class HttpBackendApiClient : IBackendApiClient
         return await response.ParseContent<List<Sprint>>() ?? new List<Sprint>();
     }
 
+    public Task<List<Sprint>> GetUserSprintsAsync(string username)
+    {
+        throw new NotImplementedException();
+    }
+
     // public async Task<List<string>?> GetUserSpreadSheetsAsync(long ownerId, long grantedUserId)
     // {
     //     var response = await client.GetAsync($"{baseUrl}/user/{grantedUserId}/{ownerId}/spreadsheets");
@@ -82,7 +87,7 @@ public class HttpBackendApiClient : IBackendApiClient
         await response.EnsureSuccess();
     }
 
-    public async Task<List<User>> GetPublicCoachsAsync()
+    public async Task<List<User>> GetPublicCoachListAsync()
     {
         var response = await client.GetAsync($"{baseUrl}/user/coach");
         await response.EnsureSuccess();

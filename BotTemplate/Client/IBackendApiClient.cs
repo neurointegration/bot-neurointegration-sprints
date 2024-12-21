@@ -15,7 +15,7 @@ public interface IBackendApiClient
     /// Достать список вопросов
     /// </summary>
     /// <param name="timePeriod">Промежуток за который взять вопросы</param>
-    Task<List<Question>> GetQuestionsAsync(int timePeriod);
+    Task<List<Question>> GetQuestionsAsync(int timePeriod, ScenarioType? scenarioType);
 
     /// <summary>
     /// Создать пользователя
@@ -27,7 +27,7 @@ public interface IBackendApiClient
     /// Обновить пользователя, указываются только обновляемые поля, если поле обновлять не надо, то оно указывается как null
     /// </summary>
     /// <param name="updateUser">Новые данные пользователя</param>
-    Task<User?> UpdateUserAsync(UpdateUser updateUser);
+    Task<User> UpdateUserAsync(UpdateUser updateUser);
 
     /// <summary>
     /// Достать информацию о пользователе
@@ -42,6 +42,13 @@ public interface IBackendApiClient
     /// <param name="grantedUserId">id запрашивающего</param>
     /// <returns></returns>
     Task<List<Sprint>> GetUserSprintsAsync(long ownerId, long grantedUserId);
+    
+    /// <summary>
+    /// Получить все спринты пользователя
+    /// </summary>
+    /// <param name="username">ник пользователя</param>
+    /// <returns></returns>
+    Task<List<Sprint>> GetUserSprintsAsync(string username);
 
     // /// <summary>
     // /// Достать гугл таблицы пользователя
@@ -67,7 +74,7 @@ public interface IBackendApiClient
     /// <summary>
     /// Получить список доступных тренеров
     /// </summary>
-    Task<List<User>> GetPublicCoachsAsync();
+    Task<List<User>> GetPublicCoachListAsync();
 
     /// <summary>
     /// Получить список тренеруемых пользователей

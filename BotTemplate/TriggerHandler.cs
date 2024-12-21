@@ -1,44 +1,31 @@
-﻿using BotTemplate.Client;
+﻿using BotTemplate.Models;
 using BotTemplate.Models.Telegram;
-using BotTemplate.Services.Telegram;
-using BotTemplate.Services.YDB;
-using Grpc.Core.Logging;
-using Telegram.Bot;
+using Newtonsoft.Json;
 using Yandex.Cloud.Functions;
 
 namespace BotTemplate;
 
-public class TriggerHandler : YcFunction<string, Response>
+public class TriggerHandler : BaseFunctionHandler<QuestionService>
 {
-    private const string CodePath = "/function/code/";
+    protected override string LogCategoryName { get; set; } = "TriggerHandler";
     
-    public Response FunctionHandler(string request, Context context)
+    protected override async Task<string> InnerHandleRequest(string request, Context context)
     {
-        var logger = new ConsoleLogger();
-        logger.ForType<string>().Info(request);
-        try
-        {
-            HandleRequest(request, context).Wait();
-            return new Response(200, "ok");
-        }
-        catch (Exception e)
-        {
-            logger.ForType<Exception>().Error(e, "Error");
-            return new Response(500, $"Error {e}");
-        }
-    }
-    
-    private async Task HandleRequest(string request, Context context)
-    {
-        var configuration = Configuration.FromEnvironment();
-        var tgClient = new TelegramBotClient(configuration.TelegramToken);
-        var telegramBotUrl = $"https://api.telegram.org/bot{configuration.TelegramToken}";
-        var view = new HtmlMessageView(tgClient);
-        var botDatabase = new BotDatabase(configuration);
-        var backendApiClient = InitializeLocalClient.Init();
-        var triggerFrequencyMinutes = int.Parse(configuration.TriggerFrequencyMinutes!);
+        var parsedRequest = ParseRequest(request);
 
-        var updateService = new TriggerService(view, botDatabase, backendApiClient, telegramBotUrl, triggerFrequencyMinutes);
-        await updateService.Handle();
+        var askResult = await handleService.AskQuestions(parsedRequest);
+        return $"Количество вопросов: {askResult}";
+    }
+
+    private QuestionRequest ParseRequest(string request)
+    {
+        var triggerFrequencyMinutes = int.Parse(configuration.TriggerFrequencyMinutes!);
+        var questionRequest = JsonConvert.DeserializeObject<QuestionRequest>(request);
+        if (questionRequest == null)
+            questionRequest = new QuestionRequest();
+
+        questionRequest.Time ??= triggerFrequencyMinutes;
+
+        return questionRequest;
     }
 }

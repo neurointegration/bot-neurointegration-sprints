@@ -12,9 +12,10 @@
 
   <ItemGroup>
     <PackageReference Include="AspNetCore.Yandex.ObjectStorage" Version="0.2.2" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0-preview.5.23280.8" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0-preview.5.23280.8" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Telegram.Bot" Version="19.0.0" />
     <PackageReference Include="Yandex.Cloud.SDK" Version="1.3.0" />

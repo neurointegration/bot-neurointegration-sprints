@@ -1,4 +1,7 @@
-﻿using Neurointegration.Api.DataModels.Models;
+﻿using Common.Ydb;
+using Neurointegration.Api.DataModels.Models;
+using Neurointegration.Api.DataModels.Result;
+using Neurointegration.Api.Excpetions;
 using Neurointegration.Api.Settings;
 using Neurointegration.Api.Storages.Mapper;
 using Ydb.Sdk.Value;
@@ -29,9 +32,6 @@ public class SprintStorage : ISprintStorage
             {$"${SprintDbSettings.UserIdField}", YdbValue.MakeInt64(userId)}
         });
 
-        if (rows == null)
-            return null;
-
         return rows.Select(row => sprintMapper.ToSheetsId(row)).ToList();
     }
 
@@ -47,9 +47,6 @@ public class SprintStorage : ISprintStorage
         {
             {$"${SprintDbSettings.UserIdField}", YdbValue.MakeInt64(userId)}
         });
-
-        if (rows == null)
-            return new List<Sprint>();
 
         return rows.Select(row => sprintMapper.ToSprintEntity(row)).ToList();
     }
@@ -67,7 +64,7 @@ public class SprintStorage : ISprintStorage
                   {SprintDbSettings.SprintStartDateField} )
              VALUES ( ${SprintDbSettings.UserIdField}, ${SprintDbSettings.SprintNumberField}, ${SprintDbSettings.SheetIdField},
                         ${SprintDbSettings.SprintStartDateField} )",
-            new Dictionary<string, YdbValue?>()
+            new Dictionary<string, YdbValue>()
             {
                 {$"${SprintDbSettings.UserIdField}", YdbValue.MakeInt64(sprint.UserId)},
                 {$"${SprintDbSettings.SprintNumberField}", YdbValue.MakeInt64(sprint.SprintNumber)},
@@ -76,7 +73,7 @@ public class SprintStorage : ISprintStorage
             });
     }
 
-    public async Task<Sprint?> GetSprint(long userId, long sprintNumber)
+    public async Task<Result<Sprint>> GetSprint(long userId, long sprintNumber)
     {
         var rows = await ydbClient.ExecuteFind($@"
             DECLARE ${SprintDbSettings.UserIdField} AS Int64;
@@ -94,8 +91,8 @@ public class SprintStorage : ISprintStorage
 
         var rowsList = rows.ToList();
         if (rowsList.Count == 0)
-            return null;
+            return Result<Sprint>.Fail(Error.NotFound($"Спринт не найден. userId={userId} и sprintNumber={sprintNumber}"));
 
-        return sprintMapper.ToSprintEntity(rowsList[0]);
+        return Result<Sprint>.Success(sprintMapper.ToSprintEntity(rowsList[0]));
     }
 }

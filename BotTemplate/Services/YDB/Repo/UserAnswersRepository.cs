@@ -1,24 +1,29 @@
-﻿using System.Text;
-using BotTemplate.Models.Telegram;
+﻿using BotTemplate.Models.Telegram;
 using Ydb.Sdk.Value;
 
 namespace BotTemplate.Services.YDB.Repo;
 
-public class UserAnswersRepo : IRepo
+public class UserAnswersRepository : IRepo
 {
     protected virtual string TableName => "user_answers";
 
     private readonly IBotDatabase botDatabase;
 
-    private UserAnswersRepo(IBotDatabase botDatabase)
+    private UserAnswersRepository(IBotDatabase botDatabase)
     {
         this.botDatabase = botDatabase;
     }
 
-    public static async Task<UserAnswersRepo> InitWithDatabase(IBotDatabase botDatabase)
+    public static async Task<UserAnswersRepository> Init(IBotDatabase botDatabase)
     {
-        var model = new UserAnswersRepo(botDatabase);
-        // await model.CreateTable();
+        var model = new UserAnswersRepository(botDatabase);
+        return model;
+    }
+
+    public static async Task<UserAnswersRepository> InitWithCreate(BotDatabase botDatabase)
+    {
+        var model = new UserAnswersRepository(botDatabase);
+        await model.CreateTable();
         return model;
     }
 
@@ -40,10 +45,10 @@ public class UserAnswersRepo : IRepo
             VALUES ( $pk, $chat_id, $key, $answer )
         ", new Dictionary<string, YdbValue?>
         {
-            { "$pk", YdbValue.MakeInt64(newId!.Value) },
-            { "$chat_id", YdbValue.MakeInt64(chatId) },
-            { "$key", YdbValue.MakeUtf8(key) },
-            { "$answer", YdbValue.MakeUtf8(text) }
+            {"$pk", YdbValue.MakeInt64(newId!.Value)},
+            {"$chat_id", YdbValue.MakeInt64(chatId)},
+            {"$key", YdbValue.MakeUtf8(key)},
+            {"$answer", YdbValue.MakeUtf8(text)}
         });
     }
 
@@ -57,7 +62,7 @@ public class UserAnswersRepo : IRepo
             WHERE chat_id = $chat_id
         ", new Dictionary<string, YdbValue>
         {
-            { "$chat_id", YdbValue.MakeInt64(chatId) }
+            {"$chat_id", YdbValue.MakeInt64(chatId)}
         });
 
         if (rows is null)
@@ -82,7 +87,7 @@ public class UserAnswersRepo : IRepo
             WHERE chat_id = $chat_id
         ", new Dictionary<string, YdbValue>
         {
-            { "$chat_id", YdbValue.MakeInt64(chatId) }
+            {"$chat_id", YdbValue.MakeInt64(chatId)}
         });
 
         if (rows is null)
@@ -125,7 +130,7 @@ public class UserAnswersRepo : IRepo
             DELETE FROM {TableName} WHERE chat_id = $chat_id;
         ", new Dictionary<string, YdbValue>
         {
-            { "$chat_id", YdbValue.MakeInt64(chatId) }
+            {"$chat_id", YdbValue.MakeInt64(chatId)}
         });
     }
 
