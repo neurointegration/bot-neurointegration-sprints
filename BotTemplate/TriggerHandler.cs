@@ -1,9 +1,5 @@
-﻿using BotTemplate.Client;
-using BotTemplate.DI;
-using BotTemplate.Models;
+﻿using BotTemplate.Models;
 using BotTemplate.Models.Telegram;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Yandex.Cloud.Functions;
 
@@ -23,16 +19,12 @@ public class TriggerHandler : BaseFunctionHandler<QuestionService>
 
     private QuestionRequest ParseRequest(string request)
     {
-        var logger = provider.GetRequiredService<ILogger>();
-        
         var triggerFrequencyMinutes = int.Parse(configuration.TriggerFrequencyMinutes!);
         var questionRequest = JsonConvert.DeserializeObject<QuestionRequest>(request);
         if (questionRequest == null)
             questionRequest = new QuestionRequest();
 
         questionRequest.Time ??= triggerFrequencyMinutes;
-
-        logger.LogInformation($"Запрос: {questionRequest}");
 
         return questionRequest;
     }

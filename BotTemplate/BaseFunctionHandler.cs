@@ -1,5 +1,6 @@
 using BotTemplate.DI;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Yandex.Cloud.Functions;
 
 namespace BotTemplate;
@@ -16,6 +17,9 @@ public abstract class BaseFunctionHandler<T> : YcFunction<string, Response>
         var service = new ServiceCollection();
         provider = service.BuildDeps(configuration, "TriggerHandler");
         handleService = provider.GetRequiredService<T>();
+        var logger = provider.GetRequiredService<ILogger>();
+        logger.LogInformation($"Запрос: {request}");
+        
         try
         {
             var result = InnerHandleRequest(request, context).GetAwaiter().GetResult();
