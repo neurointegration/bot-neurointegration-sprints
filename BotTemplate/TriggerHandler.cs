@@ -9,38 +9,22 @@ using Yandex.Cloud.Functions;
 
 namespace BotTemplate;
 
-public class TriggerHandler : YcFunction<string, Response>
+public class TriggerHandler : BaseFunctionHandler<QuestionService>
 {
-    public Response FunctionHandler(string request, Context context)
+    protected override string LogCategoryName { get; set; } = "TriggerHandler";
+    
+    protected override async Task<string> InnerHandleRequest(string request, Context context)
     {
-        try
-        {
-            var countQuestions = HandleRequest(request).GetAwaiter().GetResult();
-            return new Response(200, $"Количество вопросов: {countQuestions}");
-        }
-        catch (Exception e)
-        {
-            return new Response(500, $"Error {e}");
-        }
+        var parsedRequest = ParseRequest(request);
+
+        var askResult = await handleService.AskQuestions(parsedRequest);
+        return $"Количество вопросов: {askResult}";
     }
 
-    private async Task<int> HandleRequest(string request)
+    private QuestionRequest ParseRequest(string request)
     {
-        var configuration = Configuration.FromEnvironment();
-        var service = new ServiceCollection();
-        var provider = service.BuildDeps(configuration, "TriggerHandler");
-
-        var questionService = provider.GetRequiredService<QuestionService>();
-
         var logger = provider.GetRequiredService<ILogger>();
-        logger.LogInformation($"Запрос: {request}");
-        var parsedRequest = ParseRequest(request, configuration, logger);
-
-        return await questionService.AskQuestions(parsedRequest);
-    }
-
-    private QuestionRequest ParseRequest(string request, Configuration configuration, ILogger logger)
-    {
+        
         var triggerFrequencyMinutes = int.Parse(configuration.TriggerFrequencyMinutes!);
         var questionRequest = JsonConvert.DeserializeObject<QuestionRequest>(request);
         if (questionRequest == null)

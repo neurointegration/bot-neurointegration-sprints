@@ -7,13 +7,11 @@ namespace Neurointegration.Api.Storages.Answers;
 public class AnswerStorage: IAnswerStorage
 {
     private readonly YdbClient ydbClient;
-    private readonly ILogger logger;
     private readonly AnswerTableProperties tableProperties;
 
-    public AnswerStorage(YdbClient ydbClient, ILogger logger)
+    public AnswerStorage(YdbClient ydbClient)
     {
         this.ydbClient = ydbClient;
-        this.logger = logger;
         tableProperties = new AnswerTableProperties();
     }
     

@@ -57,7 +57,7 @@ public class AnswerTableProperties
                 {AnswerNumber.Name} {AnswerNumber.Type} NOT NULL,
                 {SprintReplyNumber.Name} {SprintReplyNumber.Type} NOT NULL,
                 {SprintNumber.Name} {SprintNumber.Type} NOT NULL,
-                PRIMARY KEY ({UserId.Name}, {ScenarioType.Name}, {SprintReplyNumber.Name}, {AnswerNumber.Name})
+                PRIMARY KEY ({UserId.Name}, {SprintNumber.Name}, {ScenarioType.Name}, {SprintReplyNumber.Name}, {AnswerNumber.Name})
              )
          ";
     }

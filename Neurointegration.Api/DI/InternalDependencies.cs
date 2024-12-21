@@ -19,7 +19,7 @@ public static class InternalDependencies
     public static IServiceCollection AddInternalDependencies(this IServiceCollection service,
         ApiSecretSettings secretSettings)
     {
-        service.AddTransient(provider => new YdbClient(secretSettings.YdbSecretSettings, provider.GetRequiredService<ILogger>()));
+        service.AddTransient(provider => new YdbClient(secretSettings.YdbSecretSettings));
         service.AddTransient(_ => new GoogleSheetClient(secretSettings));
         service.AddTransient(_ => new GoogleDriveClient(secretSettings));
 

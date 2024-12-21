@@ -10,12 +10,10 @@ namespace Common.Ydb;
 public class YdbClient
 {
     private readonly YdbSecretSettings configuration;
-    private readonly ILogger log;
 
-    public YdbClient(YdbSecretSettings configuration, ILogger log)
+    public YdbClient(YdbSecretSettings configuration)
     {
         this.configuration = configuration;
-        this.log = log;
     }
 
     public async Task<IEnumerable<ResultSet.Row>> ExecuteFind(

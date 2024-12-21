@@ -1,7 +1,5 @@
 ﻿using Neurointegration.Api.DataModels.Dto;
-using Neurointegration.Api.DataModels.Models;
 using Neurointegration.Api.DataModels.Result;
-using Neurointegration.Api.Excpetions;
 using Neurointegration.Api.Google;
 using Neurointegration.Api.Storages;
 using Neurointegration.Api.Storages.Answers;
