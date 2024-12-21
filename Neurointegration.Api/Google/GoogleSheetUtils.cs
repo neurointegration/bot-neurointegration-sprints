@@ -14,9 +14,9 @@ public class GoogleSheetUtils
         var dateOfSprint = date.DayNumber - DateOnly.FromDateTime(sprintStartDate).DayNumber;
         return scenarioType switch
         {
-            ScenarioType.EveningStandUp => GetEveningStandUpStatus(dateOfSprint, answerNumber),
-            ScenarioType.Reflection => GetReflectionStatus(sprintReplyNumber, answerNumber),
-            ScenarioType.Status => GetCellStatus(dateOfSprint, sprintReplyNumber),
+            ScenarioType.EveningStandUp => GetEveningStandUpCell(dateOfSprint, answerNumber),
+            ScenarioType.Reflection => GetReflectionCell(sprintReplyNumber, answerNumber),
+            ScenarioType.Status => GetStatusCell(dateOfSprint, sprintReplyNumber),
             _ => throw new ArgumentOutOfRangeException(nameof(scenarioType), scenarioType, null)
         };
     }
@@ -28,7 +28,7 @@ public class GoogleSheetUtils
         return $"Стендап!{column}{row}:{column}{row}";
     }
 
-    private string GetEveningStandUpStatus(int dayOfSprint, int answerNumber)
+    private string GetEveningStandUpCell(int dayOfSprint, int answerNumber)
     {
         var row = 12 + dayOfSprint;
         var column = answerNumber switch
@@ -43,10 +43,10 @@ public class GoogleSheetUtils
         return $"Стендап!{column}{row}:{column}{row}";
     }
 
-    private string GetReflectionStatus(int sprintReplyNumber, int answerNumber)
+    private string GetReflectionCell(int sprintReplyNumber, int answerNumber)
     {
         if (sprintReplyNumber == 3)
-            return GetReflectionIntegrationStatus(answerNumber);
+            return GetReflectionIntegrationCell(answerNumber);
 
         var row = answerNumber switch
         {
@@ -68,7 +68,7 @@ public class GoogleSheetUtils
         return $"Трекинг!{column}{row}:{column}{row}";
     }
 
-    private string GetReflectionIntegrationStatus(int answerNumber)
+    private string GetReflectionIntegrationCell(int answerNumber)
     {
         var row = answerNumber switch
         {
@@ -93,7 +93,7 @@ public class GoogleSheetUtils
         return $"Трекинг!{column}{row}:{column}{row}";
     }
 
-    private string GetCellStatus(int dayOfSprint, int sprintReplyNumber)
+    private string GetStatusCell(int dayOfSprint, int sprintReplyNumber)
     {
         var row = 12 + dayOfSprint;
         var answerNumber = sprintReplyNumber % 3;

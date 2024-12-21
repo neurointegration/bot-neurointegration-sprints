@@ -1,19 +1,21 @@
-﻿using Neurointegration.Api.Settings;
+﻿using Microsoft.Extensions.Logging;
 using Ydb.Sdk;
 using Ydb.Sdk.Auth;
 using Ydb.Sdk.Services.Table;
 using Ydb.Sdk.Value;
 using Ydb.Sdk.Yc;
 
-namespace Neurointegration.Api.Storages;
+namespace Common.Ydb;
 
 public class YdbClient
 {
-    private readonly ApiSecretSettings configuration;
+    private readonly YdbSecretSettings configuration;
+    private readonly ILogger log;
 
-    public YdbClient(ApiSecretSettings configuration)
+    public YdbClient(YdbSecretSettings configuration, ILogger log)
     {
         this.configuration = configuration;
+        this.log = log;
     }
 
     public async Task<IEnumerable<ResultSet.Row>> ExecuteFind(
@@ -46,7 +48,7 @@ public class YdbClient
                 TxControl.BeginSerializableRW().Commit(),
                 parameters)
         );
-
+        
         response.Status.EnsureSuccess();
     }
 
@@ -65,16 +67,11 @@ public class YdbClient
     {
         ICredentialsProvider provider;
 
-        // && string.IsNullOrEmpty(configuration.TokenJson)
         if (string.IsNullOrEmpty(configuration.IamTokenPath))
         {
             provider = new MetadataProvider();
             await ((MetadataProvider) provider).Initialize();
         }
-        // else if (!string.IsNullOrEmpty(configuration.TokenJson))
-        // {
-        //     provider = new MetadataProvider();
-        // }
         else
         {
             provider = new ServiceAccountProvider(configuration.IamTokenPath);

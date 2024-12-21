@@ -1,13 +1,14 @@
-﻿namespace Neurointegration.Api.Settings;
+﻿using Common.Ydb;
+
+namespace Neurointegration.Api.Settings;
 
 public record ApiSecretSettings
 {
     public string GoogleSheetsApiKey { get; set; }
     public string YdbEndpoint { get; set; }
     public string YdbPath { get; set; }
+    public YdbSecretSettings YdbSecretSettings { get; set; }
     public string? IamTokenPath { get; set; }
-    public string? TokenJson { get; set; }
-
 
     public static ApiSecretSettings FromConfiguration(IConfigurationRoot configuration)
     {
@@ -34,6 +35,8 @@ public record ApiSecretSettings
                       throw new ArgumentException("Не задана переменная NEURO_YDB_PATH"),
             
             IamTokenPath = Environment.GetEnvironmentVariable("IAM_TOKEN_PATH"),
+            
+            YdbSecretSettings = YdbSecretSettings.FromEnvironment()
         };
     }
 }

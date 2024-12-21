@@ -1,4 +1,5 @@
-﻿using Neurointegration.Api.Settings;
+﻿using Common.Ydb;
+using Neurointegration.Api.Settings;
 
 namespace Neurointegration.Api.Storages.Tables.Ydb;
 

@@ -1,4 +1,5 @@
-﻿using Neurointegration.Api.DataModels.Models;
+﻿using Common.Ydb;
+using Neurointegration.Api.DataModels.Models;
 using Neurointegration.Api.DataModels.Result;
 using Neurointegration.Api.Excpetions;
 using Neurointegration.Api.Settings;
