@@ -9,6 +9,9 @@ public class TimeValidator : IValidator
         
         var trimmedText = text.Trim(' ');
         
-        return TimeSpan.TryParse(trimmedText, out _);
+        if (!TimeSpan.TryParse(trimmedText, out var timeSpan))
+            return false;
+
+        return timeSpan < TimeSpan.FromHours(24);
     }
 }
