@@ -1,4 +1,6 @@
 ﻿using Neurointegration.Api.DataModels.Models;
+using Neurointegration.Api.DataModels.Result;
+using Neurointegration.Api.Excpetions;
 using Neurointegration.Api.Settings;
 using Neurointegration.Api.Storages.Mapper;
 using Ydb.Sdk.Value;
@@ -33,7 +35,7 @@ public class QuestionStorage : IQuestionStorage
              VALUES ( ${QuestionDbSettings.DateField}, ${QuestionDbSettings.UserIdField},
                       ${QuestionDbSettings.ScenarioTypeField}, ${QuestionDbSettings.PriorityField},
                       ${QuestionDbSettings.SprintReplyNumberField}, ${QuestionDbSettings.SprintNumberField} )",
-            new Dictionary<string, YdbValue?>
+            new Dictionary<string, YdbValue>
             {
                 {$"${QuestionDbSettings.DateField}", YdbValue.MakeDatetime(question.Date)},
                 {$"${QuestionDbSettings.UserIdField}", YdbValue.MakeInt64(question.UserId)},
@@ -44,7 +46,7 @@ public class QuestionStorage : IQuestionStorage
             });
     }
 
-    public async Task<IEnumerable<Question?>> Get(DateTime dateTime, ScenarioType? scenarioType = null)
+    public async Task<IEnumerable<Question>> Get(DateTime dateTime, ScenarioType? scenarioType = null)
     {
         if (scenarioType != null)
             return await GetByScenario(dateTime, scenarioType.Value);
@@ -60,13 +62,10 @@ public class QuestionStorage : IQuestionStorage
                 {$"${QuestionDbSettings.DateField}", YdbValue.MakeDatetime(dateTime)}
             });
 
-        if (rows is null)
-            return new List<Question?>();
-
         return rows.Select(row => questionMapper.ToQuestionEntity(row));
     }
     
-    public async Task<IEnumerable<Question?>> GetByScenario(DateTime dateTime, ScenarioType scenarioType)
+    public async Task<IEnumerable<Question>> GetByScenario(DateTime dateTime, ScenarioType scenarioType)
     {
         var rows = await ydbClient.ExecuteFind($@"
             DECLARE ${QuestionDbSettings.DateField} AS DATETIME;
@@ -82,14 +81,11 @@ public class QuestionStorage : IQuestionStorage
                 {$"${QuestionDbSettings.ScenarioTypeField}", YdbValue.MakeUtf8(scenarioType.ToString())}
             });
 
-        if (rows is null)
-            return new List<Question?>();
-
         return rows.Select(row => questionMapper.ToQuestionEntity(row));
     }
 
 
-    public async Task<Question?> Get(long userId, ScenarioType scenarioType)
+    public async Task<Result<Question>> Get(long userId, ScenarioType scenarioType)
     {
         var rows = await ydbClient.ExecuteFind($@"
             DECLARE ${QuestionDbSettings.UserIdField} AS Int64;
@@ -104,31 +100,37 @@ public class QuestionStorage : IQuestionStorage
                 {$"${QuestionDbSettings.UserIdField}", YdbValue.MakeInt64(userId)},
                 {$"${QuestionDbSettings.ScenarioTypeField}", YdbValue.MakeUtf8(scenarioType.ToString())}
             });
-
-        if (rows == null)
-            return null;
         
         var rowsList = rows.ToList();
         if (rowsList.Count == 0)
-            return null;
+            return Result<Question>.Fail(Error.NotFound($"Не удалось найти вопрос по userId={userId} и scenarioType={scenarioType}"));
 
-        return questionMapper.ToQuestionEntity(rowsList[0]);
+        return Result<Question>.Success(questionMapper.ToQuestionEntity(rowsList[0]));
     }
 
-    public async Task Delete(Question? question)
+    public async Task<Result> Delete(Question question)
     {
-        await ydbClient.ExecuteModify($@"
+        try
+        {
+            await ydbClient.ExecuteModify($@"
             DECLARE ${QuestionDbSettings.DateField} AS DATETIME;
             DECLARE ${QuestionDbSettings.UserIdField} AS Int64;
 
             DELETE FROM {QuestionDbSettings.TableName}
             WHERE {QuestionDbSettings.DateField} == ${QuestionDbSettings.DateField} AND 
                   {QuestionDbSettings.UserIdField} == ${QuestionDbSettings.UserIdField};",
-            new Dictionary<string, YdbValue?>
-            {
-                {$"${QuestionDbSettings.DateField}", YdbValue.MakeDatetime(question.Date)},
-                {$"${QuestionDbSettings.UserIdField}", YdbValue.MakeInt64(question.UserId)}
-            });
+                new Dictionary<string, YdbValue>
+                {
+                    {$"${QuestionDbSettings.DateField}", YdbValue.MakeDatetime(question.Date)},
+                    {$"${QuestionDbSettings.UserIdField}", YdbValue.MakeInt64(question.UserId)}
+                });
+        }
+        catch (Exception e)
+        {
+            return Result.Fail(Error.InnerError($"Не удалось удалить вопрос {question}. Ошибка {e.Message}"));
+        }
+
+        return Result.Success();
     }
 
     public async Task UpdateQuestion(Question question, Question updateQuestion)
@@ -144,7 +146,7 @@ public class QuestionStorage : IQuestionStorage
 
             DELETE FROM {QuestionDbSettings.TableName}
             WHERE {QuestionDbSettings.UserIdField} == ${QuestionDbSettings.UserIdField};",
-            new Dictionary<string, YdbValue?>
+            new Dictionary<string, YdbValue>
             {
                 {$"${QuestionDbSettings.UserIdField}", YdbValue.MakeInt64(userId)}
             });

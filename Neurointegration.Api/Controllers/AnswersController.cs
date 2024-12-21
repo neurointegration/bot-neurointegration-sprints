@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Neurointegration.Api.DataModels.Dto;
+using Neurointegration.Api.Extensions;
 using Neurointegration.Api.Services;
 
 namespace Neurointegration.Api.Controllers;
@@ -24,7 +25,10 @@ public class AnswersController : ControllerBase
     {
         log.Log(LogLevel.Information, "Accept request POST /answer");
 
-        await answersService.Save(answer);
-        return Ok();
+        var saveResult = await answersService.Save(answer);
+
+        return saveResult.IsSuccess
+            ? Ok()
+            : saveResult.Error.ToActionResult();
     }
 }

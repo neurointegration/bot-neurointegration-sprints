@@ -95,25 +95,25 @@ public class UserService : IUserService
             if (updateUser.ReflectionDate != null)
             {
                 var question = await questionStorage.Get(storedUser.UserId, ScenarioType.Reflection);
-                var newQuestion = new Question(question);
+                var newQuestion = new Question(question.Value);
                 newQuestion.Date = updateUser.ReflectionDate.Value;
-                await questionStorage.UpdateQuestion(question, newQuestion);
+                await questionStorage.UpdateQuestion(question.Value, newQuestion);
             }
 
             if (updateUser.EveningStandUpTime != null)
             {
                 var question = await questionStorage.Get(storedUser.UserId, ScenarioType.EveningStandUp);
-                var newQuestion = new Question(question);
-                newQuestion.Date = question.Date + updateUser.EveningStandUpTime.Value;
-                await questionStorage.UpdateQuestion(question, newQuestion);
+                var newQuestion = new Question(question.Value);
+                newQuestion.Date = question.Value.Date + updateUser.EveningStandUpTime.Value;
+                await questionStorage.UpdateQuestion(question.Value, newQuestion);
             }
 
             if (updateUser.MessageStartTime != null || updateUser.MessageEndTime != null)
             {
                 var question = await questionStorage.Get(storedUser.UserId, ScenarioType.Status);
-                var newQuestion = new Question(question);
-                newQuestion.Date = question.Date + questionHelper.GetNewStatusQuestionTime(newQuestion, storedUser);
-                await questionStorage.UpdateQuestion(question, newQuestion);
+                var newQuestion = new Question(question.Value);
+                newQuestion.Date = question.Value.Date + questionHelper.GetNewStatusQuestionTime(newQuestion, storedUser);
+                await questionStorage.UpdateQuestion(question.Value, newQuestion);
             }
         }
 

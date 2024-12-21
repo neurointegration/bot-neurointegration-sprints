@@ -1,4 +1,5 @@
 ﻿using Neurointegration.Api.DataModels.Models;
+using Neurointegration.Api.DataModels.Result;
 
 namespace Neurointegration.Api.Services;
 
@@ -13,6 +14,6 @@ public interface ISprintService
     
     Task<(Sprint?, long)> GetActiveSprint(long userId);
     Task<List<string>> GetUserGoogleSheets(long ownerId);
-    Task<Sprint?> GetSprint(long userId, long sprintNumber);
+    Task<Result<Sprint>> GetSprint(long userId, long sprintNumber);
     Task<List<Sprint>> GetSprints(long ownerId);
 }

@@ -53,25 +53,25 @@ public class QuestionService
             switch (question.ScenarioType)
             {
                 case ScenarioType.Status:
-                    logger.LogInformation("Start status scenario");
+                    logger.LogInformation($"Начало сценария `статус` для пользователя {question.UserId}");
                     message = await currentScenarioRepository.StartNewScenarioAndGetMessage(question.UserId, 1,
                         question.Date, question.SprintNumber, question.SprintReplyNumber);
                     break;
                 case ScenarioType.EveningStandUp:
-                    logger.LogInformation("Start evening stand up scenario");
+                    logger.LogInformation($"Начало сценария `вечерний стендап` для пользователя {question.UserId}");
                     message = await currentScenarioRepository.StartNewScenarioAndGetMessage(question.UserId, 2,
                         question.Date, question.SprintNumber, question.SprintReplyNumber);
                     break;
                 case ScenarioType.Reflection:
                     if (question.SprintReplyNumber == 3)
                     {
-                        logger.LogInformation("Start final reflection scenario");
+                        logger.LogInformation($"Начало сценария `последняя рефлексия` для пользователя {question.UserId}");
                         message = await currentScenarioRepository.StartNewScenarioAndGetMessage(question.UserId, 4,
                             question.Date, question.SprintNumber, question.SprintReplyNumber);
                     }
                     else
                     {
-                        logger.LogInformation("Start ordinar reflection scenario");
+                        logger.LogInformation($"Начало сценария `обычная рефлексия` для пользователя {question.UserId}");
                         message = await currentScenarioRepository.StartNewScenarioAndGetMessage(question.UserId, 3,
                             question.Date, question.SprintNumber, question.SprintReplyNumber);
                     }

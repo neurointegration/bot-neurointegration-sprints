@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -18,30 +19,46 @@ public interface IMessageView
 public class HtmlMessageView : IMessageView
 {
     private readonly ITelegramBotClient botClient;
+    private readonly ILogger log;
 
-    public HtmlMessageView(ITelegramBotClient client)
+    public HtmlMessageView(ITelegramBotClient client, ILogger log)
     {
         botClient = client;
+        this.log = log;
     }
 
 
     public async Task Say(string text, long chatId)
     {
-        await botClient.SendTextMessageAsync(
-            chatId,
-            text,
-            parseMode: ParseMode.Html
-        );
+        try
+        {
+            await botClient.SendTextMessageAsync(
+                chatId,
+                text,
+                parseMode: ParseMode.Html
+            );
+        }
+        catch (Exception e)
+        {
+            log.LogError($"Не удалось отправить сообщение пользователю {chatId}");
+        }
     }
 
     public async Task SayWithMarkup(string text, long chatId, IReplyMarkup? replyMarkup)
     {
-        await botClient.SendTextMessageAsync(
-            chatId,
-            text,
-            parseMode: ParseMode.Html,
-            replyMarkup: replyMarkup
-        );
+        try
+        {
+            await botClient.SendTextMessageAsync(
+                chatId,
+                text,
+                parseMode: ParseMode.Html,
+                replyMarkup: replyMarkup
+            );
+        }
+        catch (Exception e)
+        {
+            log.LogError($"Не удалось отправить сообщение пользователю {chatId}");
+        }
     }
 
     public async Task ShowHelp(long chatId)

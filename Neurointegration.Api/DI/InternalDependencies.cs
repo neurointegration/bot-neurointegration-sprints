@@ -3,6 +3,7 @@ using Neurointegration.Api.DataModels.Models;
 using Neurointegration.Api.Google;
 using Neurointegration.Api.Helpers;
 using Neurointegration.Api.Services;
+using Neurointegration.Api.Services.Decorators;
 using Neurointegration.Api.Settings;
 using Neurointegration.Api.Storages;
 using Neurointegration.Api.Storages.Answers;
@@ -39,6 +40,9 @@ public static class InternalDependencies
         service.AddTransient<IUserService, UserService>();
         service.AddTransient<IQuestionService, QuestionService>();
         service.AddTransient<IAnswersService, AnswersService>();
+
+        service.Decorate<IQuestionService, QuestionServiceDecorator>();
+        service.Decorate<IAnswersService, AnswerServiceDecorator>();
 
         return service;
     }

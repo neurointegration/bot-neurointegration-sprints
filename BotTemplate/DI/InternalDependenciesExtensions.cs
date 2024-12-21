@@ -1,6 +1,7 @@
 using BotTemplate.Services.Telegram;
 using BotTemplate.Services.YDB;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Telegram.Bot;
 
 namespace BotTemplate.DI;
@@ -17,7 +18,7 @@ public static class InternalDependenciesExtensions
     public static IServiceCollection AddMessageView(this IServiceCollection serviceCollection)
     {
         serviceCollection.AddSingleton<IMessageView>(provider =>
-            new HtmlMessageView(provider.GetService<ITelegramBotClient>()));
+            new HtmlMessageView(provider.GetRequiredService<ITelegramBotClient>(), provider.GetRequiredService<ILogger>()));
 
         return serviceCollection;
     }

@@ -1,5 +1,6 @@
 ﻿using Neurointegration.Api.DataModels.Dto;
 using Neurointegration.Api.DataModels.Models;
+using Neurointegration.Api.DataModels.Result;
 using Neurointegration.Api.Excpetions;
 using Neurointegration.Api.Google;
 using Neurointegration.Api.Storages;
@@ -23,15 +24,17 @@ public class AnswersService : IAnswersService
         this.sprintStorage = sprintStorage;
     }
 
-    public async Task Save(SendAnswer answer)
+    public async Task<Result> Save(SendAnswer answer)
     {
-        var sprint = await sprintStorage.GetSprint(answer.UserId, answer.SprintNumber);
+        var getSprint = await sprintStorage.GetSprint(answer.UserId, answer.SprintNumber);
         
-        if (sprint == null)
-            throw new ArgumentException($"У пользователя id={answer.UserId} нет информации о спринтах");
+        if (!getSprint.IsSuccess)
+            return getSprint;
         
-        var range = googleSheetUtils.GetAnswerCell(sprint.SprintStartDate, answer.ScenarioType, answer.AnswerNumber, answer.Date, answer.SprintReplyNumber);
+        var range = googleSheetUtils.GetAnswerCell(getSprint.Value.SprintStartDate, answer.ScenarioType, answer.AnswerNumber, answer.Date, answer.SprintReplyNumber);
 
-        await googleStorage.Save(answer.Answer, sprint.SheetId, range);
+        await googleStorage.Save(answer.Answer, getSprint.Value.SheetId, range);
+
+        return Result.Success();
     }
 }

@@ -16,7 +16,7 @@ public class YdbClient
         this.configuration = configuration;
     }
 
-    public async Task<IEnumerable<ResultSet.Row>?> ExecuteFind(
+    public async Task<IEnumerable<ResultSet.Row>> ExecuteFind(
         string query, Dictionary<string, YdbValue> parameters)
     {
         using var tableClient = await CreateTableClient();
@@ -32,11 +32,11 @@ public class YdbClient
         var queryResponse = (ExecuteDataQueryResponse) response;
 
         return queryResponse.Result.ResultSets.Count == 0
-            ? null
+            ? ArraySegment<ResultSet.Row>.Empty
             : queryResponse.Result.ResultSets[0].Rows;
     }
 
-    public async Task ExecuteModify(string query, Dictionary<string, YdbValue?> parameters)
+    public async Task ExecuteModify(string query, Dictionary<string, YdbValue> parameters)
     {
         using var tableClient = await CreateTableClient();
 

@@ -35,7 +35,6 @@ public class TriggerHandler : YcFunction<string, Response>
         logger.LogInformation($"Accept request = {request}");
         var parsedRequest = ParseRequest(request, configuration, logger);
 
-
         return await questionService.AskQuestions(parsedRequest);
     }
 
@@ -63,7 +62,7 @@ public class TriggerHandler : YcFunction<string, Response>
 
         questionRequest.Time ??= triggerFrequencyMinutes;
 
-        logger.LogInformation($"Parsed request = {questionRequest}");
+        logger.LogInformation($"Запрос: {questionRequest}");
 
         return questionRequest;
     }

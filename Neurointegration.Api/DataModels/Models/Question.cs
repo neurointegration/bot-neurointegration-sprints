@@ -1,6 +1,6 @@
 ﻿namespace Neurointegration.Api.DataModels.Models;
 
-public class Question
+public record Question
 {
     private Question()
     {

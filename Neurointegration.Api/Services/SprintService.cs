@@ -1,4 +1,5 @@
 ﻿using Neurointegration.Api.DataModels.Models;
+using Neurointegration.Api.DataModels.Result;
 using Neurointegration.Api.Extensions;
 using Neurointegration.Api.Storages;
 using Neurointegration.Api.Storages.Sprints;
@@ -55,7 +56,7 @@ public class SprintService : ISprintService
         return await sprintStorage.GetUserGoogleSheets(ownerId);
     }
 
-    public async Task<Sprint?> GetSprint(long userId, long sprintNumber)
+    public async Task<Result<Sprint>> GetSprint(long userId, long sprintNumber)
     {
         return await sprintStorage.GetSprint(userId, sprintNumber);
     }

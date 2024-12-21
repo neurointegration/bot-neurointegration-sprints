@@ -34,13 +34,12 @@ public class UserMessagesService
     public UserMessagesService(
         IMessageView messageView,
         IBotDatabase botDatabase,
-        IBackendApiClient backendApiClient,
-        string telegramBotUrl)
+        IBackendApiClient backendApiClient)
     {
         this.messageView = messageView;
         this.botDatabase = botDatabase;
         this.backendApiClient = backendApiClient;
-        this.telegramBotUrl = telegramBotUrl;
+        this.telegramBotUrl = $"https://api.telegram.org/bot{Configuration.FromEnvironment().TelegramToken}";
     }
 
     public async Task HandleMessage(Update message)

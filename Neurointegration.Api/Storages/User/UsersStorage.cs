@@ -35,7 +35,7 @@ public class UsersStorage : IUsersStorage
                   {UserDbSettings.EveningStandUpTimeField}, {UserDbSettings.WeekReflectionTime}, {UserDbSettings.IAmCoachField}, {UserDbSettings.SendRegularMessagesField} )
              VALUES ( ${UserDbSettings.UserIdField}, ${UserDbSettings.EmailField}, ${UserDbSettings.UsernameField}, ${UserDbSettings.MessageStartTimeField}, ${UserDbSettings.MessageEndTimeField},
                   ${UserDbSettings.EveningStandUpTimeField}, ${UserDbSettings.WeekReflectionTime}, ${UserDbSettings.IAmCoachField}, ${UserDbSettings.SendRegularMessagesField} )",
-            new Dictionary<string, YdbValue?>()
+            new Dictionary<string, YdbValue>()
             {
                 {$"${UserDbSettings.UserIdField}", YdbValue.MakeInt64(user.UserId)},
                 {$"${UserDbSettings.EmailField}", YdbValue.MakeUtf8(user.Email)},
@@ -62,9 +62,6 @@ public class UsersStorage : IUsersStorage
             {$"${UserDbSettings.UserIdField}", YdbValue.MakeInt64(userId)}
         });
 
-        if (rows == null)
-            return null;
-
         var rowsList = rows.ToList();
         if (rowsList.Count == 0)
             return null;
@@ -85,7 +82,7 @@ public class UsersStorage : IUsersStorage
                    {UserAccessDbSettings.PermissionIdField}, {UserAccessDbSettings.SheetIdField} )
              VALUES ( ${UserAccessDbSettings.GrantedUserIdField}, ${UserAccessDbSettings.OwnerUserIdField},
                         ${UserAccessDbSettings.PermissionIdField}, ${UserAccessDbSettings.SheetIdField} )",
-            new Dictionary<string, YdbValue?>()
+            new Dictionary<string, YdbValue>()
             {
                 {$"${UserAccessDbSettings.GrantedUserIdField}", YdbValue.MakeInt64(grantedUserId)},
                 {$"${UserAccessDbSettings.OwnerUserIdField}", YdbValue.MakeInt64(ownerUserId)},
@@ -110,9 +107,6 @@ public class UsersStorage : IUsersStorage
             {$"${UserAccessDbSettings.OwnerUserIdField}", YdbValue.MakeInt64(ownerUserId)}
         });
 
-        if (rows == null)
-            return new List<SheetPermission>();
-
         return rows.Select(row => userMapper.ToSheetPermissionEntity(row)).ToList();
     }
 
@@ -125,7 +119,7 @@ public class UsersStorage : IUsersStorage
             DELETE FROM {UserAccessDbSettings.TableName}
             WHERE {UserAccessDbSettings.GrantedUserIdField} == ${UserAccessDbSettings.GrantedUserIdField} AND 
                   {UserAccessDbSettings.OwnerUserIdField} == ${UserAccessDbSettings.OwnerUserIdField};",
-            new Dictionary<string, YdbValue?>()
+            new Dictionary<string, YdbValue>()
             {
                 {$"${UserAccessDbSettings.GrantedUserIdField}", YdbValue.MakeInt64(grantedUserId)},
                 {$"${UserAccessDbSettings.OwnerUserIdField}", YdbValue.MakeInt64(ownerId)}
@@ -145,9 +139,6 @@ public class UsersStorage : IUsersStorage
             {$"${UserAccessDbSettings.OwnerUserIdField}", YdbValue.MakeInt64(userId)}
         });
 
-        if (rows is null)
-            return new List<long>();
-
         return rows.Select(row => row[UserAccessDbSettings.GrantedUserIdField].GetInt64()).ToList();
     }
 
@@ -164,9 +155,6 @@ public class UsersStorage : IUsersStorage
             {$"${UserAccessDbSettings.GrantedUserIdField}", YdbValue.MakeInt64(userId)}
         });
 
-        if (rows is null)
-            return new List<long>();
-
         return rows.Select(row => row[UserAccessDbSettings.OwnerUserIdField].GetInt64());
     }
 
@@ -178,6 +166,6 @@ public class UsersStorage : IUsersStorage
             WHERE {UserDbSettings.IAmCoachField} = True
         ", new Dictionary<string, YdbValue>());
 
-        return rows?.Select(row => userMapper.ToUserEntity(row)).ToList() ?? new List<User>();
+        return rows.Select(row => userMapper.ToUserEntity(row)).ToList();
     }
 }
