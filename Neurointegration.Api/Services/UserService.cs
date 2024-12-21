@@ -1,6 +1,7 @@
 ﻿using FluentValidation;
 using Neurointegration.Api.DataModels.Dto;
 using Neurointegration.Api.DataModels.Models;
+using Neurointegration.Api.DataModels.Result;
 using Neurointegration.Api.Excpetions;
 using Neurointegration.Api.Extensions;
 using Neurointegration.Api.Helpers;
@@ -57,10 +58,13 @@ public class UserService : IUserService
         return user;
     }
 
-    public async Task<User> UpdateUser(UpdateUser updateUser)
+    public async Task<Result<User>> UpdateUser(UpdateUser updateUser)
     {
-        var storedUser = await GetUser(updateUser.UserId);
+        var getStoredUser = await GetUser(updateUser.UserId);
+        if (!getStoredUser.IsSuccess)
+            return getStoredUser;
 
+        var storedUser = getStoredUser.Value;
         if (updateUser.Email != null)
             storedUser.Email = updateUser.Email;
 
@@ -126,17 +130,22 @@ public class UserService : IUserService
         IsUserValid(storedUser);
         await usersStorage.SaveUser(storedUser);
 
-        return storedUser;
+        return Result<User>.Success(storedUser);
     }
 
-    public async Task<List<User>> GetStudents(long coachId)
+    public async Task<Result<List<User>>> GetStudents(long coachId)
     {
         var studentIds = (await usersStorage.GetAccessUsers(coachId)).ToList();
         var students = new List<User>(studentIds.Count);
         foreach (var studentId in studentIds)
-            students.Add(await usersStorage.GetUser(studentId));
+        {
+            var getUser = await usersStorage.GetUser(studentId);
+            if (!getUser.IsSuccess)
+                return Result<List<User>>.Fail(getUser.Error);
+            students.Add(getUser.Value);
+        }
 
-        return students;
+        return Result<List<User>>.Success(students);
     }
 
     private async Task AddRegularQuestions(User user, Sprint sprint, DateTime firstReflectionDate)
@@ -189,28 +198,28 @@ public class UserService : IUserService
         }
     }
 
-    public async Task<User> GetUser(long userId)
+    public async Task<Result<User>> GetUser(long userId)
     {
-        var user = await usersStorage.GetUser(userId);
-        if (user == null)
-            throw new NotFoundException($"Пользователя c id={userId} не существует");
-
-        return user;
+        return await usersStorage.GetUser(userId);
     }
 
-    public async Task GrantedAccess(long ownerId, long grantedUserId)
+    public async Task<Result> GrantedAccess(long ownerId, long grantedUserId)
     {
         var ownerSheets = await sprintService.GetUserGoogleSheets(ownerId);
         var grantedUser = await GetUser(grantedUserId);
-
+        if (!grantedUser.IsSuccess)
+            return grantedUser;
+        
         if (ownerSheets.Count == 0)
             throw new ArgumentException($"У пользователя id={ownerId} нет гугл таблиц");
 
         foreach (var sheetId in ownerSheets)
         {
-            var permissionId = await googleStorage.GrantedAccessSheet(sheetId, grantedUser.Email);
-            await usersStorage.AddAccess(grantedUser.UserId, ownerId, sheetId, permissionId);
+            var permissionId = await googleStorage.GrantedAccessSheet(sheetId, grantedUser.Value.Email);
+            await usersStorage.AddAccess(grantedUser.Value.UserId, ownerId, sheetId, permissionId);
         }
+        
+        return Result.Success();
     }
 
     public async Task DeleteAccess(long ownerId, long grantedUserId)
@@ -226,15 +235,19 @@ public class UserService : IUserService
         await usersStorage.DeleteAccess(grantedUserId, ownerId);
     }
 
-    public async Task UpdateAccess(long userId, string sheetId)
+    public async Task<Result> UpdateAccess(long userId, string sheetId)
     {
         var grantedUsers = await usersStorage.GetGrantedUsers(userId);
         foreach (var grantedUserId in grantedUsers)
         {
             var grantedUser = await GetUser(grantedUserId);
-            var permissionId = await googleStorage.GrantedAccessSheet(sheetId, grantedUser.Email);
+            if (!grantedUser.IsSuccess)
+                return grantedUser;
+            var permissionId = await googleStorage.GrantedAccessSheet(sheetId, grantedUser.Value.Email);
             await usersStorage.AddAccess(grantedUserId, userId, sheetId, permissionId);
         }
+        
+        return Result.Success();
     }
 
     public async Task<List<Sprint>> GetSprints(long ownerId)
@@ -242,6 +255,16 @@ public class UserService : IUserService
         var sprints = await sprintService.GetSprints(ownerId);
 
         return sprints;
+    }
+    
+    public async Task<Result<List<Sprint>>> GetSprints(string username)
+    {
+        var user = await usersStorage.GetUser(username);
+        if (!user.IsSuccess)
+            return Result<List<Sprint>>.Fail(user.Error);
+        var sprints = await sprintService.GetSprints(user.Value.UserId);
+
+        return Result<List<Sprint>>.Success(sprints);
     }
 
 

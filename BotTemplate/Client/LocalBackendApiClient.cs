@@ -10,7 +10,8 @@ public class LocalBackendApiClient : IBackendApiClient
     private readonly IQuestionService questionService;
     private readonly IUserService userService;
 
-    public LocalBackendApiClient(IAnswersService answersService, IQuestionService questionService, IUserService userService)
+    public LocalBackendApiClient(IAnswersService answersService, IQuestionService questionService,
+        IUserService userService)
     {
         this.answersService = answersService;
         this.questionService = questionService;
@@ -19,7 +20,9 @@ public class LocalBackendApiClient : IBackendApiClient
 
     public async Task SendAnswerAsync(SendAnswer sendAnswer)
     {
-        await answersService.Save(sendAnswer);
+        var answer = await answersService.Save(sendAnswer);
+        if (!answer.IsSuccess)
+            throw new HttpRequestException(answer.Error.Message);
     }
 
     public async Task<List<Question>> GetQuestionsAsync(int timePeriod, ScenarioType? scenarioType)
@@ -32,22 +35,24 @@ public class LocalBackendApiClient : IBackendApiClient
     public async Task<User> CreateUserAsync(CreateUser createUser)
     {
         var result = await userService.CreateUser(createUser);
-        
+
         return result;
     }
 
-    public async Task<User?> UpdateUserAsync(UpdateUser updateUser)
+    public async Task<User> UpdateUserAsync(UpdateUser updateUser)
     {
         var result = await userService.UpdateUser(updateUser);
-        
-        return result;
+        if (!result.IsSuccess)
+            throw new HttpRequestException(result.Error.Message);
+        return result.Value;
     }
 
     public async Task<User> GetUserAsync(long userId)
     {
         var result = await userService.GetUser(userId);
-        
-        return result;
+        if (!result.IsSuccess)
+            throw new HttpRequestException(result.Error.Message);
+        return result.Value;
     }
 
     public async Task<List<Sprint>> GetUserSprintsAsync(long ownerId, long grantedUserId)
@@ -55,6 +60,14 @@ public class LocalBackendApiClient : IBackendApiClient
         var result = await userService.GetSprints(ownerId);
 
         return result;
+    }
+
+    public async Task<List<Sprint>> GetUserSprintsAsync(string username)
+    {
+        var result = await userService.GetSprints(username);
+        if (!result.IsSuccess)
+            throw new HttpRequestException(result.Error.Message);
+        return result.Value;
     }
 
     public async Task GrantedAccessToUserInfoAsync(long ownerId, long grantedUserId)
@@ -67,7 +80,7 @@ public class LocalBackendApiClient : IBackendApiClient
         await userService.DeleteAccess(ownerId, grantedUserId);
     }
 
-    public async Task<List<User>> GetPublicCoachsAsync()
+    public async Task<List<User>> GetPublicCoachListAsync()
     {
         var result = await userService.GetPublicCoachs();
 
@@ -77,7 +90,8 @@ public class LocalBackendApiClient : IBackendApiClient
     public async Task<List<User>> GetCoachStudentsAsync(long coachId)
     {
         var result = await userService.GetStudents(coachId);
-        
-        return result;
+        if (!result.IsSuccess)
+            throw new HttpRequestException(result.Error.Message);
+        return result.Value;
     }
 }

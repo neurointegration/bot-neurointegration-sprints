@@ -1,6 +1,8 @@
 ﻿using Common.Ydb;
 using Neurointegration.Api.DataModels.Dto;
 using Neurointegration.Api.DataModels.Models;
+using Neurointegration.Api.DataModels.Result;
+using Neurointegration.Api.Excpetions;
 using Neurointegration.Api.Settings;
 using Neurointegration.Api.Storages.Mapper;
 using Ydb.Sdk.Value;
@@ -50,7 +52,7 @@ public class UsersStorage : IUsersStorage
             });
     }
 
-    public async Task<User?> GetUser(long userId)
+    public async Task<Result<User>> GetUser(long userId)
     {
         var rows = await ydbClient.ExecuteFind($@"
             DECLARE ${UserDbSettings.UserIdField} AS Int64;
@@ -65,9 +67,29 @@ public class UsersStorage : IUsersStorage
 
         var rowsList = rows.ToList();
         if (rowsList.Count == 0)
-            return null;
+            return Result<User>.Fail(Error.NotFound($"Пользователь с userId={userId} не найден"));
 
-        return userMapper.ToUserEntity(rowsList[0]);
+        return Result<User>.Success(userMapper.ToUserEntity(rowsList[0]));
+    }
+
+    public async Task<Result<User>> GetUser(string username)
+    {
+        var rows = await ydbClient.ExecuteFind($@"
+            DECLARE ${UserDbSettings.UsernameField} AS Utf8;
+
+            SELECT *
+            FROM {UserDbSettings.TableName}
+            WHERE {UserDbSettings.UsernameField} = ${UserDbSettings.UsernameField}
+        ", new Dictionary<string, YdbValue>
+        {
+            {$"${UserDbSettings.UsernameField}", YdbValue.MakeUtf8(username)}
+        });
+
+        var rowsList = rows.ToList();
+        if (rowsList.Count == 0)
+            return Result<User>.Fail(Error.NotFound($"Пользователь с username={username} не найден"));
+
+        return Result<User>.Success(userMapper.ToUserEntity(rowsList[0]));
     }
 
     public async Task AddAccess(long grantedUserId, long ownerUserId, string sheetId, string permissionId)

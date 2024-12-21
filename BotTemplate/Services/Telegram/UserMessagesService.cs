@@ -398,7 +398,7 @@ public class UserMessagesService
                 var dateValidator = new DateValidator();
                 if (text!.Trim() == "Новый спринт")
                 {
-                    var coaches = await backendApiClient.GetPublicCoachsAsync();
+                    var coaches = await backendApiClient.GetPublicCoachListAsync();
                     messageToSend = SelectCoachMessage.GetMessage(coaches);
                     var sprintStartDate = DateTime.UtcNow.Date;
                     await userAnswersRepository.SaveAnswer(fromChatId, "SprintStartDate",
@@ -416,7 +416,7 @@ public class UserMessagesService
                 }
                 else
                 {
-                    var coaches = await backendApiClient.GetPublicCoachsAsync();
+                    var coaches = await backendApiClient.GetPublicCoachListAsync();
                     messageToSend = SelectCoachMessage.GetMessage(coaches);
                     var sprintStartDate = DateTime.ParseExact(text.Trim(), "dd.MM.yyyy", CultureInfo.InvariantCulture,
                         DateTimeStyles.None);

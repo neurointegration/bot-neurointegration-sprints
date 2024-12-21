@@ -15,7 +15,7 @@ public abstract class BaseFunctionHandler<T> : YcFunction<string, Response>
     {
         configuration = Configuration.FromEnvironment();
         var service = new ServiceCollection();
-        provider = service.BuildDeps(configuration, "TriggerHandler");
+        provider = service.BuildDeps(configuration, LogCategoryName);
         handleService = provider.GetRequiredService<T>();
         var logger = provider.GetRequiredService<ILogger>();
         logger.LogInformation($"Запрос: {request}");

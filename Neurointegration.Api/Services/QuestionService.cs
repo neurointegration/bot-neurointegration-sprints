@@ -80,7 +80,10 @@ public class QuestionService : IQuestionService
         if (!activeSprint.IsSuccess)
             return activeSprint;
         
-        updateQuestion.Date = await GetNewQuestionDateTime(question);
+        var getNewDate = await GetNewQuestionDateTime(question);
+        if (!getNewDate.IsSuccess)
+            return getNewDate;
+        updateQuestion.Date = getNewDate.Value;
         updateQuestion.SprintReplyNumber += 1;
         updateQuestion.SprintNumber = GetNextQuestionSprintNumber(question, activeSprint.Value);
         if (updateQuestion.SprintNumber != question.SprintNumber)
@@ -137,17 +140,19 @@ public class QuestionService : IQuestionService
         return question.SprintNumber;
     }
 
-    private async Task<DateTime> GetNewQuestionDateTime(Question question)
+    private async Task<Result<DateTime>> GetNewQuestionDateTime(Question question)
     {
         var user = await userService.GetUser(question.UserId);
+        if (!user.IsSuccess)
+            return Result<DateTime>.Fail(user.Error);
         switch (question.ScenarioType)
         {
             case ScenarioType.EveningStandUp:
-                return question.Date.AddDays(1);
+                return Result<DateTime>.Success(question.Date.AddDays(1));
             case ScenarioType.Reflection:
-                return question.Date.AddDays(7);
+                return Result<DateTime>.Success(question.Date.AddDays(7));
             case ScenarioType.Status:
-                return questionHelper.GetNewStatusQuestionDate(question, user);
+                return Result<DateTime>.Success(questionHelper.GetNewStatusQuestionDate(question, user.Value));
             default:
                 throw new ArgumentOutOfRangeException();
         }
@@ -158,9 +163,11 @@ public class QuestionService : IQuestionService
         var getSprint = await sprintService.GetSprint(userId, sprintNumber);
         if (getSprint.Error.Status == ErrorStatus.NotFound)
         {
-            var user = await userService.GetUser(userId);
-            var sprint = await sprintService.CreateSprint(user, sprintNumber, sprintStartDate);
-            await userService.UpdateAccess(user.UserId, sprint.SheetId);
+            var getUser = await userService.GetUser(userId);
+            if (!getUser.IsSuccess)
+                return getUser;
+            var sprint = await sprintService.CreateSprint(getUser.Value, sprintNumber, sprintStartDate);
+            await userService.UpdateAccess(getUser.Value.UserId, sprint.SheetId);
         }
 
         return getSprint;
