@@ -28,7 +28,8 @@ public class TelegramHandler : YcFunction<string, Response>
     private async Task HandleRequest(string request, Context context)
     {
         var configuration = Configuration.FromEnvironment();
-        var provider = BuildDeps(configuration);
+        var service = new ServiceCollection();
+        var provider = service.BuildDeps(configuration, "TelegramHandler");
 
         var userMessagesService = provider.GetRequiredService<UserMessagesService>();
 
@@ -36,20 +37,5 @@ public class TelegramHandler : YcFunction<string, Response>
         var message = JsonConvert.DeserializeObject<Update>(body)!;
 
         await userMessagesService.HandleMessage(message);
-    }
-
-    private IServiceProvider BuildDeps(Configuration configuration)
-    {
-        var service = new ServiceCollection();
-        using var factory = LoggerFactory.Create(builder => builder.AddSimpleConsole());
-
-        return service
-            .AddSingleton<ILogger>(factory.CreateLogger("TelegramHandler"))
-            .AddBackend()
-            .AddTgClient(configuration.TelegramToken)
-            .AddMessageView()
-            .AddBotDb(configuration)
-            .AddSingleton<UserMessagesService>()
-            .BuildServiceProvider();
     }
 }

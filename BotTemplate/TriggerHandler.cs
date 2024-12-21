@@ -16,7 +16,7 @@ public class TriggerHandler : YcFunction<string, Response>
         try
         {
             var countQuestions = HandleRequest(request).GetAwaiter().GetResult();
-            return new Response(200, $"{countQuestions}");
+            return new Response(200, $"Количество вопросов: {countQuestions}");
         }
         catch (Exception e)
         {
@@ -27,30 +27,16 @@ public class TriggerHandler : YcFunction<string, Response>
     private async Task<int> HandleRequest(string request)
     {
         var configuration = Configuration.FromEnvironment();
-        var provider = BuildDeps(configuration);
+        var service = new ServiceCollection();
+        var provider = service.BuildDeps(configuration, "TriggerHandler");
 
         var questionService = provider.GetRequiredService<QuestionService>();
 
         var logger = provider.GetRequiredService<ILogger>();
-        logger.LogInformation($"Accept request = {request}");
+        logger.LogInformation($"Запрос: {request}");
         var parsedRequest = ParseRequest(request, configuration, logger);
 
         return await questionService.AskQuestions(parsedRequest);
-    }
-
-    private IServiceProvider BuildDeps(Configuration configuration)
-    {
-        var service = new ServiceCollection();
-        using var factory = LoggerFactory.Create(builder => builder.AddSimpleConsole());
-
-        return service
-            .AddSingleton<ILogger>(factory.CreateLogger("TriggerHandler"))
-            .AddBackend()
-            .AddTgClient(configuration.TelegramToken)
-            .AddMessageView()
-            .AddBotDb(configuration)
-            .AddSingleton<QuestionService>()
-            .BuildServiceProvider();
     }
 
     private QuestionRequest ParseRequest(string request, Configuration configuration, ILogger logger)

@@ -4,17 +4,7 @@ using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 
-
 namespace BotTemplate.Services.Telegram;
-
-public interface IMessageView
-{
-    Task Say(string text, long chatId);
-    Task SayWithMarkup(string text, long chatId, IReplyMarkup? replyMarkup);
-    Task ShowHelp(long chatId);
-    Task SendFile(long chatId, byte[] content, string filename, string caption);
-    Task SendPicture(long chatId, byte[] picture, string caption);
-}
 
 public class HtmlMessageView : IMessageView
 {
@@ -26,7 +16,6 @@ public class HtmlMessageView : IMessageView
         botClient = client;
         this.log = log;
     }
-
 
     public async Task Say(string text, long chatId)
     {
@@ -40,7 +29,7 @@ public class HtmlMessageView : IMessageView
         }
         catch (Exception e)
         {
-            log.LogError($"Не удалось отправить сообщение пользователю {chatId}");
+            log.LogError($"Не удалось отправить сообщение {text} пользователю {chatId}. Ошибка {e.Message}");
         }
     }
 
@@ -57,7 +46,7 @@ public class HtmlMessageView : IMessageView
         }
         catch (Exception e)
         {
-            log.LogError($"Не удалось отправить сообщение пользователю {chatId}");
+            log.LogError($"Не удалось отправить сообщение {text} пользователю {chatId}. Ошибка {e.Message}");
         }
     }
 
@@ -65,8 +54,8 @@ public class HtmlMessageView : IMessageView
     {
         await Say(
             "Это шаблон telegram-бота, поддерживающий <b>Yandex Cloud Function</b>!\n" +
-                "Если он тебе нужен, то тогда тебе " +
-                "<a href=\"https://github.com/BasedDepartment1/cloud-function-bot\">сюда</a>.",
+            "Если он тебе нужен, то тогда тебе " +
+            "<a href=\"https://github.com/BasedDepartment1/cloud-function-bot\">сюда</a>.",
             chatId
         );
     }
@@ -88,7 +77,7 @@ public class HtmlMessageView : IMessageView
             caption: EscapeForHtml(caption)
         );
     }
-    
+
     private static string EscapeForHtml(string text)
     {
         return text

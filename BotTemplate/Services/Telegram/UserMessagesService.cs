@@ -431,7 +431,7 @@ public class UserMessagesService
                 break;
             case 7:
                 var telegramUserIdValidator = new TelegramUserIdValidator();
-                if (!telegramUserIdValidator.IsValid(text))
+                if (!telegramUserIdValidator.IsValid(text) && text != MessageConstants.WithoutCoachButtonValue)
                 {
                     messageToSend = new Models.Telegram.Message("Нажми на одну из кнопок");
                     await currentScenarioRepository.DecreaseIndex(fromChatId);
@@ -441,7 +441,8 @@ public class UserMessagesService
                     messageToSend = RegisteredMessage.GetMessage();
                     var buttons = BottomMessage.GetMessage();
                     messageToSend.ReplyMarkup = buttons.ReplyMarkup;
-                    await userAnswersRepository.SaveAnswer(fromChatId, "Coach", text!);
+                    if (text != MessageConstants.WithoutCoachButtonValue)
+                        await userAnswersRepository.SaveAnswer(fromChatId, "Coach", text!);
                     await currentScenarioRepository.EndScenarioNoMatterWhat(fromChatId);
                     await RegisterUser(fromChatId);
                 }
@@ -501,7 +502,8 @@ public class UserMessagesService
         await userAnswersRepository.ClearByChatId(fromChatId);
         await messageView.Say("Создаю пользователя и таблицу. Подожди", fromChatId);
         await backendApiClient.CreateUserAsync(createUser);
-        await backendApiClient.GrantedAccessToUserInfoAsync(createUser.UserId, coachId);
+        if (coachId != 0)
+            await backendApiClient.GrantedAccessToUserInfoAsync(createUser.UserId, coachId);
         await usersRepository.RegisterUser(fromChatId, createUser.IAmCoach, createUser.SendRegularMessages);
     }
 
