@@ -28,6 +28,9 @@ public class YdbClient
                 parameters)
         );
 
+        if (response.Status.Issues.Count != 0)
+            throw new Exception(string.Join("; ", response.Status.Issues));
+
         response.Status.EnsureSuccess();
         var queryResponse = (ExecuteDataQueryResponse) response;
 
@@ -46,7 +49,10 @@ public class YdbClient
                 TxControl.BeginSerializableRW().Commit(),
                 parameters)
         );
-        
+
+        if (response.Status.Issues.Count != 0)
+            throw new Exception(string.Join("; ", response.Status.Issues));
+
         response.Status.EnsureSuccess();
     }
 

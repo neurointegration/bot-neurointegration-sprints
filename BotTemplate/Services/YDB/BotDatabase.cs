@@ -19,33 +19,35 @@ public class BotDatabase : IBotDatabase
         string query, Dictionary<string, YdbValue> parameters)
     {
         using var tableClient = await CreateTableClient();
-        
-        var response = await tableClient.SessionExec(async session 
-            => await session.ExecuteDataQuery(
-                query, 
-                TxControl.BeginSerializableRW().Commit(), 
-                parameters)
-        );
-        
-        response.Status.EnsureSuccess();
-        var queryResponse = (ExecuteDataQueryResponse) response;
-    
-        return queryResponse.Result.ResultSets.Count == 0 
-            ? null 
-            : queryResponse.Result.ResultSets[0].Rows;
-        
-    }
 
-    public async Task ExecuteModify(string query, Dictionary<string, YdbValue?> parameters)
-    {
-        using var tableClient = await CreateTableClient();
-        
         var response = await tableClient.SessionExec(async session
             => await session.ExecuteDataQuery(
                 query,
                 TxControl.BeginSerializableRW().Commit(),
                 parameters)
         );
+
+        response.Status.EnsureSuccess();
+        var queryResponse = (ExecuteDataQueryResponse) response;
+
+        return queryResponse.Result.ResultSets.Count == 0
+            ? null
+            : queryResponse.Result.ResultSets[0].Rows;
+    }
+
+    public async Task ExecuteModify(string query, Dictionary<string, YdbValue?> parameters)
+    {
+        using var tableClient = await CreateTableClient();
+
+        var response = await tableClient.SessionExec(async session
+            => await session.ExecuteDataQuery(
+                query,
+                TxControl.BeginSerializableRW().Commit(),
+                parameters)
+        );
+
+        if (response.Status.Issues.Count != 0)
+            throw new Exception(string.Join("; ", response.Status.Issues));
 
         response.Status.EnsureSuccess();
     }
@@ -57,6 +59,9 @@ public class BotDatabase : IBotDatabase
         var response = await tableClient.SessionExec(async session
             => await session.ExecuteSchemeQuery(query)
         );
+
+        if (response.Status.Issues.Count != 0)
+            throw new Exception(string.Join("; ", response.Status.Issues));
 
         response.Status.EnsureSuccess();
     }
@@ -80,7 +85,7 @@ public class BotDatabase : IBotDatabase
             configuration.YdbPath,
             provider
         );
-        
+
         var driver = new Driver(config);
         await driver.Initialize();
 
