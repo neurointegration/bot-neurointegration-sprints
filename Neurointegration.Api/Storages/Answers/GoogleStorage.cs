@@ -8,18 +8,22 @@ public class GoogleStorage : IGoogleStorage
     private readonly GoogleSheetClient sheetClient;
     private readonly GoogleDriveClient driveClient;
     private readonly GoogleSheetUtils googleSheetUtils;
+    private readonly ILogger log;
 
     public GoogleStorage(GoogleSheetClient sheetClient, GoogleDriveClient driveClient,
-        GoogleSheetUtils googleSheetUtils)
+        GoogleSheetUtils googleSheetUtils, ILogger log)
     {
         this.sheetClient = sheetClient;
         this.driveClient = driveClient;
         this.googleSheetUtils = googleSheetUtils;
+        this.log = log;
     }
 
     public async Task Save(string answer, string sheetId, string range)
     {
-        await sheetClient.Write(sheetId, range, answer);
+        log.LogInformation($"Сохранение в гугл таблицу. SheetId={sheetId}, range={range}");
+        Task.Run(() => sheetClient.Write(sheetId, range, answer));
+        log.LogInformation($"Сохранили ответ в гугл таблицу");
     }
 
     public async Task<string> CreateSheet(DateOnly startDate)
@@ -40,7 +44,7 @@ public class GoogleStorage : IGoogleStorage
     {
         await driveClient.DeleteUserFromSpreadSheet(sheetId, permissionId);
     }
-    
+
     private async Task SetStatusDates(string spreadsheetId, DateOnly startDate)
     {
         for (var i = 0; i < SprintConstants.SprintDaysCount; i++)
