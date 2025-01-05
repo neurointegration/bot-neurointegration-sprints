@@ -31,6 +31,7 @@ public class AnswerStorage: IAnswerStorage
 
              VALUES ( {tableProperties.Date.NameDeclare}, 
                         {tableProperties.UserId.NameDeclare}, 
+                        {tableProperties.Answer.NameDeclare},
                         {tableProperties.ScenarioType.NameDeclare},
                         {tableProperties.AnswerNumber.NameDeclare},
                         {tableProperties.SprintReplyNumber.NameDeclare},

@@ -21,7 +21,7 @@ public class AnswerServiceDecorator : IAnswersService
         
         if (!saveResult.IsSuccess)
             log.LogWarning($"Неудачная попытка сохранения. Ошибка ${saveResult.Error}");
-
+        
         return saveResult;
     }
 }
