@@ -40,7 +40,7 @@ public class QuestionService : IQuestionService
                 continue;
 
             var getUser = await userService.GetUser(question.UserId);
-            if (!getUser.IsSuccess || !getUser.Value.SendRegularMessages)
+            if (!getUser.IsSuccess || (question.ScenarioType.IsRegularEvent() && !getUser.Value.SendRegularMessages))
             {
                 sendUsers.Add(question.UserId);
                 continue;
