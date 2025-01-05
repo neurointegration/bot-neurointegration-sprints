@@ -39,6 +39,13 @@ public class QuestionService : IQuestionService
             if (sendUsers.Contains(question.UserId))
                 continue;
 
+            var getUser = await userService.GetUser(question.UserId);
+            if (!getUser.IsSuccess || !getUser.Value.SendRegularMessages)
+            {
+                sendUsers.Add(question.UserId);
+                continue;
+            }
+
             switch (question.ScenarioType.IsRegularEvent())
             {
                 case true:
