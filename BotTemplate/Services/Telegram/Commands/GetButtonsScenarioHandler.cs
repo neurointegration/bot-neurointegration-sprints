@@ -6,16 +6,16 @@ namespace BotTemplate.Services.Telegram.Commands;
 public class GetButtonsScenarioHandler : IChatCommandHandler
 {
     public string Command => "/get_buttons_scenario";
-    private readonly IRepo _repo;
+    private readonly IRepository repository;
     
-    public GetButtonsScenarioHandler(IRepo repo)
+    public GetButtonsScenarioHandler(IRepository repository)
     {
-        _repo = repo;
+        this.repository = repository;
     }
     
     public async Task<string?> HandlePlainText(long fromChatId)
     {
-        if (_repo is not CurrentScenarioRepository currentScenarioRepo)
+        if (repository is not ScenarioStateRepository currentScenarioRepo)
             throw new ArgumentException("Передан неверный тип репозитория");
         
         return string.Join('\n', await currentScenarioRepo.StartNewScenarioAndGetMessage(fromChatId, 1));

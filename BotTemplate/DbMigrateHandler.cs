@@ -22,7 +22,7 @@ public class DbMigrateHandler : YcFunction<string, Response>
         var configuration = Configuration.FromEnvironment();
         var botDatabase = new BotDatabase(configuration);
         var scenariosRepo = await ScenariosRepository.InitWithCreate(botDatabase);
-        await CurrentScenarioRepository.InitWithCreate(botDatabase, scenariosRepo);
+        await ScenarioStateRepository.InitWithCreate(botDatabase, scenariosRepo);
         await UserAnswersRepository.InitWithCreate(botDatabase);
         await UsersRepository.InitWithCreate(botDatabase);
         

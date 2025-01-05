@@ -6,16 +6,16 @@ namespace BotTemplate.Services.Telegram.Commands;
 public class WeeklyReflectionCommandHandler : IChatCommandHandler
 {
     public string Command => "/weekly_reflection";
-    private readonly IRepo _repo;
+    private readonly IRepository repository;
 
-    public WeeklyReflectionCommandHandler(IRepo repo)
+    public WeeklyReflectionCommandHandler(IRepository repository)
     {
-        _repo = repo;
+        this.repository = repository;
     }
 
     public async Task<string?> HandlePlainText(long fromChatId)
     {
-        if (_repo is not CurrentScenarioRepository currentScenarioRepo)
+        if (repository is not ScenarioStateRepository currentScenarioRepo)
             throw new ArgumentException("Передан неверный тип репозитория");
 
         return await currentScenarioRepo.StartNewScenarioAndGetMessage(fromChatId, 3);

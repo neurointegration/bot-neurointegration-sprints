@@ -3,7 +3,7 @@ using Ydb.Sdk.Value;
 
 namespace BotTemplate.Services.YDB.Repo;
 
-public class UserAnswersRepository : IRepo
+public class UserAnswersRepository : IRepository
 {
     protected virtual string TableName => "user_answers";
 

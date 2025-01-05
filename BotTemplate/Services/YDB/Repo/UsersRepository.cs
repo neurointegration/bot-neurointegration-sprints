@@ -2,7 +2,7 @@
 
 namespace BotTemplate.Services.YDB.Repo;
 
-public class UsersRepository : IRepo
+public class UsersRepository : IRepository
 {
     protected virtual string TableName => "users_repo";
 

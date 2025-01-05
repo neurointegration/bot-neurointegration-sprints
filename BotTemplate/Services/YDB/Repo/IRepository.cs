@@ -1,6 +1,6 @@
 ﻿namespace BotTemplate.Services.YDB.Repo;
 
-public interface IRepo
+public interface IRepository
 {
     Task ClearAll();
     Task CreateTable();

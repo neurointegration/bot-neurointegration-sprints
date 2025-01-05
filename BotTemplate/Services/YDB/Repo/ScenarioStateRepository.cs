@@ -4,29 +4,29 @@ using Ydb.Sdk.Value;
 
 namespace BotTemplate.Services.YDB;
 
-public class CurrentScenarioRepository : IRepo
+public class ScenarioStateRepository : IRepository
 {
-    public virtual string TableName => "current_scenarios";
+    public virtual string TableName => "scenario_state";
 
     private readonly IBotDatabase _botDatabase;
     private readonly ScenariosRepository scenariosRepository;
 
-    private CurrentScenarioRepository(IBotDatabase botDatabase, ScenariosRepository scenariosRepository)
+    private ScenarioStateRepository(IBotDatabase botDatabase, ScenariosRepository scenariosRepository)
     {
         _botDatabase = botDatabase;
         this.scenariosRepository = scenariosRepository;
     }
 
-    public static async Task<CurrentScenarioRepository> Init(IBotDatabase botDatabase,
+    public static async Task<ScenarioStateRepository> Init(IBotDatabase botDatabase,
         ScenariosRepository scenariosRepository)
     {
-        var model = new CurrentScenarioRepository(botDatabase, scenariosRepository);
+        var model = new ScenarioStateRepository(botDatabase, scenariosRepository);
         return model;
     }
 
-    public static async Task<CurrentScenarioRepository> InitWithCreate(BotDatabase botDatabase, ScenariosRepository scenariosRepository)
+    public static async Task<ScenarioStateRepository> InitWithCreate(BotDatabase botDatabase, ScenariosRepository scenariosRepository)
     {
-        var model = new CurrentScenarioRepository(botDatabase, scenariosRepository);
+        var model = new ScenarioStateRepository(botDatabase, scenariosRepository);
         await model.CreateTable();
         return model;
     }

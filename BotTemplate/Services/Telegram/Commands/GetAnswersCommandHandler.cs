@@ -6,16 +6,16 @@ namespace BotTemplate.Services.Telegram.Commands;
 public class GetAnswersCommandHandler : IChatCommandHandler
 {
     public string Command => "/get_all_answers";
-    private readonly IRepo _repo;
+    private readonly IRepository repository;
 
-    public GetAnswersCommandHandler(IRepo repo)
+    public GetAnswersCommandHandler(IRepository repository)
     {
-        _repo = repo;
+        this.repository = repository;
     }
 
     public async Task<string?> HandlePlainText(long fromChatId)
     {
-        if (_repo is not UserAnswersRepository userAnswersRepo)
+        if (repository is not UserAnswersRepository userAnswersRepo)
             throw new ArgumentException("Передан неверный тип репозитория");
 
         var answers = (await userAnswersRepo.GetAllWithKeys(fromChatId)).Select(userAnswer => userAnswer.Answer).ToList();

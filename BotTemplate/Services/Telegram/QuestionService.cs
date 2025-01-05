@@ -33,7 +33,7 @@ public class QuestionService
     public async Task<int> AskQuestions(QuestionRequest questionRequest)
     {
         var scenariosRepository = await ScenariosRepository.Init(botDatabase);
-        var currentScenarioRepository = await CurrentScenarioRepository.Init(botDatabase, scenariosRepository);
+        var currentScenarioRepository = await ScenarioStateRepository.Init(botDatabase, scenariosRepository);
         await UserAnswersRepository.Init(botDatabase);
         await UsersRepository.Init(botDatabase);
 

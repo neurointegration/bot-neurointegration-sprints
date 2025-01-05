@@ -6,16 +6,16 @@ namespace BotTemplate.Services.Telegram.Commands;
 public class EveningStandUpCommandHandler : IChatCommandHandler
 {
     public string Command => "/evening_stand_up";
-    private readonly IRepo _repo;
+    private readonly IRepository repository;
 
-    public EveningStandUpCommandHandler(IRepo repo)
+    public EveningStandUpCommandHandler(IRepository repository)
     {
-        _repo = repo;
+        this.repository = repository;
     }
 
     public async Task<string?> HandlePlainText(long fromChatId)
     {
-        if (_repo is not CurrentScenarioRepository currentScenarioRepo)
+        if (repository is not ScenarioStateRepository currentScenarioRepo)
             throw new ArgumentException("Передан неверный тип репозитория");
 
         return await currentScenarioRepo.StartNewScenarioAndGetMessage(fromChatId, 2);
