@@ -14,4 +14,5 @@ public interface IUsersStorage
     Task<List<SheetPermission>> GetPermissions(long grantedUserId, long ownerId);
     Task DeleteAccess(long grantedUserId, long ownerId);
     Task<List<long>> GetGrantedUsers(long userId);
+    Task DeleteUser(long userId);
 }

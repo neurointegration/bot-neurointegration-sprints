@@ -18,4 +18,5 @@ public interface IUserService
     Task<Result> UpdateAccess(long userId, string sheetId);
     Task<List<Sprint>> GetSprints(long ownerId);
     Task<Result<List<Sprint>>> GetSprints(string username);
+    Task DeleteUser(long userId);
 }

@@ -23,14 +23,18 @@ public class UserMapper
             WeekReflectionTime = row[UserDbSettings.WeekReflectionTime].GetOptionalInterval(),
             MessageStartTime = row[UserDbSettings.MessageStartTimeField].GetOptionalInterval(),
             MessageEndTime = row[UserDbSettings.MessageEndTimeField].GetOptionalInterval(),
-            RoutineActions = ToRoutineActionsList(row[UserDbSettings.RoutineActionsField].GetUtf8())
+            RoutineActions = ToRoutineActionsList(row[UserDbSettings.RoutineActionsField].GetOptionalUtf8())
         };
     }
 
-    public List<RoutineAction> ToRoutineActionsList(string text)
+    public List<RoutineAction> ToRoutineActionsList(string? text)
     {
-        var actionLines = text.Split(";");
         var result = new List<RoutineAction>();
+
+        if (string.IsNullOrWhiteSpace(text))
+            return result;
+        
+        var actionLines = text.Split(";");
         foreach (var line in actionLines)
         {
             var parsedAction = line.Split("::");
@@ -52,10 +56,12 @@ public class UserMapper
         var sb = new StringBuilder();
         foreach (var routine in routineActions)
         {
-            sb.Append($"{routine.Type}::{routine.Action};");
+            sb.Append($";{routine.Type}::{routine.Action}");
         }
 
-        sb.Remove(sb.Length - 1, 1);
+        if (sb.Length > 0)
+            sb.Remove(0, 1);
+        
         return sb.ToString();
     }
 

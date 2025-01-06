@@ -11,7 +11,7 @@ public class ScenarioStateRepository : IRepository
     private readonly IBotDatabase _botDatabase;
     private readonly ScenariosRepository scenariosRepository;
 
-    private ScenarioStateRepository(IBotDatabase botDatabase, ScenariosRepository scenariosRepository)
+    public ScenarioStateRepository(IBotDatabase botDatabase, ScenariosRepository scenariosRepository)
     {
         _botDatabase = botDatabase;
         this.scenariosRepository = scenariosRepository;

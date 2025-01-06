@@ -8,7 +8,7 @@ public class ScenariosRepository : IRepository
 
     private readonly IBotDatabase botDatabase;
 
-    private ScenariosRepository(IBotDatabase botDatabase)
+    public ScenariosRepository(IBotDatabase botDatabase)
     {
         this.botDatabase = botDatabase;
     }
@@ -134,8 +134,8 @@ public class ScenariosRepository : IRepository
         {
             await botDatabase.ExecuteModify($@"
             INSERT INTO {TableName} ( scenario_id, message_index, message, answer_key )
-            VALUES ( 'register', 0, '/stateMessage', 'key1' ),
-                   ( 'register', 1, '/handleStateResponse', null ),
+            VALUES ( 'regular_status', 0, '/stateMessage', 'key1' ),
+                   ( 'regular_status', 1, '/handleStateResponse', null ),
                    ( 'regular_evening_standup', 0, 'Время заполнять стендап! Какие победы были сегодня?', 'key1' ),
                    ( 'regular_evening_standup', 1, 'Отлично! Какой лайв берешь на ближайшие сутки?', 'key2' ),
                    ( 'regular_evening_standup', 2, 'Что насчет кайфа?', 'key3' ),

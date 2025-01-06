@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json;
 
 namespace BotTemplate;
 
@@ -18,29 +19,8 @@ public record Configuration
 
     public static Configuration FromJson(string path)
     {
-        var configuration = new ConfigurationBuilder()
-            .AddJsonFile(path, optional: false, reloadOnChange: true)
-            .Build();
-
-        return new Configuration
-        {
-            TelegramToken = configuration.GetSection("AppSettings")[nameof(TelegramToken)] ??
-                            throw new ArgumentException("Не задана переменная GOOGLESHEETS_APIKEY"),
-
-            YdbEndpoint = configuration.GetSection("AppSettings")[nameof(YdbEndpoint)] ??
-                          throw new ArgumentException("Не задана переменная NEURO_YDB_ENDPOINT"),
-
-            YdbPath = configuration.GetSection("AppSettings")[nameof(YdbPath)] ??
-                      throw new ArgumentException("Не задана переменная NEURO_YDB_PATH"),
-
-            IamTokenPath = configuration.GetSection("AppSettings")[nameof(IamTokenPath)],
-            
-            BackendApiKey = configuration.GetSection("AppSettings")[nameof(BackendApiKey)],
-            
-            BackendBaseUrl = configuration.GetSection("AppSettings")[nameof(BackendBaseUrl)],
-            
-            TriggerFrequencyMinutes = configuration.GetSection("AppSettings")[nameof(TriggerFrequencyMinutes)],
-        };
+        var text = File.ReadAllText(path);
+        return JsonConvert.DeserializeObject<Configuration>(text) ?? throw new ArgumentException("Не заданы настройки бота");
     }
 
     public static Configuration FromEnvironment()
@@ -48,7 +28,7 @@ public record Configuration
         return new Configuration()
         {
             TelegramToken = Environment.GetEnvironmentVariable("NEURO_TELEGRMA_TOKEN") ??
-                            throw new ArgumentException("Не задана переменная GOOGLESHEETS_APIKEY"),
+                            throw new ArgumentException("Не задана переменная NEURO_TELEGRMA_TOKEN"),
 
             YdbEndpoint = Environment.GetEnvironmentVariable("NEURO_YDB_ENDPOINT") ??
                           throw new ArgumentException("Не задана переменная NEURO_YDB_ENDPOINT"),

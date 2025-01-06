@@ -1,6 +1,7 @@
 using BotTemplate.Client;
 using BotTemplate.Models.Telegram;
 using BotTemplate.Services.Telegram;
+using BotTemplate.Services.Telegram.Messages.Status;
 using BotTemplate.Services.YDB;
 using Microsoft.Extensions.Logging;
 using Neurointegration.Api.DataModels.Dto;
@@ -14,6 +15,7 @@ public abstract class BaseRegularScenario : IRegularScenario
     protected readonly ILogger Logger;
     protected readonly IMessageSender MessageSender;
     protected readonly IBackendApiClient BackendApiClient;
+    private HashSet<IMessageCommand> messageCommands;
     protected virtual string ScenarioId { get; } = default!;
     public virtual ScenarioType ScenarioType { get; } = default!;
 
@@ -27,6 +29,11 @@ public abstract class BaseRegularScenario : IRegularScenario
         this.Logger = logger;
         this.MessageSender = messageSender;
         this.BackendApiClient = backendApiClient;
+        messageCommands = new HashSet<IMessageCommand>()
+        {
+            new HandleStateResponse(),
+            new SendStateMessage()
+        };
     }
 
     public virtual async Task Start(Question question)
@@ -34,8 +41,9 @@ public abstract class BaseRegularScenario : IRegularScenario
         Logger.LogInformation($"Начало сценария `{ScenarioType.ToString()}` для пользователя {question.UserId}");
         var message = await ScenarioStateRepository.StartNewScenarioAndGetMessage(question.UserId, ScenarioId,
             question.Date, question.SprintNumber, question.SprintReplyNumber);
-
-        await MessageSender.TrySay(message, question.UserId);
+        
+        if (!await TryProcessCommand(message, question.UserId))
+            await MessageSender.TrySay(message, question.UserId);
     }
 
     public virtual async Task Handle(TelegramEvent telegramEvent)
@@ -56,7 +64,22 @@ public abstract class BaseRegularScenario : IRegularScenario
         await BackendApiClient.SendAnswerAsync(sendAnswer);
 
         var message = await ScenarioStateRepository.IncreaseAndGetNewMessage(chatId);
-        await MessageSender.TrySay(message, chatId);
+        if (!await TryProcessCommand(message, chatId))
+            await MessageSender.TrySay(message, chatId);
+        
         await ScenarioStateRepository.TryEndScenario(chatId);
+    }
+
+    private async Task<bool> TryProcessCommand(string? message, long userId)
+    {
+        if (message != null && message.StartsWith('/'))
+        {
+            var messageCommand =
+                messageCommands.FirstOrDefault(messageCommand => message.StartsWith(messageCommand.Command));
+            await messageCommand!.Handle(MessageSender, userId, null);
+            return true;
+        }
+
+        return false;
     }
 }

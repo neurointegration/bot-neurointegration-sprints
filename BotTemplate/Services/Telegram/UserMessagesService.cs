@@ -32,7 +32,8 @@ public class UserMessagesService
         ScenarioStateRepository scenarioStateRepository,
         StatusScenario statusScenario,
         EveningStandUpScenario eveningStandUpScenario,
-        WeekendReflectionScenario weekendReflectionScenario)
+        WeekendReflectionScenario weekendReflectionScenario,
+        Configuration configuration)
     {
         this.messageSender = messageSender;
         this.registerScenario = registerScenario;
@@ -44,7 +45,7 @@ public class UserMessagesService
         this.eveningStandUpScenario = eveningStandUpScenario;
         this.weekendReflectionScenario = weekendReflectionScenario;
 
-        telegramBotUrl = $"https://api.telegram.org/bot{Configuration.FromEnvironment().TelegramToken}";
+        telegramBotUrl = $"https://api.telegram.org/bot{configuration.TelegramToken}";
     }
 
     public async Task HandleMessage(Update message)

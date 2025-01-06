@@ -168,6 +168,19 @@ public class UsersStorage : IUsersStorage
         return rows.Select(row => row[UserAccessDbSettings.GrantedUserIdField].GetInt64()).ToList();
     }
 
+    public async Task DeleteUser(long userId)
+    {
+        await ydbClient.ExecuteModify($@"
+             DECLARE ${UserDbSettings.UserIdField} AS Int64;
+
+            DELETE FROM {UserDbSettings.TableName}
+            WHERE {UserDbSettings.UserIdField} == ${UserDbSettings.UserIdField};",
+            new Dictionary<string, YdbValue>()
+            {
+                {$"${UserDbSettings.UserIdField}", YdbValue.MakeInt64(userId)},
+            });
+    }
+
     public async Task<IEnumerable<long>> GetAccessUsers(long userId)
     {
         var rows = await ydbClient.ExecuteFind($@"

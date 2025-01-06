@@ -6,7 +6,7 @@ using Neurointegration.Api.Settings;
 
 namespace Neurointegration.Api.Google;
 
-public class GoogleSheetClient
+public class GoogleSheetClient : IGoogleSheetClient
 {
     private readonly SheetsService sheetsService;
 

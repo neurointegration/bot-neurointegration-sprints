@@ -38,7 +38,7 @@ public class UserService : IUserService
     public async Task<User> CreateUser(CreateUser createUser)
     {
         var storedUser = await usersStorage.GetUser(createUser.UserId);
-        if (storedUser != null)
+        if (storedUser.IsSuccess)
             throw new DataConflictException("User с таким id уже существует");
 
         var user = new User(createUser);
@@ -292,5 +292,11 @@ public class UserService : IUserService
         var validationResult = userValidator.Validate(user);
         if (!validationResult.IsValid)
             throw new ArgumentException(string.Join(", ", validationResult.Errors.Select(x => x.ErrorMessage)));
+    }
+
+    public async Task DeleteUser(long userId)
+    {
+        await usersStorage.DeleteUser(userId);
+        await questionStorage.DeleteUserQuestions(userId);
     }
 }

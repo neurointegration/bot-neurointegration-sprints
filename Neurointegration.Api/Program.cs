@@ -7,7 +7,7 @@ using Neurointegration.Api.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddInternalDependencies(ApiSecretSettings.FromConfiguration(builder.Configuration));
+builder.Services.AddInternalDependencies(ApiSecretSettings.FromJson(""));
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<IAuthorizationHandler, ApiKeyHandler>();

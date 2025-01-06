@@ -5,12 +5,12 @@ namespace Neurointegration.Api.Storages.Answers;
 
 public class GoogleStorage : IGoogleStorage
 {
-    private readonly GoogleSheetClient sheetClient;
-    private readonly GoogleDriveClient driveClient;
+    private readonly IGoogleSheetClient sheetClient;
+    private readonly IGoogleDriveClient driveClient;
     private readonly GoogleSheetUtils googleSheetUtils;
     private readonly ILogger log;
 
-    public GoogleStorage(GoogleSheetClient sheetClient, GoogleDriveClient driveClient,
+    public GoogleStorage(IGoogleSheetClient sheetClient, IGoogleDriveClient driveClient,
         GoogleSheetUtils googleSheetUtils, ILogger log)
     {
         this.sheetClient = sheetClient;

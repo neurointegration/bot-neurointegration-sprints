@@ -22,6 +22,7 @@ public static class InternalDependenciesExtensions
 
         return serviceCollection
             .AddSingleton<ILogger>(factory.CreateLogger(categoryName))
+            .AddSingleton(configuration)
             .AddBackend()
             .AddTgClient(configuration.TelegramToken)
             .AddMessageSender()
@@ -67,11 +68,10 @@ public static class InternalDependenciesExtensions
     
     public static IServiceCollection AddScenarios(this IServiceCollection serviceCollection)
     {
-        serviceCollection.AddSingleton<ScenarioStateRepository>();
-        
         serviceCollection.AddSingleton<RegisterScenario>();
         serviceCollection.AddSingleton<SettingsScenario>();
         serviceCollection.AddSingleton<GetStudentsScenario>();
+        serviceCollection.AddSingleton<GetTablesLinksScenario>();
         
         serviceCollection.AddSingleton<StatusScenario>();
         serviceCollection.AddSingleton<EveningStandUpScenario>();
