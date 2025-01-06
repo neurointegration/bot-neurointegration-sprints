@@ -19,11 +19,12 @@ public class GoogleStorage : IGoogleStorage
         this.log = log;
     }
 
-    public async Task Save(string answer, string sheetId, string range)
+    public Task Save(string answer, string sheetId, string range)
     {
         log.LogInformation($"Сохранение в гугл таблицу. SheetId={sheetId}, range={range}");
         Task.Run(() => sheetClient.Write(sheetId, range, answer));
         log.LogInformation($"Сохранили ответ в гугл таблицу");
+        return Task.CompletedTask;
     }
 
     public async Task<string> CreateSheet(DateOnly startDate)

@@ -24,6 +24,9 @@ public class WeekendReflectionScenario : BaseRegularScenario
 
     public override async Task Start(Question question)
     {
+        if (question.ScenarioType != ScenarioType)
+            return;
+        
         string? message;
         if (question.SprintReplyNumber == SprintReplyCount - 1)
         {

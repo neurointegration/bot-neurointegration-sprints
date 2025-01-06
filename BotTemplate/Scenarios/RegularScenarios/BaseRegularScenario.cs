@@ -25,10 +25,10 @@ public abstract class BaseRegularScenario : IRegularScenario
         IBackendApiClient backendApiClient,
         ILogger logger)
     {
-        this.ScenarioStateRepository = scenarioStateRepository;
-        this.Logger = logger;
-        this.MessageSender = messageSender;
-        this.BackendApiClient = backendApiClient;
+        ScenarioStateRepository = scenarioStateRepository;
+        Logger = logger;
+        MessageSender = messageSender;
+        BackendApiClient = backendApiClient;
         messageCommands = new HashSet<IMessageCommand>()
         {
             new HandleStateResponse(),
@@ -38,11 +38,14 @@ public abstract class BaseRegularScenario : IRegularScenario
 
     public virtual async Task Start(Question question)
     {
+        if (question.ScenarioType != ScenarioType)
+            return;
+
         Logger.LogInformation($"Начало сценария `{ScenarioType.ToString()}` для пользователя {question.UserId}");
         var message = await ScenarioStateRepository.StartNewScenarioAndGetMessage(question.UserId, ScenarioId,
             question.Date, question.SprintNumber, question.SprintReplyNumber);
-        
-        if (!await TryProcessCommand(message, question.UserId))
+
+        if (!await TryProcessCommand(message, question.UserId, null))
             await MessageSender.TrySay(message, question.UserId);
     }
 
@@ -50,11 +53,17 @@ public abstract class BaseRegularScenario : IRegularScenario
     {
         var chatId = telegramEvent.ChatId;
         var currentScenarioInfo = await ScenarioStateRepository.GetInfoByChatId(chatId);
+        if (currentScenarioInfo.ScenarioId != ScenarioId)
+            return;
+
+        var text = telegramEvent.Text ?? "";
+        Logger.LogInformation(
+            $"Ответ {currentScenarioInfo!.Index!.Value} на `{ScenarioType.ToString()}` для пользователя {chatId}");
 
         var sendAnswer = new SendAnswer
         {
             UserId = chatId,
-            Answer = telegramEvent.Text ?? "",
+            Answer = text,
             AnswerNumber = currentScenarioInfo.Index!.Value,
             ScenarioType = ScenarioType,
             Date = DateOnly.FromDateTime(currentScenarioInfo.Date ?? DateTime.UtcNow),
@@ -64,19 +73,21 @@ public abstract class BaseRegularScenario : IRegularScenario
         await BackendApiClient.SendAnswerAsync(sendAnswer);
 
         var message = await ScenarioStateRepository.IncreaseAndGetNewMessage(chatId);
-        if (!await TryProcessCommand(message, chatId))
+        if (!await TryProcessCommand(message, chatId, text))
             await MessageSender.TrySay(message, chatId);
-        
+
         await ScenarioStateRepository.TryEndScenario(chatId);
     }
 
-    private async Task<bool> TryProcessCommand(string? message, long userId)
+    private async Task<bool> TryProcessCommand(string? newMessage, long userId, string? userAnswer)
     {
-        if (message != null && message.StartsWith('/'))
+        if (newMessage != null && newMessage.StartsWith('/'))
         {
             var messageCommand =
-                messageCommands.FirstOrDefault(messageCommand => message.StartsWith(messageCommand.Command));
-            await messageCommand!.Handle(MessageSender, userId, null);
+                messageCommands.FirstOrDefault(messageCommand => newMessage.StartsWith(messageCommand.Command));
+            var result = await messageCommand!.Handle(MessageSender, userId, userAnswer);
+            if (!result.IsSuccessful())
+                await ScenarioStateRepository.DecreaseIndex(userId);
             return true;
         }
 

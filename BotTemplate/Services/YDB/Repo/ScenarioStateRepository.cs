@@ -8,12 +8,12 @@ public class ScenarioStateRepository : IRepository
 {
     public virtual string TableName => "scenario_state";
 
-    private readonly IBotDatabase _botDatabase;
+    private readonly IBotDatabase botDatabase;
     private readonly ScenariosRepository scenariosRepository;
 
     public ScenarioStateRepository(IBotDatabase botDatabase, ScenariosRepository scenariosRepository)
     {
-        _botDatabase = botDatabase;
+        this.botDatabase = botDatabase;
         this.scenariosRepository = scenariosRepository;
     }
 
@@ -24,7 +24,7 @@ public class ScenarioStateRepository : IRepository
         if (curIndex is not null)
             return null;
 
-        await _botDatabase.ExecuteModify($@"
+        await botDatabase.ExecuteModify($@"
             DECLARE $chat_id AS Int64;
             DECLARE $scenario_id AS Utf8;
             DECLARE $current_sprint_number AS Int64;
@@ -56,7 +56,7 @@ public class ScenarioStateRepository : IRepository
         var newIndex = oldIndex.Value + 1;
         var message = await scenariosRepository.GetMessageByScenarioIdAndMessageIndex(scenarioId!, newIndex);
 
-        await _botDatabase.ExecuteModify($@"
+        await botDatabase.ExecuteModify($@"
             DECLARE $chat_id AS Int64;
             DECLARE $scenario_id AS Utf8;
             DECLARE $new_index AS Int32;
@@ -83,7 +83,7 @@ public class ScenarioStateRepository : IRepository
         var scenarioId = await GetScenarioIdByChatId(chatId);
         var newIndex = oldIndex.Value - 1;
 
-        await _botDatabase.ExecuteModify($@"
+        await botDatabase.ExecuteModify($@"
             DECLARE $chat_id AS Int64;
             DECLARE $scenario_id AS Utf8;
             DECLARE $new_index AS Int32;
@@ -108,7 +108,7 @@ public class ScenarioStateRepository : IRepository
         var key = await scenariosRepository.GetKeyByIndex(scenarioId!, oldIndex.Value);
         if (key is not null)
             return;
-        await _botDatabase.ExecuteModify($@"
+        await botDatabase.ExecuteModify($@"
             DECLARE $chat_id AS Int64;
 
             DELETE FROM {TableName} WHERE chat_id = $chat_id;
@@ -123,7 +123,7 @@ public class ScenarioStateRepository : IRepository
         var oldIndex = await GetIndexByChatId(chatId);
         if (oldIndex is null)
             return;
-        await _botDatabase.ExecuteModify($@"
+        await botDatabase.ExecuteModify($@"
             DECLARE $chat_id AS Int64;
 
             DELETE FROM {TableName} WHERE chat_id = $chat_id;
@@ -146,7 +146,7 @@ public class ScenarioStateRepository : IRepository
 
     public async Task<string?> GetScenarioIdByChatId(long chatId)
     {
-        var rows = await _botDatabase.ExecuteFind($@"
+        var rows = await botDatabase.ExecuteFind($@"
             DECLARE $chat_id AS Int64;
 
             SELECT scenario_id
@@ -171,7 +171,7 @@ public class ScenarioStateRepository : IRepository
 
     public async Task<int?> GetIndexByChatId(long chatId)
     {
-        var rows = await _botDatabase.ExecuteFind($@"
+        var rows = await botDatabase.ExecuteFind($@"
             DECLARE $chat_id AS Int64;
 
             SELECT index
@@ -196,7 +196,7 @@ public class ScenarioStateRepository : IRepository
 
     public async Task<CurrentScenarioInfo?> GetInfoByChatId(long chatId)
     {
-        var rows = await _botDatabase.ExecuteFind($@"
+        var rows = await botDatabase.ExecuteFind($@"
             DECLARE $chat_id AS Int64;
 
             SELECT scenario_id, current_sprint_number, sprint_reply_number, index, date
@@ -229,7 +229,7 @@ public class ScenarioStateRepository : IRepository
 
     public async Task ClearAll()
     {
-        await _botDatabase.ExecuteScheme($@"
+        await botDatabase.ExecuteScheme($@"
             DROP TABLE {TableName};
         ");
     }
@@ -238,7 +238,7 @@ public class ScenarioStateRepository : IRepository
     {
         try
         {
-            await _botDatabase.ExecuteScheme($@"
+            await botDatabase.ExecuteScheme($@"
             CREATE TABLE {TableName} (
                 chat_id Int64 NOT NULL,
                 scenario_id Utf8 NOT NULL,
