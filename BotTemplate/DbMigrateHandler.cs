@@ -1,5 +1,3 @@
-using BotTemplate.Services.YDB;
-using BotTemplate.Services.YDB.Repo;
 using Common.Ydb;
 using Microsoft.Extensions.DependencyInjection;
 using Neurointegration.Api.DI;
@@ -19,13 +17,6 @@ public class DbMigrateHandler : YcFunction<string, Response>
 
     public async Task Handle()
     {
-        var configuration = Configuration.FromEnvironment();
-        var botDatabase = new BotDatabase(configuration);
-        var scenariosRepo = await ScenariosRepository.InitWithCreate(botDatabase);
-        await ScenarioStateRepository.InitWithCreate(botDatabase, scenariosRepo);
-        await UserAnswersRepository.InitWithCreate(botDatabase);
-        await UsersRepository.InitWithCreate(botDatabase);
-        
         var secretSettings = ApiSecretSettings.FromEnvironment();
         var service = new ServiceCollection()
             .AddTransient(_ => new YdbClient(secretSettings.YdbSecretSettings))

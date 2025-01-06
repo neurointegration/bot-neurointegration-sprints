@@ -32,4 +32,5 @@ public class User
     public TimeSpan? MessageStartTime { get; set; }
     public TimeSpan? MessageEndTime { get; set; }
     public List<Sprint> Sprints { get; set; } = new List<Sprint>();
+    public List<RoutineAction> RoutineActions { get; set; } = new List<RoutineAction>();
 }

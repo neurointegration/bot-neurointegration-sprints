@@ -6,12 +6,12 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace BotTemplate.Services.Telegram;
 
-public class HtmlMessageView : IMessageView
+public class HtmlMessageSender : IMessageSender
 {
     private readonly ITelegramBotClient botClient;
     private readonly ILogger log;
 
-    public HtmlMessageView(ITelegramBotClient client, ILogger log)
+    public HtmlMessageSender(ITelegramBotClient client, ILogger log)
     {
         botClient = client;
         this.log = log;
@@ -33,6 +33,26 @@ public class HtmlMessageView : IMessageView
         }
     }
 
+    public async Task TrySay(string? text, long chatId)
+    {
+        if (text == null)
+            return;
+        
+        try
+        {
+            await botClient.SendTextMessageAsync(
+                chatId,
+                text,
+                parseMode: ParseMode.Html
+            );
+        }
+        catch (Exception e)
+        {
+            log.LogError($"Не удалось отправить сообщение {text} пользователю {chatId}. Ошибка {e.Message}");
+        }
+    }
+
+    
     public async Task SayWithMarkup(string text, long chatId, IReplyMarkup? replyMarkup)
     {
         try

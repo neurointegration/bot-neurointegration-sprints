@@ -37,8 +37,8 @@ public static class InternalDependenciesExtensions
 
     public static IServiceCollection AddMessageView(this IServiceCollection serviceCollection)
     {
-        serviceCollection.AddSingleton<IMessageView>(provider =>
-            new HtmlMessageView(provider.GetRequiredService<ITelegramBotClient>(),
+        serviceCollection.AddSingleton<IMessageSender>(provider =>
+            new HtmlMessageSender(provider.GetRequiredService<ITelegramBotClient>(),
                 provider.GetRequiredService<ILogger>()));
 
         return serviceCollection;

@@ -3,10 +3,10 @@ using Neurointegration.Api.DataModels.Dto;
 using Neurointegration.Api.DataModels.Models;
 using Neurointegration.Api.DataModels.Result;
 using Neurointegration.Api.Excpetions;
-using Neurointegration.Api.Extensions;
 using Neurointegration.Api.Helpers;
 using Neurointegration.Api.Storages;
 using Neurointegration.Api.Storages.Questions;
+using Neurointegration.Api.Storages.User;
 
 namespace Neurointegration.Api.Services;
 

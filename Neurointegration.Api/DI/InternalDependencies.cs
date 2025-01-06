@@ -11,6 +11,7 @@ using Neurointegration.Api.Storages.Answers;
 using Neurointegration.Api.Storages.Mapper;
 using Neurointegration.Api.Storages.Questions;
 using Neurointegration.Api.Storages.Sprints;
+using Neurointegration.Api.Storages.User;
 
 namespace Neurointegration.Api.DI;
 

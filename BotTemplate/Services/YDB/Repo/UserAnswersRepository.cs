@@ -9,22 +9,9 @@ public class UserAnswersRepository : IRepository
 
     private readonly IBotDatabase botDatabase;
 
-    private UserAnswersRepository(IBotDatabase botDatabase)
+    public UserAnswersRepository(IBotDatabase botDatabase)
     {
         this.botDatabase = botDatabase;
-    }
-
-    public static async Task<UserAnswersRepository> Init(IBotDatabase botDatabase)
-    {
-        var model = new UserAnswersRepository(botDatabase);
-        return model;
-    }
-
-    public static async Task<UserAnswersRepository> InitWithCreate(BotDatabase botDatabase)
-    {
-        var model = new UserAnswersRepository(botDatabase);
-        await model.CreateTable();
-        return model;
     }
 
     public async Task SaveAnswer(long chatId, string key, string text)
@@ -50,31 +37,6 @@ public class UserAnswersRepository : IRepository
             {"$key", YdbValue.MakeUtf8(key)},
             {"$answer", YdbValue.MakeUtf8(text)}
         });
-    }
-
-    public async Task<string[]> GetAll(long chatId)
-    {
-        var rows = await botDatabase.ExecuteFind($@"
-            DECLARE $chat_id AS Int64;
-
-            SELECT answer
-            FROM {TableName}
-            WHERE chat_id = $chat_id
-        ", new Dictionary<string, YdbValue>
-        {
-            {"$chat_id", YdbValue.MakeInt64(chatId)}
-        });
-
-        if (rows is null)
-        {
-            return Array.Empty<string>();
-        }
-
-        var rowsArray = rows as ResultSet.Row[] ?? rows.ToArray();
-
-        return !rowsArray.Any()
-            ? Array.Empty<string>()
-            : rowsArray.Select(message => message["answer"].GetUtf8()).ToArray();
     }
 
     public async Task<UserAnswer[]> GetAllWithKeys(long chatId)
@@ -132,13 +94,6 @@ public class UserAnswersRepository : IRepository
         {
             {"$chat_id", YdbValue.MakeInt64(chatId)}
         });
-    }
-
-    public async Task ClearAll()
-    {
-        await botDatabase.ExecuteScheme($@"
-            DROP TABLE {TableName};
-        ");
     }
 
     public async Task CreateTable()

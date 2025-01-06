@@ -1,5 +1,5 @@
 ﻿using BotTemplate.Models;
-using BotTemplate.Models.Telegram;
+using BotTemplate.Services.Telegram;
 using Newtonsoft.Json;
 using Yandex.Cloud.Functions;
 

@@ -1,5 +1,6 @@
 ﻿using Neurointegration.Api.DataModels.Dto;
 using Neurointegration.Api.DataModels.Models;
+using Neurointegration.Api.DataModels.Result;
 using Neurointegration.Api.Services;
 
 namespace BotTemplate.Client;
@@ -47,12 +48,9 @@ public class LocalBackendApiClient : IBackendApiClient
         return result.Value;
     }
 
-    public async Task<User> GetUserAsync(long userId)
+    public async Task<Result<User>> GetUser(long userId)
     {
-        var result = await userService.GetUser(userId);
-        if (!result.IsSuccess)
-            throw new HttpRequestException(result.Error.Message);
-        return result.Value;
+        return await userService.GetUser(userId);
     }
 
     public async Task<List<Sprint>> GetUserSprintsAsync(long ownerId, long grantedUserId)

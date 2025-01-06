@@ -17,21 +17,7 @@ public class ScenarioStateRepository : IRepository
         this.scenariosRepository = scenariosRepository;
     }
 
-    public static async Task<ScenarioStateRepository> Init(IBotDatabase botDatabase,
-        ScenariosRepository scenariosRepository)
-    {
-        var model = new ScenarioStateRepository(botDatabase, scenariosRepository);
-        return model;
-    }
-
-    public static async Task<ScenarioStateRepository> InitWithCreate(BotDatabase botDatabase, ScenariosRepository scenariosRepository)
-    {
-        var model = new ScenarioStateRepository(botDatabase, scenariosRepository);
-        await model.CreateTable();
-        return model;
-    }
-
-    public async Task<string?> StartNewScenarioAndGetMessage(long chatId, long scenarioId, DateTime? date = null, long currentSprintNumber = 0,
+    public async Task<string?> StartNewScenarioAndGetMessage(long chatId, string scenarioId, DateTime? date = null, long currentSprintNumber = 0,
         int sprintReplyNumber = 0)
     {
         var curIndex = await GetIndexByChatId(chatId);
@@ -40,7 +26,7 @@ public class ScenarioStateRepository : IRepository
 
         await _botDatabase.ExecuteModify($@"
             DECLARE $chat_id AS Int64;
-            DECLARE $scenario_id AS Int64;
+            DECLARE $scenario_id AS Utf8;
             DECLARE $current_sprint_number AS Int64;
             DECLARE $sprint_reply_number AS Int32;
             DECLARE $date AS DATETIME?;
@@ -50,7 +36,7 @@ public class ScenarioStateRepository : IRepository
         ", new Dictionary<string, YdbValue?>
         {
             {"$chat_id", YdbValue.MakeInt64(chatId)},
-            {"$scenario_id", YdbValue.MakeInt64(scenarioId)},
+            {"$scenario_id", YdbValue.MakeUtf8(scenarioId)},
             {"$current_sprint_number", YdbValue.MakeInt64(currentSprintNumber)},
             {"$sprint_reply_number", YdbValue.MakeInt32(sprintReplyNumber)},
             {"$date", YdbValue.MakeOptionalDatetime(date)}
@@ -68,11 +54,11 @@ public class ScenarioStateRepository : IRepository
 
         var scenarioId = await GetScenarioIdByChatId(chatId);
         var newIndex = oldIndex.Value + 1;
-        var message = await scenariosRepository.GetMessageByScenarioIdAndMessageIndex(scenarioId!.Value, newIndex);
+        var message = await scenariosRepository.GetMessageByScenarioIdAndMessageIndex(scenarioId!, newIndex);
 
         await _botDatabase.ExecuteModify($@"
             DECLARE $chat_id AS Int64;
-            DECLARE $scenario_id AS Int64;
+            DECLARE $scenario_id AS Utf8;
             DECLARE $new_index AS Int32;
 
             UPDATE {TableName}
@@ -81,7 +67,7 @@ public class ScenarioStateRepository : IRepository
         ", new Dictionary<string, YdbValue?>
         {
             {"$chat_id", YdbValue.MakeInt64(chatId)},
-            {"$scenario_id", YdbValue.MakeInt64(scenarioId.Value)},
+            {"$scenario_id", YdbValue.MakeUtf8(scenarioId!)},
             {"$new_index", YdbValue.MakeInt32(newIndex)}
         });
 
@@ -99,7 +85,7 @@ public class ScenarioStateRepository : IRepository
 
         await _botDatabase.ExecuteModify($@"
             DECLARE $chat_id AS Int64;
-            DECLARE $scenario_id AS Int64;
+            DECLARE $scenario_id AS Utf8;
             DECLARE $new_index AS Int32;
 
             UPDATE {TableName}
@@ -108,7 +94,7 @@ public class ScenarioStateRepository : IRepository
         ", new Dictionary<string, YdbValue?>
         {
             {"$chat_id", YdbValue.MakeInt64(chatId)},
-            {"$scenario_id", YdbValue.MakeInt64(scenarioId!.Value)},
+            {"$scenario_id", YdbValue.MakeUtf8(scenarioId!)},
             {"$new_index", YdbValue.MakeInt32(newIndex)}
         });
     }
@@ -119,7 +105,7 @@ public class ScenarioStateRepository : IRepository
         var oldIndex = await GetIndexByChatId(chatId);
         if (oldIndex is null)
             return;
-        var key = await scenariosRepository.GetKeyByIndex(scenarioId!.Value, oldIndex.Value);
+        var key = await scenariosRepository.GetKeyByIndex(scenarioId!, oldIndex.Value);
         if (key is not null)
             return;
         await _botDatabase.ExecuteModify($@"
@@ -155,10 +141,10 @@ public class ScenarioStateRepository : IRepository
 
         var index = await GetIndexByChatId(chatId);
 
-        return await scenariosRepository.GetKeyByIndex(scenarioId.Value, index!.Value);
+        return await scenariosRepository.GetKeyByIndex(scenarioId, index!.Value);
     }
 
-    public async Task<long?> GetScenarioIdByChatId(long chatId)
+    public async Task<string?> GetScenarioIdByChatId(long chatId)
     {
         var rows = await _botDatabase.ExecuteFind($@"
             DECLARE $chat_id AS Int64;
@@ -180,7 +166,7 @@ public class ScenarioStateRepository : IRepository
 
         return !rowsArray.Any()
             ? null
-            : rowsArray.First()["scenario_id"].GetInt64();
+            : rowsArray.First()["scenario_id"].GetUtf8();
     }
 
     public async Task<int?> GetIndexByChatId(long chatId)
@@ -233,7 +219,7 @@ public class ScenarioStateRepository : IRepository
             : new CurrentScenarioInfo
             {
                 ChatId = chatId,
-                ScenarioId = rowsArray.First()["scenario_id"].GetInt64(),
+                ScenarioId = rowsArray.First()["scenario_id"].GetUtf8(),
                 CurrentSprintNumber = rowsArray.First()["current_sprint_number"].GetOptionalInt64(),
                 SprintReplyNumber = rowsArray.First()["sprint_reply_number"].GetOptionalInt32(),
                 Index = rowsArray.First()["index"].GetOptionalInt32(),
@@ -255,7 +241,7 @@ public class ScenarioStateRepository : IRepository
             await _botDatabase.ExecuteScheme($@"
             CREATE TABLE {TableName} (
                 chat_id Int64 NOT NULL,
-                scenario_id Int64 NOT NULL,
+                scenario_id Utf8 NOT NULL,
                 current_sprint_number Int64,
                 sprint_reply_number Int32,
                 index Int32,

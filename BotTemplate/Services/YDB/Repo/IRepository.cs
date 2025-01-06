@@ -2,6 +2,5 @@
 
 public interface IRepository
 {
-    Task ClearAll();
     Task CreateTable();
 }

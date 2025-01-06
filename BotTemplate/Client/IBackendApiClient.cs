@@ -1,5 +1,6 @@
 ﻿using Neurointegration.Api.DataModels.Dto;
 using Neurointegration.Api.DataModels.Models;
+using Neurointegration.Api.DataModels.Result;
 
 namespace BotTemplate.Client;
 
@@ -33,7 +34,7 @@ public interface IBackendApiClient
     /// Достать информацию о пользователе
     /// </summary>
     /// <param name="userId">Id пользователя</param>
-    Task<User> GetUserAsync(long userId);
+    Task<Result<User>> GetUser(long userId);
 
     /// <summary>
     /// Получить все спринты пользователя

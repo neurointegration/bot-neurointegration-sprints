@@ -1,13 +1,12 @@
 ﻿using Common.Ydb;
 using Neurointegration.Api.DataModels.Dto;
-using Neurointegration.Api.DataModels.Models;
 using Neurointegration.Api.DataModels.Result;
 using Neurointegration.Api.Excpetions;
 using Neurointegration.Api.Settings;
 using Neurointegration.Api.Storages.Mapper;
 using Ydb.Sdk.Value;
 
-namespace Neurointegration.Api.Storages;
+namespace Neurointegration.Api.Storages.User;
 
 public class UsersStorage : IUsersStorage
 {
@@ -20,7 +19,7 @@ public class UsersStorage : IUsersStorage
         this.userMapper = userMapper;
     }
 
-    public async Task SaveUser(User user)
+    public async Task SaveUser(DataModels.Models.User user)
     {
         await ydbClient.ExecuteModify($@"
              DECLARE ${UserDbSettings.UserIdField} AS Int64;
@@ -32,12 +31,15 @@ public class UsersStorage : IUsersStorage
              DECLARE ${UserDbSettings.WeekReflectionTime} AS Interval?;
              DECLARE ${UserDbSettings.IAmCoachField} AS Bool;
              DECLARE ${UserDbSettings.SendRegularMessagesField} AS Bool;
+             DECLARE ${UserDbSettings.RoutineActionsField} AS Utf8;
 
              REPLACE INTO {UserDbSettings.TableName} 
                 ( {UserDbSettings.UserIdField}, {UserDbSettings.EmailField}, {UserDbSettings.UsernameField}, {UserDbSettings.MessageStartTimeField}, {UserDbSettings.MessageEndTimeField},
-                  {UserDbSettings.EveningStandUpTimeField}, {UserDbSettings.WeekReflectionTime}, {UserDbSettings.IAmCoachField}, {UserDbSettings.SendRegularMessagesField} )
+                  {UserDbSettings.EveningStandUpTimeField}, {UserDbSettings.WeekReflectionTime}, {UserDbSettings.IAmCoachField}, {UserDbSettings.SendRegularMessagesField},
+                  {UserDbSettings.RoutineActionsField})
              VALUES ( ${UserDbSettings.UserIdField}, ${UserDbSettings.EmailField}, ${UserDbSettings.UsernameField}, ${UserDbSettings.MessageStartTimeField}, ${UserDbSettings.MessageEndTimeField},
-                  ${UserDbSettings.EveningStandUpTimeField}, ${UserDbSettings.WeekReflectionTime}, ${UserDbSettings.IAmCoachField}, ${UserDbSettings.SendRegularMessagesField} )",
+                  ${UserDbSettings.EveningStandUpTimeField}, ${UserDbSettings.WeekReflectionTime}, ${UserDbSettings.IAmCoachField}, ${UserDbSettings.SendRegularMessagesField},
+                     ${UserDbSettings.RoutineActionsField} )",
             new Dictionary<string, YdbValue>()
             {
                 {$"${UserDbSettings.UserIdField}", YdbValue.MakeInt64(user.UserId)},
@@ -49,10 +51,11 @@ public class UsersStorage : IUsersStorage
                 {$"${UserDbSettings.WeekReflectionTime}", YdbValue.MakeOptionalInterval(user.WeekReflectionTime)},
                 {$"${UserDbSettings.IAmCoachField}", YdbValue.MakeBool(user.IAmCoach)},
                 {$"${UserDbSettings.SendRegularMessagesField}", YdbValue.MakeBool(user.SendRegularMessages)},
+                {$"${UserDbSettings.RoutineActionsField}", YdbValue.MakeUtf8(userMapper.ToString(user.RoutineActions))},
             });
     }
 
-    public async Task<Result<User>> GetUser(long userId)
+    public async Task<Result<DataModels.Models.User>> GetUser(long userId)
     {
         var rows = await ydbClient.ExecuteFind($@"
             DECLARE ${UserDbSettings.UserIdField} AS Int64;
@@ -67,12 +70,12 @@ public class UsersStorage : IUsersStorage
 
         var rowsList = rows.ToList();
         if (rowsList.Count == 0)
-            return Result<User>.Fail(Error.NotFound($"Пользователь с userId={userId} не найден"));
+            return Result<DataModels.Models.User>.Fail(Error.NotFound($"Пользователь с userId={userId} не найден"));
 
-        return Result<User>.Success(userMapper.ToUserEntity(rowsList[0]));
+        return Result<DataModels.Models.User>.Success(userMapper.ToUserEntity(rowsList[0]));
     }
 
-    public async Task<Result<User>> GetUser(string username)
+    public async Task<Result<DataModels.Models.User>> GetUser(string username)
     {
         var rows = await ydbClient.ExecuteFind($@"
             DECLARE ${UserDbSettings.UsernameField} AS Utf8;
@@ -87,9 +90,9 @@ public class UsersStorage : IUsersStorage
 
         var rowsList = rows.ToList();
         if (rowsList.Count == 0)
-            return Result<User>.Fail(Error.NotFound($"Пользователь с username={username} не найден"));
+            return Result<DataModels.Models.User>.Fail(Error.NotFound($"Пользователь с username={username} не найден"));
 
-        return Result<User>.Success(userMapper.ToUserEntity(rowsList[0]));
+        return Result<DataModels.Models.User>.Success(userMapper.ToUserEntity(rowsList[0]));
     }
 
     public async Task AddAccess(long grantedUserId, long ownerUserId, string sheetId, string permissionId)
@@ -181,7 +184,7 @@ public class UsersStorage : IUsersStorage
         return rows.Select(row => row[UserAccessDbSettings.OwnerUserIdField].GetInt64());
     }
 
-    public async Task<List<User>> GetPublicCoachs()
+    public async Task<List<DataModels.Models.User>> GetPublicCoachs()
     {
         var rows = await ydbClient.ExecuteFind($@"
             SELECT *

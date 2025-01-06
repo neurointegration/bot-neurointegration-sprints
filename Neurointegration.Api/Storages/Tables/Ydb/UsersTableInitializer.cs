@@ -21,6 +21,7 @@ public class UsersTableInitializer : ITableInitializer
                 {UserDbSettings.UsernameField} Utf8 NOT NULL,
                 {UserDbSettings.IAmCoachField} Bool NOT NULL,
                 {UserDbSettings.SendRegularMessagesField} Bool NOT NULL,
+                {UserDbSettings.RoutineActionsField} Utf8 NOT NULL,
                 
                 {UserDbSettings.EveningStandUpTimeField} Interval,
                 {UserDbSettings.WeekReflectionTime} Interval,
