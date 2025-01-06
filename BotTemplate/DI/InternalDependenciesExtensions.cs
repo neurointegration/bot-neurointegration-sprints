@@ -1,7 +1,10 @@
 using BotTemplate.Client;
-using BotTemplate.Models.Telegram;
+using BotTemplate.Scenarios.Coach;
+using BotTemplate.Scenarios.RegularScenarios;
+using BotTemplate.Scenarios.User;
 using BotTemplate.Services.Telegram;
 using BotTemplate.Services.YDB;
+using BotTemplate.Services.YDB.Repo;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Telegram.Bot;
@@ -21,8 +24,10 @@ public static class InternalDependenciesExtensions
             .AddSingleton<ILogger>(factory.CreateLogger(categoryName))
             .AddBackend()
             .AddTgClient(configuration.TelegramToken)
-            .AddMessageView()
+            .AddMessageSender()
             .AddBotDb(configuration)
+            .AddRepositories()
+            .AddScenarios()
             .AddSingleton<QuestionService>()
             .AddSingleton<UserMessagesService>()
             .BuildServiceProvider();
@@ -35,7 +40,7 @@ public static class InternalDependenciesExtensions
         return serviceCollection;
     }
 
-    public static IServiceCollection AddMessageView(this IServiceCollection serviceCollection)
+    public static IServiceCollection AddMessageSender(this IServiceCollection serviceCollection)
     {
         serviceCollection.AddSingleton<IMessageSender>(provider =>
             new HtmlMessageSender(provider.GetRequiredService<ITelegramBotClient>(),
@@ -48,6 +53,30 @@ public static class InternalDependenciesExtensions
     {
         serviceCollection.AddSingleton<IBotDatabase>(provider => new BotDatabase(configuration));
 
+        return serviceCollection;
+    }
+    
+    public static IServiceCollection AddRepositories(this IServiceCollection serviceCollection)
+    {
+        serviceCollection.AddSingleton<ScenarioStateRepository>();
+        serviceCollection.AddSingleton<ScenariosRepository>();
+        serviceCollection.AddSingleton<UserAnswersRepository>();
+        
+        return serviceCollection;
+    }
+    
+    public static IServiceCollection AddScenarios(this IServiceCollection serviceCollection)
+    {
+        serviceCollection.AddSingleton<ScenarioStateRepository>();
+        
+        serviceCollection.AddSingleton<RegisterScenario>();
+        serviceCollection.AddSingleton<SettingsScenario>();
+        serviceCollection.AddSingleton<GetStudentsScenario>();
+        
+        serviceCollection.AddSingleton<StatusScenario>();
+        serviceCollection.AddSingleton<EveningStandUpScenario>();
+        serviceCollection.AddSingleton<WeekendReflectionScenario>();
+        
         return serviceCollection;
     }
 }

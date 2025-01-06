@@ -19,6 +19,9 @@ public class UserMessagesService
     private readonly HttpClient client = new();
 
     private readonly ScenarioStateRepository scenarioStateRepository;
+    private readonly StatusScenario statusScenario;
+    private readonly EveningStandUpScenario eveningStandUpScenario;
+    private readonly WeekendReflectionScenario weekendReflectionScenario;
 
     public UserMessagesService(
         IMessageSender messageSender,
@@ -26,7 +29,10 @@ public class UserMessagesService
         SettingsScenario settingsScenario,
         GetStudentsScenario getStudentsScenario,
         GetTablesLinksScenario getTablesLinksScenario,
-        ScenarioStateRepository scenarioStateRepository)
+        ScenarioStateRepository scenarioStateRepository,
+        StatusScenario statusScenario,
+        EveningStandUpScenario eveningStandUpScenario,
+        WeekendReflectionScenario weekendReflectionScenario)
     {
         this.messageSender = messageSender;
         this.registerScenario = registerScenario;
@@ -34,6 +40,9 @@ public class UserMessagesService
         this.getStudentsScenario = getStudentsScenario;
         this.getTablesLinksScenario = getTablesLinksScenario;
         this.scenarioStateRepository = scenarioStateRepository;
+        this.statusScenario = statusScenario;
+        this.eveningStandUpScenario = eveningStandUpScenario;
+        this.weekendReflectionScenario = weekendReflectionScenario;
 
         telegramBotUrl = $"https://api.telegram.org/bot{Configuration.FromEnvironment().TelegramToken}";
     }
@@ -123,8 +132,10 @@ public class UserMessagesService
         if (key == null)
             return;
 
-        //TODO
-        var nonCommandScenarios = new List<IRegularScenario>();
+        var nonCommandScenarios = new List<IRegularScenario>()
+        {
+            statusScenario, eveningStandUpScenario, weekendReflectionScenario
+        };
         foreach (var scenario in nonCommandScenarios)
         {
             await scenario.Handle(telegramEvent);
