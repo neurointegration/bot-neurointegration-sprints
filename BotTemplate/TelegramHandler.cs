@@ -15,7 +15,7 @@ public class TelegramHandler : BaseFunctionHandler<UserMessagesService>
         var body = JObject.Parse(request).GetValue("body")!.Value<string>()!;
         var message = JsonConvert.DeserializeObject<Update>(body)!;
 
-        await handleService.HandleMessage(message);
+        await HandleService.HandleMessage(message);
 
         return "ok";
     }

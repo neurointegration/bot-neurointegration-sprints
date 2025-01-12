@@ -13,13 +13,13 @@ public class TriggerHandler : BaseFunctionHandler<QuestionService>
     {
         var parsedRequest = ParseRequest(request);
 
-        var askResult = await handleService.AskQuestions(parsedRequest);
+        var askResult = await HandleService.AskQuestions(parsedRequest);
         return $"Количество вопросов: {askResult}";
     }
 
     private QuestionRequest ParseRequest(string request)
     {
-        var triggerFrequencyMinutes = int.Parse(configuration.TriggerFrequencyMinutes!);
+        var triggerFrequencyMinutes = int.Parse(Configuration.TriggerFrequencyMinutes!);
         var questionRequest = JsonConvert.DeserializeObject<QuestionRequest>(request);
         if (questionRequest == null)
             questionRequest = new QuestionRequest();

@@ -7,28 +7,22 @@ namespace BotTemplate;
 
 public abstract class BaseFunctionHandler<T> : YcFunction<string, Response>
 {
-    protected IServiceProvider provider;
-    protected Configuration configuration;
-    protected T handleService;
+    protected IServiceProvider Provider;
+    protected Configuration Configuration;
+    protected T HandleService;
+    protected ILogger Logger;
 
     public Response FunctionHandler(string request, Context context)
     {
-        configuration = Configuration.FromEnvironment();
+        Configuration = Configuration.FromEnvironment();
         var service = new ServiceCollection();
-        provider = service.BuildDeps(configuration, LogCategoryName);
-        handleService = provider.GetRequiredService<T>();
-        var logger = provider.GetRequiredService<ILogger>();
-        logger.LogInformation($"Запрос: {request}");
-        
-        try
-        {
-            var result = InnerHandleRequest(request, context).GetAwaiter().GetResult();
-            return new Response(200, result);
-        }
-        catch (Exception e)
-        {
-            return new Response(500, $"Error {e}");
-        }
+        Provider = service.BuildDeps(Configuration, LogCategoryName);
+        HandleService = Provider.GetRequiredService<T>();
+        Logger = Provider.GetRequiredService<ILogger>();
+        Logger.LogInformation($"Запрос: {request}");
+
+        var result = InnerHandleRequest(request, context).GetAwaiter().GetResult();
+        return new Response(200, result);
     }
 
     protected abstract Task<string> InnerHandleRequest(string request, Context context);
