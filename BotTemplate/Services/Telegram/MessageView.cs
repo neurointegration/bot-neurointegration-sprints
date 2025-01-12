@@ -3,6 +3,7 @@ using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
+using Message = BotTemplate.Models.Telegram.Message;
 
 namespace BotTemplate.Services.Telegram;
 
@@ -30,6 +31,48 @@ public class HtmlMessageSender : IMessageSender
         catch (Exception e)
         {
             log.LogError($"Не удалось отправить сообщение {text} пользователю {chatId}. Ошибка {e.Message}");
+        }
+    }
+    
+    public async Task<int?> TrySay(Message message, long chatId)
+    {
+        try
+        {
+            var sendingMessage = await botClient.SendTextMessageAsync(
+                chatId,
+                message.Text,
+                parseMode: ParseMode.Html,
+                replyMarkup: message.ReplyMarkup
+            );
+
+            return sendingMessage.MessageId;
+        }
+        catch (Exception e)
+        {
+            log.LogError($"Не удалось отправить сообщение {message.Text} пользователю {chatId}. Ошибка {e.Message}");
+        }
+
+        return null;
+    }
+    
+    public async Task TryEdit(Message message, long chatId, int messageId)
+    {
+        if (message.ReplyMarkup is not InlineKeyboardMarkup inlineKeyboardMarkup)
+            return;
+        
+        try
+        {
+            await botClient.EditMessageTextAsync(
+                chatId,
+                messageId,
+                message.Text,
+                parseMode: ParseMode.Html,
+                replyMarkup: inlineKeyboardMarkup
+            );
+        }
+        catch (Exception e)
+        {
+            log.LogError($"Не удалось изменить сообщение {messageId}. Ошибка {e.Message}");
         }
     }
 

@@ -28,7 +28,7 @@ public interface IBackendApiClient
     /// Обновить пользователя, указываются только обновляемые поля, если поле обновлять не надо, то оно указывается как null
     /// </summary>
     /// <param name="updateUser">Новые данные пользователя</param>
-    Task<User> UpdateUserAsync(UpdateUser updateUser);
+    Task<User> UpdateUser(UpdateUser updateUser);
 
     /// <summary>
     /// Достать информацию о пользователе
@@ -82,4 +82,24 @@ public interface IBackendApiClient
     /// </summary>
     /// <param name="coachId">id тренера</param>
     Task<List<User>> GetCoachStudentsAsync(long coachId);
+    
+    /// <summary>
+    /// Достать информацию о рутинных действиях пользователя
+    /// </summary>
+    /// <param name="userId">Id пользователя</param>
+    Task<List<WeekRoutineAction>> GetUserRoutineActions(long userId);
+
+    /// <summary>
+    /// Добавить 1 к количеству выполнений рутины за неделю
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="actionId"></param>
+    /// <returns></returns>
+    Task CheckupAction(long userId, string actionId);
+    
+    Task AddActions(long userId, List<RoutineAction> routineActions);
+    
+    Task AddAction(long userId, RoutineAction routineAction);
+
+    Task DeleteAction(long userId, string actionId);
 }

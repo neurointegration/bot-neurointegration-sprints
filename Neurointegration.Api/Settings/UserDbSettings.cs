@@ -9,7 +9,6 @@ public static class UserDbSettings
     public const string WeekReflectionTime = "week_reflection_time";
     public const string MessageStartTimeField = "start_message_time";
     public const string MessageEndTimeField = "end_message_time";
-    public const string RoutineActionsField = "routine_actions";
 
     public const string EmailField = "email";
     public const string IAmCoachField = "iam_coach";

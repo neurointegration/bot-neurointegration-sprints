@@ -53,7 +53,7 @@ public class SprintStorage : ISprintStorage
 
     public async Task SaveOrUpdate(Sprint sprint)
     {
-        await ydbClient.ExecuteModify($@"
+        await ydbClient.ExecuteDataQuery($@"
              DECLARE ${SprintDbSettings.UserIdField} AS Int64;
              DECLARE ${SprintDbSettings.SprintNumberField} AS Int64;
              DECLARE ${SprintDbSettings.SheetIdField} AS text;

@@ -8,4 +8,5 @@ public class CurrentScenarioInfo
     public int? SprintReplyNumber { get; set; }
     public int? Index { get; set; }
     public DateTime? Date { get; set; }
+    public string? Data { get; set; }
 }

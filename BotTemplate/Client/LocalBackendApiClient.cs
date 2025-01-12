@@ -10,13 +10,15 @@ public class LocalBackendApiClient : IBackendApiClient
     private readonly IAnswersService answersService;
     private readonly IQuestionService questionService;
     private readonly IUserService userService;
+    private readonly IRoutineActionsService routineActionsService;
 
     public LocalBackendApiClient(IAnswersService answersService, IQuestionService questionService,
-        IUserService userService)
+        IUserService userService, IRoutineActionsService routineActionsService)
     {
         this.answersService = answersService;
         this.questionService = questionService;
         this.userService = userService;
+        this.routineActionsService = routineActionsService;
     }
 
     public async Task SendAnswerAsync(SendAnswer sendAnswer)
@@ -40,7 +42,7 @@ public class LocalBackendApiClient : IBackendApiClient
         return result;
     }
 
-    public async Task<User> UpdateUserAsync(UpdateUser updateUser)
+    public async Task<User> UpdateUser(UpdateUser updateUser)
     {
         var result = await userService.UpdateUser(updateUser);
         if (!result.IsSuccess)
@@ -91,5 +93,33 @@ public class LocalBackendApiClient : IBackendApiClient
         if (!result.IsSuccess)
             throw new HttpRequestException(result.Error.Message);
         return result.Value;
+    }
+
+    public async Task<List<WeekRoutineAction>> GetUserRoutineActions(long userId)
+    {
+        return await routineActionsService.GetWeekActions(userId);
+    }
+    
+    public async Task CheckupAction(long userId, string actionId)
+    {
+        await routineActionsService.CheckupAction(userId, actionId);
+    }
+
+    public async Task AddActions(long userId, List<RoutineAction> routineActions)
+    {
+        foreach (var routineAction in routineActions)
+        {
+            await AddAction(userId, routineAction);
+        }
+    }
+
+    public async Task AddAction(long userId, RoutineAction routineAction)
+    {
+        await routineActionsService.AddAction(userId, routineAction);
+    }
+
+    public async Task DeleteAction(long userId, string actionId)
+    {
+        await routineActionsService.DeleteAction(userId, actionId);
     }
 }

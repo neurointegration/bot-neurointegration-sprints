@@ -41,14 +41,12 @@ public class SprintService : ISprintService
         await sprintStorage.SaveOrUpdate(sprint);
     }
 
-    public async Task<(Sprint?, long)> GetActiveSprint(long userId)
+    public async Task<Sprint?> GetLastSprint(long userId)
     {
         var sprints = await sprintStorage.GetUserSprints(userId);
         var lastSprint = sprints.MaxBy(sprint => sprint.SprintNumber);
-        if (lastSprint.SprintStartDate.AddDays(27) >= DateTime.UtcNow.Date)
-            return (lastSprint, lastSprint.SprintNumber);
 
-        return (null, lastSprint.SprintNumber);
+        return lastSprint;
     }
 
     public async Task<List<string>> GetUserGoogleSheets(long ownerId)
@@ -61,8 +59,8 @@ public class SprintService : ISprintService
         return await sprintStorage.GetSprint(userId, sprintNumber);
     }
 
-    public async Task<List<Sprint>> GetSprints(long ownerId)
+    public async Task<List<Sprint>> GetSprints(long userId)
     {
-        return await sprintStorage.GetUserSprints(ownerId);
+        return await sprintStorage.GetUserSprints(userId);
     }
 }

@@ -22,47 +22,8 @@ public class UserMapper
             EveningStandUpTime = row[UserDbSettings.EveningStandUpTimeField].GetOptionalInterval(),
             WeekReflectionTime = row[UserDbSettings.WeekReflectionTime].GetOptionalInterval(),
             MessageStartTime = row[UserDbSettings.MessageStartTimeField].GetOptionalInterval(),
-            MessageEndTime = row[UserDbSettings.MessageEndTimeField].GetOptionalInterval(),
-            RoutineActions = ToRoutineActionsList(row[UserDbSettings.RoutineActionsField].GetOptionalUtf8())
+            MessageEndTime = row[UserDbSettings.MessageEndTimeField].GetOptionalInterval()
         };
-    }
-
-    public List<RoutineAction> ToRoutineActionsList(string? text)
-    {
-        var result = new List<RoutineAction>();
-
-        if (string.IsNullOrWhiteSpace(text))
-            return result;
-        
-        var actionLines = text.Split(";");
-        foreach (var line in actionLines)
-        {
-            var parsedAction = line.Split("::");
-            var type = Enum.Parse<RoutineType>(parsedAction[0]);
-            var action = parsedAction[1];
-            result.Add(
-                new RoutineAction()
-                {
-                    Type = type,
-                    Action = action
-                });
-        }
-
-        return result;
-    }
-
-    public string ToString(List<RoutineAction> routineActions)
-    {
-        var sb = new StringBuilder();
-        foreach (var routine in routineActions)
-        {
-            sb.Append($";{routine.Type}::{routine.Action}");
-        }
-
-        if (sb.Length > 0)
-            sb.Remove(0, 1);
-        
-        return sb.ToString();
     }
 
     public SheetPermission ToSheetPermissionEntity(ResultSet.Row row)

@@ -4,9 +4,7 @@ using Neurointegration.Api.DataModels.Models;
 
 namespace BotTemplate.Scenarios.RegularScenarios;
 
-public interface IRegularScenario
+public interface IRegularScenario : IScenario
 {
-    Task Start(Question question);
-
-    Task Handle(TelegramEvent telegramEvent);
+    Task<bool> TryStart(Question question);
 }

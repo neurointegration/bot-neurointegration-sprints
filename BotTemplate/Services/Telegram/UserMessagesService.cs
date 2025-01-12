@@ -1,8 +1,8 @@
+using BotTemplate.Models;
 using BotTemplate.Models.Telegram;
-using BotTemplate.Scenarios.Coach;
-using BotTemplate.Scenarios.RegularScenarios;
-using BotTemplate.Scenarios.User;
+using BotTemplate.Scenarios;
 using BotTemplate.Services.YDB;
+using Newtonsoft.Json;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
@@ -11,39 +11,21 @@ namespace BotTemplate.Services.Telegram;
 public class UserMessagesService
 {
     private readonly IMessageSender messageSender;
-    private readonly RegisterScenario registerScenario;
-    private readonly SettingsScenario settingsScenario;
-    private readonly GetStudentsScenario getStudentsScenario;
-    private readonly GetTablesLinksScenario getTablesLinksScenario;
+    private readonly IEnumerable<IScenario> scenarios;
     private readonly string telegramBotUrl;
     private readonly HttpClient client = new();
 
     private readonly ScenarioStateRepository scenarioStateRepository;
-    private readonly StatusScenario statusScenario;
-    private readonly EveningStandUpScenario eveningStandUpScenario;
-    private readonly WeekendReflectionScenario weekendReflectionScenario;
 
     public UserMessagesService(
         IMessageSender messageSender,
-        RegisterScenario registerScenario,
-        SettingsScenario settingsScenario,
-        GetStudentsScenario getStudentsScenario,
-        GetTablesLinksScenario getTablesLinksScenario,
+        IEnumerable<IScenario> scenarios,
         ScenarioStateRepository scenarioStateRepository,
-        StatusScenario statusScenario,
-        EveningStandUpScenario eveningStandUpScenario,
-        WeekendReflectionScenario weekendReflectionScenario,
         Configuration configuration)
     {
         this.messageSender = messageSender;
-        this.registerScenario = registerScenario;
-        this.settingsScenario = settingsScenario;
-        this.getStudentsScenario = getStudentsScenario;
-        this.getTablesLinksScenario = getTablesLinksScenario;
+        this.scenarios = scenarios;
         this.scenarioStateRepository = scenarioStateRepository;
-        this.statusScenario = statusScenario;
-        this.eveningStandUpScenario = eveningStandUpScenario;
-        this.weekendReflectionScenario = weekendReflectionScenario;
 
         telegramBotUrl = $"https://api.telegram.org/bot{configuration.TelegramToken}";
     }
@@ -64,7 +46,7 @@ public class UserMessagesService
                 ChatId = message.CallbackQuery!.Message!.Chat.Id,
                 Text = message.CallbackQuery.Data!,
                 Username = message.CallbackQuery.From.Username!,
-                MessageType = message.CallbackQuery.Message.Type
+                MessageType = message.CallbackQuery.Message.Type,
             },
             _ => null
         };
@@ -83,7 +65,7 @@ public class UserMessagesService
     {
         var chatId = telegramEvent.ChatId;
         var text = telegramEvent.Text;
-        var scenarioId = await scenarioStateRepository.GetScenarioIdByChatId(chatId);
+        var scenarioInfo = await scenarioStateRepository.GetInfoByChatId(chatId);
 
         if (text == null)
         {
@@ -91,56 +73,17 @@ public class UserMessagesService
             return;
         }
 
+        var success = false;
 
-        if (text == "/start" || scenarioId == registerScenario.ScenarioId)
+        foreach (var scenario in scenarios)
         {
-            await registerScenario.Handle(telegramEvent);
-            return;
+            success = await scenario.TryHandle(telegramEvent, scenarioInfo);
+            if (success)
+                break;
         }
-
-        if (text == "Настройки" || scenarioId == settingsScenario.ScenarioId)
-        {
-            if (scenarioId != null && scenarioId != settingsScenario.ScenarioId)
-                await messageSender.Say("Закночи другой сценарий, прежде чем открыть настройки.", chatId);
-            else
-                await settingsScenario.Handle(telegramEvent);
-
-            return;
-        }
-
-        if (text == "Таблица результатов")
-        {
-            if (scenarioId != null)
-                await messageSender.Say("Закночи другой сценарий, прежде чем получать таблицу результатов.", chatId);
-            else
-                await getTablesLinksScenario.Handle(telegramEvent);
-
-            return;
-        }
-
-        if (text == "Мои ученики")
-        {
-            if (scenarioId != null)
-                await messageSender.Say(
-                    "Закночи другой сценарий, прежде чем получать таблицы результатов твоих учеников.", chatId);
-            else
-                await getStudentsScenario.Handle(telegramEvent);
-
-            return;
-        }
-
-        var key = await scenarioStateRepository.GetCurrentKey(chatId);
-        if (key == null)
-            return;
-
-        var nonCommandScenarios = new List<IRegularScenario>()
-        {
-            statusScenario, eveningStandUpScenario, weekendReflectionScenario
-        };
-        foreach (var scenario in nonCommandScenarios)
-        {
-            await scenario.Handle(telegramEvent);
-        }
+        
+        if (!success)
+            await HandleDefaultUpdate(telegramEvent.ChatId);
     }
 
     private async Task HandleDefaultUpdate(long chatId)

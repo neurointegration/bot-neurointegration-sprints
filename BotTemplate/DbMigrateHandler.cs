@@ -1,5 +1,6 @@
 using Common.Ydb;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Neurointegration.Api.DI;
 using Neurointegration.Api.Settings;
 using Neurointegration.Api.Storages.Tables;
@@ -18,9 +19,12 @@ public class DbMigrateHandler : YcFunction<string, Response>
     public async Task Handle()
     {
         var secretSettings = ApiSecretSettings.FromEnvironment();
+        using var factory = LoggerFactory.Create(builder => builder.AddSimpleConsole());
         var service = new ServiceCollection()
-            .AddTransient(_ => new YdbClient(secretSettings.YdbSecretSettings))
-            .AddDb();
+            .AddSingleton<ILogger>(factory.CreateLogger("Migrate"))
+            .AddTransient(provider =>
+                new YdbClient(secretSettings.YdbSecretSettings, provider.GetRequiredService<ILogger>()))
+            .AddInitialize();
         var serviceProvider = service.BuildServiceProvider();
         var initializer = serviceProvider.GetService<YdbInitializer>() ??
                           throw new ArgumentException("Нет экземпляра инициализатора бд для апи");

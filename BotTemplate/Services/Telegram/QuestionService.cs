@@ -11,9 +11,7 @@ public class QuestionService
 {
     private readonly IBackendApiClient backendApiClient;
     private readonly ScenarioStateRepository scenarioStateRepository;
-    private readonly StatusScenario statusScenario;
-    private readonly EveningStandUpScenario eveningStandUpScenario;
-    private readonly WeekendReflectionScenario weekendReflectionScenario;
+    private readonly IEnumerable<IRegularScenario> regularScenarios;
     private readonly ILogger logger;
 
     private const int DefaultRequestTimeMinutes = 2;
@@ -21,16 +19,12 @@ public class QuestionService
     public QuestionService(
         IBackendApiClient backendApiClient,
         ScenarioStateRepository scenarioStateRepository,
-        StatusScenario statusScenario,
-        EveningStandUpScenario eveningStandUpScenario,
-        WeekendReflectionScenario weekendReflectionScenario,
+        IEnumerable<IRegularScenario> regularScenarios,
         ILogger logger)
     {
         this.backendApiClient = backendApiClient;
         this.scenarioStateRepository = scenarioStateRepository;
-        this.statusScenario = statusScenario;
-        this.eveningStandUpScenario = eveningStandUpScenario;
-        this.weekendReflectionScenario = weekendReflectionScenario;
+        this.regularScenarios = regularScenarios;
         this.logger = logger;
     }
 
@@ -43,22 +37,17 @@ public class QuestionService
         foreach (var question in questions)
         {
             await scenarioStateRepository.EndScenarioNoMatterWhat(question.UserId);
+            var success = false;
 
-            switch (question.ScenarioType)
+            foreach (var scenario in regularScenarios)
             {
-                case ScenarioType.Status:
-                    await statusScenario.Start(question);
-                    continue;
-                case ScenarioType.EveningStandUp:
-                    await eveningStandUpScenario.Start(question);
-                    continue;
-                case ScenarioType.Reflection:
-                    await weekendReflectionScenario.Start(question);
-                    continue;
-                default:
-                    logger.LogWarning($"Неизвестный тип вопроса {question.ScenarioType} для пользователя {question.UserId}");
-                    continue;
+                success = await scenario.TryStart(question);
+                if (success)
+                    break;
             }
+            
+            if (!success)
+                logger.LogWarning($"Неизвестный тип вопроса {question.ScenarioType} для пользователя {question.UserId}");
         }
 
         return questions.Count;

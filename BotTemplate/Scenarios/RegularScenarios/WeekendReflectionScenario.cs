@@ -22,11 +22,11 @@ public class WeekendReflectionScenario : BaseRegularScenario
     {
     }
 
-    public override async Task Start(Question question)
+    public override async Task<bool> TryStart(Question question)
     {
         if (question.ScenarioType != ScenarioType)
-            return;
-        
+            return false;
+
         string? message;
         if (question.SprintReplyNumber == SprintReplyCount - 1)
         {
@@ -43,5 +43,6 @@ public class WeekendReflectionScenario : BaseRegularScenario
         }
 
         await MessageSender.TrySay(message, question.UserId);
+        return true;
     }
 }

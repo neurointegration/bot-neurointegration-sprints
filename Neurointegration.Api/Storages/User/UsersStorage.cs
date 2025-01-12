@@ -21,7 +21,7 @@ public class UsersStorage : IUsersStorage
 
     public async Task SaveUser(DataModels.Models.User user)
     {
-        await ydbClient.ExecuteModify($@"
+        await ydbClient.ExecuteDataQuery($@"
              DECLARE ${UserDbSettings.UserIdField} AS Int64;
              DECLARE ${UserDbSettings.EmailField} AS text;
              DECLARE ${UserDbSettings.UsernameField} AS text;
@@ -31,15 +31,12 @@ public class UsersStorage : IUsersStorage
              DECLARE ${UserDbSettings.WeekReflectionTime} AS Interval?;
              DECLARE ${UserDbSettings.IAmCoachField} AS Bool;
              DECLARE ${UserDbSettings.SendRegularMessagesField} AS Bool;
-             DECLARE ${UserDbSettings.RoutineActionsField} AS Utf8;
 
              REPLACE INTO {UserDbSettings.TableName} 
                 ( {UserDbSettings.UserIdField}, {UserDbSettings.EmailField}, {UserDbSettings.UsernameField}, {UserDbSettings.MessageStartTimeField}, {UserDbSettings.MessageEndTimeField},
-                  {UserDbSettings.EveningStandUpTimeField}, {UserDbSettings.WeekReflectionTime}, {UserDbSettings.IAmCoachField}, {UserDbSettings.SendRegularMessagesField},
-                  {UserDbSettings.RoutineActionsField})
+                  {UserDbSettings.EveningStandUpTimeField}, {UserDbSettings.WeekReflectionTime}, {UserDbSettings.IAmCoachField}, {UserDbSettings.SendRegularMessagesField} )
              VALUES ( ${UserDbSettings.UserIdField}, ${UserDbSettings.EmailField}, ${UserDbSettings.UsernameField}, ${UserDbSettings.MessageStartTimeField}, ${UserDbSettings.MessageEndTimeField},
-                  ${UserDbSettings.EveningStandUpTimeField}, ${UserDbSettings.WeekReflectionTime}, ${UserDbSettings.IAmCoachField}, ${UserDbSettings.SendRegularMessagesField},
-                     ${UserDbSettings.RoutineActionsField} )",
+                  ${UserDbSettings.EveningStandUpTimeField}, ${UserDbSettings.WeekReflectionTime}, ${UserDbSettings.IAmCoachField}, ${UserDbSettings.SendRegularMessagesField} )",
             new Dictionary<string, YdbValue>()
             {
                 {$"${UserDbSettings.UserIdField}", YdbValue.MakeInt64(user.UserId)},
@@ -51,7 +48,6 @@ public class UsersStorage : IUsersStorage
                 {$"${UserDbSettings.WeekReflectionTime}", YdbValue.MakeOptionalInterval(user.WeekReflectionTime)},
                 {$"${UserDbSettings.IAmCoachField}", YdbValue.MakeBool(user.IAmCoach)},
                 {$"${UserDbSettings.SendRegularMessagesField}", YdbValue.MakeBool(user.SendRegularMessages)},
-                {$"${UserDbSettings.RoutineActionsField}", YdbValue.MakeUtf8(userMapper.ToString(user.RoutineActions))},
             });
     }
 
@@ -97,7 +93,7 @@ public class UsersStorage : IUsersStorage
 
     public async Task AddAccess(long grantedUserId, long ownerUserId, string sheetId, string permissionId)
     {
-        await ydbClient.ExecuteModify($@"
+        await ydbClient.ExecuteDataQuery($@"
              DECLARE ${UserAccessDbSettings.GrantedUserIdField} AS Int64;
              DECLARE ${UserAccessDbSettings.OwnerUserIdField} AS Int64;
              DECLARE ${UserAccessDbSettings.PermissionIdField} AS Utf8;
@@ -138,7 +134,7 @@ public class UsersStorage : IUsersStorage
 
     public async Task DeleteAccess(long grantedUserId, long ownerId)
     {
-        await ydbClient.ExecuteModify($@"
+        await ydbClient.ExecuteDataQuery($@"
              DECLARE ${UserAccessDbSettings.GrantedUserIdField} AS Int64;
              DECLARE ${UserAccessDbSettings.OwnerUserIdField} AS Int64;
 
@@ -170,7 +166,7 @@ public class UsersStorage : IUsersStorage
 
     public async Task DeleteUser(long userId)
     {
-        await ydbClient.ExecuteModify($@"
+        await ydbClient.ExecuteDataQuery($@"
              DECLARE ${UserDbSettings.UserIdField} AS Int64;
 
             DELETE FROM {UserDbSettings.TableName}

@@ -4,10 +4,12 @@ using BotTemplate.Services.Telegram;
 
 namespace BotTemplate.Scenarios.Coach;
 
-public class GetStudentsScenario
+public class GetStudentsScenario: IScenario
 {
     private readonly IBackendApiClient backendApiClient;
     private readonly IMessageSender messageSender;
+
+    private const string Command = CommandsConstants.GetStudents;
 
     public GetStudentsScenario(IBackendApiClient backendApiClient, IMessageSender messageSender)
     {
@@ -15,15 +17,24 @@ public class GetStudentsScenario
         this.messageSender = messageSender;
     }
 
-    public async Task Handle(TelegramEvent telegramEvent)
+    public async Task<bool> TryHandle(TelegramEvent telegramEvent, CurrentScenarioInfo? scenarioInfo)
     {
+        if (telegramEvent.Text?.Trim().ToLower() != Command)
+            return false;
+        
+        if (scenarioInfo != null)
+        {
+            await messageSender.Say("Закночи другой сценарий, прежде чем получать таблицы результатов твоих учеников.", telegramEvent.ChatId);
+            return true;
+        }
+        
         await messageSender.Say("Загружаю твоих учеников. Подожди", telegramEvent.ChatId);
         var students = await backendApiClient.GetCoachStudentsAsync(telegramEvent.ChatId);
         if (students.Count == 0)
         {
             await messageSender.Say("У тебя пока нету учеников.",
                 telegramEvent.ChatId);
-            return;
+            return true;
         }
 
         var studentsSheets = new List<string>();
@@ -43,5 +54,6 @@ public class GetStudentsScenario
         }
 
         await messageSender.Say(message, telegramEvent.ChatId);
+        return true;
     }
 }

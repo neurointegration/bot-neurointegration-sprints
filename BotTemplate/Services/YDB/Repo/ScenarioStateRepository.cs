@@ -1,5 +1,8 @@
+using BotTemplate.Models.ScenariosData;
 using BotTemplate.Models.Telegram;
 using BotTemplate.Services.YDB.Repo;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Ydb.Sdk.Value;
 
 namespace BotTemplate.Services.YDB;
@@ -10,15 +13,22 @@ public class ScenarioStateRepository : IRepository
 
     private readonly IBotDatabase botDatabase;
     private readonly ScenariosRepository scenariosRepository;
+    private readonly ILogger logger;
 
-    public ScenarioStateRepository(IBotDatabase botDatabase, ScenariosRepository scenariosRepository)
+    public ScenarioStateRepository(IBotDatabase botDatabase, ScenariosRepository scenariosRepository, ILogger logger)
     {
         this.botDatabase = botDatabase;
         this.scenariosRepository = scenariosRepository;
+        this.logger = logger;
     }
 
-    public async Task<string?> StartNewScenarioAndGetMessage(long chatId, string scenarioId, DateTime? date = null, long currentSprintNumber = 0,
-        int sprintReplyNumber = 0)
+    public async Task<string?> StartNewScenarioAndGetMessage(
+        long chatId,
+        string scenarioId,
+        DateTime? date = null,
+        long currentSprintNumber = 0,
+        int sprintReplyNumber = 0,
+        string? data = null)
     {
         var curIndex = await GetIndexByChatId(chatId);
         if (curIndex is not null)
@@ -30,17 +40,21 @@ public class ScenarioStateRepository : IRepository
             DECLARE $current_sprint_number AS Int64;
             DECLARE $sprint_reply_number AS Int32;
             DECLARE $date AS DATETIME?;
+            DECLARE $data AS Json?;
 
-            INSERT INTO {TableName} ( chat_id, scenario_id, current_sprint_number, sprint_reply_number, index, date )
-            VALUES ( $chat_id, $scenario_id, $current_sprint_number, $sprint_reply_number, 0, $date )
+            REPLACE INTO {TableName} ( chat_id, scenario_id, current_sprint_number, sprint_reply_number, index, date, data )
+            VALUES ( $chat_id, $scenario_id, $current_sprint_number, $sprint_reply_number, 0, $date, $data)
         ", new Dictionary<string, YdbValue?>
         {
             {"$chat_id", YdbValue.MakeInt64(chatId)},
             {"$scenario_id", YdbValue.MakeUtf8(scenarioId)},
             {"$current_sprint_number", YdbValue.MakeInt64(currentSprintNumber)},
             {"$sprint_reply_number", YdbValue.MakeInt32(sprintReplyNumber)},
-            {"$date", YdbValue.MakeOptionalDatetime(date)}
+            {"$date", YdbValue.MakeOptionalDatetime(date)},
+            {"$data", YdbValue.MakeOptionalJson(data)}
         });
+
+        logger.LogInformation($"Начали для пользователя {chatId} сценарий {scenarioId}");
 
         var message = await scenariosRepository.GetMessageByScenarioIdAndMessageIndex(scenarioId, 0);
         return message;
@@ -133,17 +147,6 @@ public class ScenarioStateRepository : IRepository
         });
     }
 
-    public async Task<string?> GetCurrentKey(long chatId)
-    {
-        var scenarioId = await GetScenarioIdByChatId(chatId);
-        if (scenarioId is null)
-            return null;
-
-        var index = await GetIndexByChatId(chatId);
-
-        return await scenariosRepository.GetKeyByIndex(scenarioId, index!.Value);
-    }
-
     public async Task<string?> GetScenarioIdByChatId(long chatId)
     {
         var rows = await botDatabase.ExecuteFind($@"
@@ -199,7 +202,7 @@ public class ScenarioStateRepository : IRepository
         var rows = await botDatabase.ExecuteFind($@"
             DECLARE $chat_id AS Int64;
 
-            SELECT scenario_id, current_sprint_number, sprint_reply_number, index, date
+            SELECT scenario_id, current_sprint_number, sprint_reply_number, index, date, data
             FROM {TableName}
             WHERE chat_id = $chat_id
         ", new Dictionary<string, YdbValue>
@@ -224,14 +227,24 @@ public class ScenarioStateRepository : IRepository
                 SprintReplyNumber = rowsArray.First()["sprint_reply_number"].GetOptionalInt32(),
                 Index = rowsArray.First()["index"].GetOptionalInt32(),
                 Date = rowsArray.First()["date"].GetOptionalDatetime(),
+                Data = rowsArray.First()["data"].GetOptionalJson()
             };
     }
 
-    public async Task ClearAll()
+    public async Task UpdateData<T>(long chatId, T? scenarioData)
     {
-        await botDatabase.ExecuteScheme($@"
-            DROP TABLE {TableName};
-        ");
+        await botDatabase.ExecuteModify($@"
+            DECLARE $chat_id AS Int64;
+            DECLARE $data AS Json?;
+
+            UPDATE {TableName}
+            SET data = $data
+            WHERE chat_id = $chat_id;
+        ", new Dictionary<string, YdbValue?>
+        {
+            {"$chat_id", YdbValue.MakeInt64(chatId)},
+            {"$data", YdbValue.MakeOptionalJson(JsonConvert.SerializeObject(scenarioData))},
+        });
     }
 
     public async Task CreateTable()
@@ -246,6 +259,8 @@ public class ScenarioStateRepository : IRepository
                 sprint_reply_number Int32,
                 index Int32,
                 date DATETIME,
+                data Json
+                
                 PRIMARY KEY (chat_id)
             )
         ");

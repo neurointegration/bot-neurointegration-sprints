@@ -12,13 +12,14 @@ using Neurointegration.Api.Excpetions;
 
 namespace BotTemplate.Scenarios.User;
 
-public class RegisterScenario
+public class RegisterScenario: IScenario
 {
     private readonly ScenarioStateRepository scenarioStateRepository;
     private readonly UserAnswersRepository userAnswersRepository;
     private readonly IBackendApiClient backendApiClient;
     private readonly IMessageSender messageSender;
-    public string ScenarioId => "register";
+    private const string ScenarioId = "register";
+    private const string Command = CommandsConstants.Start;
 
     public RegisterScenario(
         ScenarioStateRepository scenarioStateRepository,
@@ -32,19 +33,28 @@ public class RegisterScenario
         this.messageSender = messageSender;
     }
 
-    public async Task Handle(TelegramEvent telegramEvent)
+    public async Task<bool> TryHandle(TelegramEvent telegramEvent,  CurrentScenarioInfo? scenarioInfo)
     {
+        if (telegramEvent.Text?.Trim().ToLower() != Command && scenarioInfo?.ScenarioId != ScenarioId)
+            return false;
+        
+        if (scenarioInfo != null && scenarioInfo.ScenarioId != ScenarioId)
+        {
+            await messageSender.Say("Закночи другой сценарий, прежде чем запустить стартовый сценарий.", telegramEvent.ChatId);
+            return true;
+        }
+        
         var chatId = telegramEvent.ChatId;
         var getUser = await backendApiClient.GetUser(chatId);
         if (getUser.IsSuccess)
         {
             await messageSender.Say("Ты уже зарегистрирован.", chatId);
-            return;
+            return true;
         }
         if (getUser.Error.Status != ErrorStatus.NotFound)
         {
             await messageSender.Say(MessageConstants.UnknownErrorText, chatId);
-            return;
+            return true;
         }
 
         var text = telegramEvent.Text ?? "";
@@ -210,6 +220,8 @@ public class RegisterScenario
 
         if (messageToSend is not null)
             await messageSender.SayWithMarkup(messageToSend.Text, chatId, messageToSend.ReplyMarkup);
+
+        return true;
     }
 
     private async Task RegisterUser(long fromChatId)

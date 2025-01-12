@@ -21,7 +21,7 @@ public class QuestionStorage : IQuestionStorage
 
     public async Task AddOrReplace(Question question)
     {
-        await ydbClient.ExecuteModify($@"
+        await ydbClient.ExecuteDataQuery($@"
             DECLARE ${QuestionDbSettings.DateField} AS DATETIME;
             DECLARE ${QuestionDbSettings.UserIdField} AS Int64;
             DECLARE ${QuestionDbSettings.ScenarioTypeField} AS Utf8;
@@ -113,13 +113,13 @@ public class QuestionStorage : IQuestionStorage
     {
         try
         {
-            await ydbClient.ExecuteModify($@"
+            await ydbClient.ExecuteDataQuery($@"
             DECLARE ${QuestionDbSettings.DateField} AS DATETIME;
             DECLARE ${QuestionDbSettings.UserIdField} AS Int64;
 
             DELETE FROM {QuestionDbSettings.TableName}
-            WHERE {QuestionDbSettings.DateField} == ${QuestionDbSettings.DateField} AND 
-                  {QuestionDbSettings.UserIdField} == ${QuestionDbSettings.UserIdField};",
+            WHERE {QuestionDbSettings.DateField} = ${QuestionDbSettings.DateField} AND 
+                  {QuestionDbSettings.UserIdField} = ${QuestionDbSettings.UserIdField};",
                 new Dictionary<string, YdbValue>
                 {
                     {$"${QuestionDbSettings.DateField}", YdbValue.MakeDatetime(question.Date)},
@@ -142,11 +142,11 @@ public class QuestionStorage : IQuestionStorage
 
     public async Task DeleteUserQuestions(long userId)
     {
-        await ydbClient.ExecuteModify($@"
+        await ydbClient.ExecuteDataQuery($@"
             DECLARE ${QuestionDbSettings.UserIdField} AS Int64;
 
             DELETE FROM {QuestionDbSettings.TableName}
-            WHERE {QuestionDbSettings.UserIdField} == ${QuestionDbSettings.UserIdField};",
+            WHERE {QuestionDbSettings.UserIdField} = ${QuestionDbSettings.UserIdField};",
             new Dictionary<string, YdbValue>
             {
                 {$"${QuestionDbSettings.UserIdField}", YdbValue.MakeInt64(userId)}

@@ -36,10 +36,10 @@ public abstract class BaseRegularScenario : IRegularScenario
         };
     }
 
-    public virtual async Task Start(Question question)
+    public virtual async Task<bool> TryStart(Question question)
     {
         if (question.ScenarioType != ScenarioType)
-            return;
+            return false;
 
         Logger.LogInformation($"Начало сценария `{ScenarioType.ToString()}` для пользователя {question.UserId}");
         var message = await ScenarioStateRepository.StartNewScenarioAndGetMessage(question.UserId, ScenarioId,
@@ -47,14 +47,16 @@ public abstract class BaseRegularScenario : IRegularScenario
 
         if (!await TryProcessCommand(message, question.UserId, null))
             await MessageSender.TrySay(message, question.UserId);
+
+        return true;
     }
 
-    public virtual async Task Handle(TelegramEvent telegramEvent)
+    public virtual async Task<bool> TryHandle(TelegramEvent telegramEvent, CurrentScenarioInfo? scenarioInfo)
     {
         var chatId = telegramEvent.ChatId;
         var currentScenarioInfo = await ScenarioStateRepository.GetInfoByChatId(chatId);
-        if (currentScenarioInfo.ScenarioId != ScenarioId)
-            return;
+        if (currentScenarioInfo == null || currentScenarioInfo.ScenarioId != ScenarioId)
+            return false;
 
         var text = telegramEvent.Text ?? "";
         Logger.LogInformation(
@@ -77,6 +79,8 @@ public abstract class BaseRegularScenario : IRegularScenario
             await MessageSender.TrySay(message, chatId);
 
         await ScenarioStateRepository.TryEndScenario(chatId);
+
+        return true;
     }
 
     private async Task<bool> TryProcessCommand(string? newMessage, long userId, string? userAnswer)

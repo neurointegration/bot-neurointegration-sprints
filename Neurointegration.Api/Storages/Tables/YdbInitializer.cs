@@ -1,21 +1,24 @@
-﻿using Neurointegration.Api.Storages.Tables.Ydb;
+﻿using Common.Ydb;
+using Common.Ydb.Schema;
 
 namespace Neurointegration.Api.Storages.Tables;
 
 public class YdbInitializer
 {
-    private readonly List<ITableInitializer> initializers;
+    private readonly YdbClient ydbClient;
+    private readonly List<ITableSchema> schemas;
 
-    public YdbInitializer(IEnumerable<ITableInitializer> initializers)
+    public YdbInitializer(YdbClient ydbClient, IEnumerable<ITableSchema> tableSchemas)
     {
-        this.initializers = initializers.ToList();
+        this.ydbClient = ydbClient;
+        this.schemas = tableSchemas.ToList();
     }
 
     public async Task CreateTables()
     {
-        foreach (var tableInitializer in initializers)
+        foreach (var schema in schemas)
         {
-            await tableInitializer.CreateTable();
+            await ydbClient.CreateTable(schema);
         }
     }
 }

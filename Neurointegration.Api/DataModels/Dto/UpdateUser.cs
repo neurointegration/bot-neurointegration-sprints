@@ -1,6 +1,8 @@
-﻿namespace Neurointegration.Api.DataModels.Dto;
+﻿using Neurointegration.Api.DataModels.Models;
 
-public class UpdateUser
+namespace Neurointegration.Api.DataModels.Dto;
+
+public record UpdateUser
 {
     public long UserId { get; set; }
     public string? Email { get; set; }

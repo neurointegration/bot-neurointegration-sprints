@@ -33,7 +33,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-await app.UseDb();
+// await app.UseDb();
 
 // app.UseHttpsRedirection();
 

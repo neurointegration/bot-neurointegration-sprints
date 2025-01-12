@@ -1,5 +1,7 @@
 using BotTemplate.Client;
+using BotTemplate.Scenarios;
 using BotTemplate.Scenarios.Coach;
+using BotTemplate.Scenarios.Common;
 using BotTemplate.Scenarios.RegularScenarios;
 using BotTemplate.Scenarios.User;
 using BotTemplate.Services.Telegram;
@@ -56,27 +58,38 @@ public static class InternalDependenciesExtensions
 
         return serviceCollection;
     }
-    
+
     public static IServiceCollection AddRepositories(this IServiceCollection serviceCollection)
     {
         serviceCollection.AddSingleton<ScenarioStateRepository>();
         serviceCollection.AddSingleton<ScenariosRepository>();
         serviceCollection.AddSingleton<UserAnswersRepository>();
-        
+
         return serviceCollection;
     }
-    
+
     public static IServiceCollection AddScenarios(this IServiceCollection serviceCollection)
     {
-        serviceCollection.AddSingleton<RegisterScenario>();
-        serviceCollection.AddSingleton<SettingsScenario>();
-        serviceCollection.AddSingleton<GetStudentsScenario>();
-        serviceCollection.AddSingleton<GetTablesLinksScenario>();
+        serviceCollection.AddSingleton<IScenario, ChangeCoachStatusScenario>();
+        serviceCollection.AddSingleton<IScenario, ChangeSendRegularMessagesScenario>();
+        serviceCollection.AddSingleton<IScenario, ChangeEveningStandUpTimeScenario>();
+        serviceCollection.AddSingleton<IScenario, ChangeStateTimeRangeScenario>();
+        serviceCollection.AddSingleton<IScenario, ChangeRoutineActionsScenario>();
+
+        serviceCollection.AddSingleton<IScenario, RegisterScenario>();
+        serviceCollection.AddSingleton<IScenario, SettingsScenario>();
+        serviceCollection.AddSingleton<IScenario, GetStudentsScenario>();
+        serviceCollection.AddSingleton<IScenario, GetTablesLinksScenario>();
+
+        serviceCollection.AddSingleton<IScenario, StatusScenario>();
+        serviceCollection.AddSingleton<IScenario, EveningStandUpScenario>();
+        serviceCollection.AddSingleton<IScenario, WeekendReflectionScenario>();
+        serviceCollection.AddSingleton<IScenario, CheckupRoutineActionsScenario>();
         
-        serviceCollection.AddSingleton<StatusScenario>();
-        serviceCollection.AddSingleton<EveningStandUpScenario>();
-        serviceCollection.AddSingleton<WeekendReflectionScenario>();
-        
+        serviceCollection.AddSingleton<IRegularScenario, StatusScenario>();
+        serviceCollection.AddSingleton<IRegularScenario, EveningStandUpScenario>();
+        serviceCollection.AddSingleton<IRegularScenario, WeekendReflectionScenario>();
+
         return serviceCollection;
     }
 }
