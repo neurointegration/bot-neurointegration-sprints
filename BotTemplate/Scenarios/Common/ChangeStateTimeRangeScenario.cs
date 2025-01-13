@@ -36,7 +36,7 @@ public class ChangeStateTimeRangeScenario : IScenario
         if (text == Command)
         {
             await messageSender.TrySay(ChangeStatusTimeMessage.GetMessage(), chatId);
-            await scenarioStateRepository.StartNewScenarioAndGetMessage(chatId, ScenarioId);
+            await scenarioStateRepository.StartNewScenario(chatId, ScenarioId);
             return true;
         }
         

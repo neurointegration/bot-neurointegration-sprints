@@ -1,6 +1,5 @@
 using BotTemplate.Client;
 using BotTemplate.Models;
-using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Yandex.Cloud.Functions;
 

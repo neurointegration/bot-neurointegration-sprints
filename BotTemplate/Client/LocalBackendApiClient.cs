@@ -21,7 +21,7 @@ public class LocalBackendApiClient : IBackendApiClient
         this.routineActionsService = routineActionsService;
     }
 
-    public async Task SendAnswerAsync(SendAnswer sendAnswer)
+    public async Task SaveAnswer(SendAnswer sendAnswer)
     {
         var answer = await answersService.Save(sendAnswer);
         if (!answer.IsSuccess)

@@ -17,8 +17,8 @@ public static class DbDependencies
     
     public static IServiceCollection AddInitialize(this IServiceCollection service)
     {
-        // service.AddSingleton<ITableSchema, AnswerTableSchema>();
-        service.AddSingleton<ITableSchema, RoutineTableSchema>();
+        service.AddSingleton<ITableSchema, AnswerTableSchema>();
+        // service.AddSingleton<ITableSchema, RoutineTableSchema>();
         
         service.AddSingleton<YdbInitializer>();
 

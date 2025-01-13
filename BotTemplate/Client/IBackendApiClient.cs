@@ -10,7 +10,7 @@ public interface IBackendApiClient
     /// Сохранить ответ на вопрос
     /// </summary>
     /// <param name="sendAnswer">Ответ</param>
-    Task SendAnswerAsync(SendAnswer sendAnswer);
+    Task SaveAnswer(SendAnswer sendAnswer);
 
     /// <summary>
     /// Достать список вопросов

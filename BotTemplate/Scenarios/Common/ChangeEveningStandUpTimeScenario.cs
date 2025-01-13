@@ -34,7 +34,7 @@ public class ChangeEveningStandUpTimeScenario : IScenario
         if (text == Command)
         {
             await messageSender.TrySay(ChangeEveningStandUpTimeMessage.GetMessage(), chatId);
-            await scenarioStateRepository.StartNewScenarioAndGetMessage(chatId, ScenarioId);
+            await scenarioStateRepository.StartNewScenario(chatId, ScenarioId);
             return true;
         }
 

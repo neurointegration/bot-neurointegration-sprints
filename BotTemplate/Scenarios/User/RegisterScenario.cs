@@ -61,7 +61,7 @@ public class RegisterScenario: IScenario
         var index = await scenarioStateRepository.GetIndexByChatId(chatId);
         if (index is null)
         {
-            await scenarioStateRepository.StartNewScenarioAndGetMessage(chatId, ScenarioId);
+            await scenarioStateRepository.StartNewScenario(chatId, ScenarioId);
             index = -1;
         }
         else

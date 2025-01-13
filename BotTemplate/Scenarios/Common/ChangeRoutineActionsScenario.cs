@@ -51,7 +51,7 @@ public class ChangeRoutineActionsScenario : IScenario
             {
                 MessageId = messageId.Value
             };
-            await scenarioStateRepository.StartNewScenarioAndGetMessage(chatId, ScenarioId,
+            await scenarioStateRepository.StartNewScenario(chatId, ScenarioId,
                 data: JsonConvert.SerializeObject(data));
             return true;
         }

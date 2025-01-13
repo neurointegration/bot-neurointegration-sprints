@@ -1,6 +1,5 @@
 using Common.Ydb;
 using Neurointegration.Api.DataModels.Dto;
-using Ydb.Sdk.Value;
 
 namespace Neurointegration.Api.Storages.Answers;
 
@@ -25,7 +24,7 @@ public class AnswerStorage : IAnswerStorage
                 tableSchema.Date.WithValue(answer.Date.ToDateTime(TimeOnly.MinValue)),
                 tableSchema.Answer.WithValue(answer.Answer),
                 tableSchema.ScenarioType.WithValue(answer.ScenarioType.ToString()),
-                tableSchema.AnswerNumber.WithValue(answer.AnswerNumber),
+                tableSchema.AnswerType.WithValue(answer.AnswerType.ToString()),
                 tableSchema.SprintReplyNumber.WithValue(answer.SprintReplyNumber),
                 tableSchema.SprintNumber.WithValue(answer.SprintNumber)
             });

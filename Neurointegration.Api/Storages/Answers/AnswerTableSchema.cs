@@ -11,9 +11,9 @@ public class AnswerTableSchema: BaseTableSchema
 
     public readonly Int64YbdField UserId;
     public readonly Int32YbdField SprintReplyNumber;
-    public readonly Int32YbdField AnswerNumber;
     public readonly Int64YbdField SprintNumber;
     public readonly Utf8YdbField Answer;
+    public readonly Utf8YdbField AnswerType;
     public readonly Utf8YdbField ScenarioType;
     public readonly DateYdbField Date;
 
@@ -26,7 +26,7 @@ public class AnswerTableSchema: BaseTableSchema
         Date = new DateYdbField("date", FieldConditions.NotNull);
         Answer = new Utf8YdbField("answer", FieldConditions.NotNull);
         ScenarioType = new Utf8YdbField("scenario_type", FieldConditions.NotNull, FieldConditions.IsPrimaryKey);
-        AnswerNumber = new Int32YbdField("answer_number", FieldConditions.NotNull, FieldConditions.IsPrimaryKey);
+        AnswerType = new Utf8YdbField("answer_type", FieldConditions.NotNull, FieldConditions.IsPrimaryKey);
         SprintNumber = new Int64YbdField("sprint_number", FieldConditions.NotNull, FieldConditions.IsPrimaryKey);
         SprintReplyNumber = new Int32YbdField("sprint_reply_number", FieldConditions.NotNull, FieldConditions.IsPrimaryKey);
 
@@ -36,7 +36,7 @@ public class AnswerTableSchema: BaseTableSchema
             Date,
             Answer,
             ScenarioType,
-            AnswerNumber,
+            AnswerType,
             SprintNumber,
             SprintReplyNumber
         }.ToImmutableArray();

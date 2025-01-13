@@ -39,4 +39,6 @@ public static class CommandsConstants
     public const string CheckupRoutineActionPrefix = $"/checkupAction";
     public const string StartCheckupRoutineActions = "start_checkup_routine";
     public const string FinishCheckupRoutineActions = "finish_checkup_routine";
+    
+    public const string FinishEveningStandUp = "finish_evening_stand_up";
 }

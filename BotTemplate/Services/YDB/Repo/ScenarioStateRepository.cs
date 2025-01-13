@@ -1,4 +1,3 @@
-using BotTemplate.Models.ScenariosData;
 using BotTemplate.Models.Telegram;
 using BotTemplate.Services.YDB.Repo;
 using Microsoft.Extensions.Logging;
@@ -12,17 +11,15 @@ public class ScenarioStateRepository : IRepository
     public virtual string TableName => "scenario_state";
 
     private readonly IBotDatabase botDatabase;
-    private readonly ScenariosRepository scenariosRepository;
     private readonly ILogger logger;
 
-    public ScenarioStateRepository(IBotDatabase botDatabase, ScenariosRepository scenariosRepository, ILogger logger)
+    public ScenarioStateRepository(IBotDatabase botDatabase, ILogger logger)
     {
         this.botDatabase = botDatabase;
-        this.scenariosRepository = scenariosRepository;
         this.logger = logger;
     }
-
-    public async Task<string?> StartNewScenarioAndGetMessage(
+    
+    public async Task StartNewScenario(
         long chatId,
         string scenarioId,
         DateTime? date = null,
@@ -30,10 +27,6 @@ public class ScenarioStateRepository : IRepository
         int sprintReplyNumber = 0,
         string? data = null)
     {
-        var curIndex = await GetIndexByChatId(chatId);
-        if (curIndex is not null)
-            return null;
-
         await botDatabase.ExecuteModify($@"
             DECLARE $chat_id AS Int64;
             DECLARE $scenario_id AS Utf8;
@@ -55,20 +48,16 @@ public class ScenarioStateRepository : IRepository
         });
 
         logger.LogInformation($"Начали для пользователя {chatId} сценарий {scenarioId}");
-
-        var message = await scenariosRepository.GetMessageByScenarioIdAndMessageIndex(scenarioId, 0);
-        return message;
     }
 
-    public async Task<string?> IncreaseAndGetNewMessage(long chatId)
+    public async Task IncreaseAndGetNewMessage(long chatId)
     {
         var oldIndex = await GetIndexByChatId(chatId);
         if (oldIndex is null)
-            return null;
+            return;
 
         var scenarioId = await GetScenarioIdByChatId(chatId);
         var newIndex = oldIndex.Value + 1;
-        var message = await scenariosRepository.GetMessageByScenarioIdAndMessageIndex(scenarioId!, newIndex);
 
         await botDatabase.ExecuteModify($@"
             DECLARE $chat_id AS Int64;
@@ -84,8 +73,6 @@ public class ScenarioStateRepository : IRepository
             {"$scenario_id", YdbValue.MakeUtf8(scenarioId!)},
             {"$new_index", YdbValue.MakeInt32(newIndex)}
         });
-
-        return message;
     }
 
     public async Task DecreaseIndex(long chatId)
@@ -110,25 +97,6 @@ public class ScenarioStateRepository : IRepository
             {"$chat_id", YdbValue.MakeInt64(chatId)},
             {"$scenario_id", YdbValue.MakeUtf8(scenarioId!)},
             {"$new_index", YdbValue.MakeInt32(newIndex)}
-        });
-    }
-
-    public async Task TryEndScenario(long chatId)
-    {
-        var scenarioId = await GetScenarioIdByChatId(chatId);
-        var oldIndex = await GetIndexByChatId(chatId);
-        if (oldIndex is null)
-            return;
-        var key = await scenariosRepository.GetKeyByIndex(scenarioId!, oldIndex.Value);
-        if (key is not null)
-            return;
-        await botDatabase.ExecuteModify($@"
-            DECLARE $chat_id AS Int64;
-
-            DELETE FROM {TableName} WHERE chat_id = $chat_id;
-        ", new Dictionary<string, YdbValue?>
-        {
-            {"$chat_id", YdbValue.MakeInt64(chatId)}
         });
     }
 
