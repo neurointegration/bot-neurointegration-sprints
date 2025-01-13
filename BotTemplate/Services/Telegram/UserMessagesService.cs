@@ -1,8 +1,6 @@
-using BotTemplate.Models;
 using BotTemplate.Models.Telegram;
 using BotTemplate.Scenarios;
 using BotTemplate.Services.YDB;
-using Newtonsoft.Json;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
@@ -69,7 +67,7 @@ public class UserMessagesService
 
         if (text == null)
         {
-            await HandleDefaultUpdate(telegramEvent.ChatId);
+            await HandleUnknownCommand(telegramEvent.ChatId);
             return;
         }
 
@@ -83,11 +81,16 @@ public class UserMessagesService
         }
         
         if (!success)
-            await HandleDefaultUpdate(telegramEvent.ChatId);
+            await HandleUnknownCommand(telegramEvent.ChatId);
     }
 
     private async Task HandleDefaultUpdate(long chatId)
     {
         await messageSender.Say(MessageConstants.DefaultText, chatId);
     }
+    private async Task HandleUnknownCommand(long chatId)
+    {
+        await messageSender.Say(MessageConstants.UnknownCommand, chatId);
+    }
+    
 }

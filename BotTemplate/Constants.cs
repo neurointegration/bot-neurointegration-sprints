@@ -7,11 +7,15 @@ public static class MessageConstants
     public const string WithoutCoachButtonValue = "WithoutCoachButtonValue";
     public const string UnknownErrorText = "Что-то пошло не так! Попробуйте позже";
     public const string DefaultText = "Я пока не умею поддерживать стикеры, картинки и прочие нетекстовые сообщения!";
+    public const string UnknownCommand = "Я не знаю такой команды";
 }
 
 public static class CommandsConstants
 {
     public const string Start = "/start"; 
+    public const string SettingsCommand = "/settings"; 
+    public const string MyInfoCommand = "/info"; 
+    
     public const string ResultTables = "таблица результатов"; 
     public const string Settings = "настройки"; 
     public const string GetStudents = "мои ученики"; 

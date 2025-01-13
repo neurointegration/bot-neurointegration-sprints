@@ -28,7 +28,6 @@ public class GetStudentsScenario: IScenario
             return true;
         }
         
-        await messageSender.Say("Загружаю твоих учеников. Подожди", telegramEvent.ChatId);
         var students = await backendApiClient.GetCoachStudentsAsync(telegramEvent.ChatId);
         if (students.Count == 0)
         {

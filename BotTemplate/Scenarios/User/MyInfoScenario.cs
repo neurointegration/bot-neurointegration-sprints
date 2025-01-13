@@ -1,36 +1,38 @@
 using BotTemplate.Client;
 using BotTemplate.Models.Telegram;
 using BotTemplate.Services.Telegram;
-using BotTemplate.Services.Telegram.Messages.Settings;
 
 namespace BotTemplate.Scenarios.User;
 
-public class SettingsScenario : IScenario
+public class MyInfoScenario : IScenario
 {
     private readonly IBackendApiClient backendApiClient;
     private readonly IMessageSender messageSender;
-    private const string Command = CommandsConstants.Settings;
 
-    public SettingsScenario(
+    private HashSet<string> commands = new HashSet<string>()
+    {
+        CommandsConstants.MyInfoCommand
+    };
+
+    public MyInfoScenario(
         IBackendApiClient backendApiClient,
         IMessageSender messageSender)
     {
         this.backendApiClient = backendApiClient;
         this.messageSender = messageSender;
     }
-    
+
     public async Task<bool> TryHandle(TelegramEvent telegramEvent, CurrentScenarioInfo? scenarioInfo)
     {
-        if (telegramEvent.Text?.Trim().ToLower() == Command)
+        if (commands.Contains(telegramEvent.Text?.Trim().ToLower() ?? ""))
         {
             var chatId = telegramEvent.ChatId;
-            
+
             var getUser = await backendApiClient.GetUser(chatId);
             if (!getUser.IsSuccess)
                 await messageSender.Say(MessageConstants.UnknownErrorText, chatId);
 
-            var message = ShowSettingsMessage.GetMessage(getUser.Value);
-            await messageSender.SayWithMarkup(message.Text, chatId, message.ReplyMarkup);
+            await messageSender.TrySay(MyInfoMessages.GetMessage(getUser.Value.IAmCoach), chatId);
             return true;
         }
 
