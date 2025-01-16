@@ -36,12 +36,11 @@ public class QuestionService
 
         foreach (var question in questions)
         {
-            await scenarioStateRepository.EndScenarioNoMatterWhat(question.UserId);
             var success = false;
 
             foreach (var scenario in regularScenarios)
             {
-                success = await scenario.TryStart(question);
+                success = await scenario.TryAddToStart(question);
                 if (success)
                     break;
             }

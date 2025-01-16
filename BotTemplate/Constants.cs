@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Neurointegration.Api.DataModels.Models;
 
 namespace BotTemplate;
@@ -46,5 +47,6 @@ public static class CommandsConstants
     
     public const string FinishEveningStandUp = "finish_evening_stand_up";
 
+    public const string StartRegularScenarioRegexPattern = @"ready [({]?[a-fA-F0-9]{8}[-]?([a-fA-F0-9]{4}[-]?){3}[a-fA-F0-9]{12}[})]?.*$";
     public static string StartScenarioAction(string scenarioToStartId, string? answer = null) => $"ready {scenarioToStartId}{(answer is not null ? $" {answer}" : string.Empty)}";
 }

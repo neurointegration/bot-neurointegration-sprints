@@ -1,5 +1,9 @@
+using System.Text.RegularExpressions;
+using BotTemplate.Extensions;
+using BotTemplate.Models.ScenariosData;
 using BotTemplate.Models.Telegram;
 using BotTemplate.Scenarios;
+using BotTemplate.Scenarios.RegularScenarios;
 using BotTemplate.Services.YDB;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
@@ -10,20 +14,26 @@ public class UserMessagesService
 {
     private readonly IMessageSender messageSender;
     private readonly IEnumerable<IScenario> scenarios;
+    private readonly IEnumerable<IRegularScenario> regularScenarios;
     private readonly string telegramBotUrl;
     private readonly HttpClient client = new();
 
     private readonly ScenarioStateRepository scenarioStateRepository;
+    private readonly ScenariosToStartRepository scenariosToStartRepository;
 
     public UserMessagesService(
         IMessageSender messageSender,
         IEnumerable<IScenario> scenarios,
+        IEnumerable<IRegularScenario> regularScenarios,
         ScenarioStateRepository scenarioStateRepository,
+        ScenariosToStartRepository scenariosToStartRepository,
         Configuration configuration)
     {
         this.messageSender = messageSender;
         this.scenarios = scenarios;
+        this.regularScenarios = regularScenarios;
         this.scenarioStateRepository = scenarioStateRepository;
+        this.scenariosToStartRepository = scenariosToStartRepository;
 
         telegramBotUrl = $"https://api.telegram.org/bot{configuration.TelegramToken}";
     }
@@ -72,6 +82,28 @@ public class UserMessagesService
         }
 
         var success = false;
+        string[] splittedReadyQuery;
+
+        if (Regex.IsMatch(text, CommandsConstants.StartRegularScenarioRegexPattern)) 
+        {
+            splittedReadyQuery = text.Split();
+            var scenarioToStartId = splittedReadyQuery[1];
+            var scenarioToStart = await scenariosToStartRepository.GetScenarioToStartAndDeleteIt(scenarioToStartId);
+
+            await TryStartRegularScenario(scenarioToStart);
+            if (splittedReadyQuery.Length != 3)
+                return;
+            
+            var newText = splittedReadyQuery[2];
+            telegramEvent = new TelegramEvent
+            {
+                ChatId = telegramEvent.ChatId,
+                Text = newText,
+                Username = telegramEvent.Username,
+                MessageType = telegramEvent.MessageType
+            };
+            scenarioInfo = ScenarioToStartExtensions.ToCurrentScenarioInfo(scenarioToStart);
+        }
 
         foreach (var scenario in scenarios)
         {
@@ -83,6 +115,21 @@ public class UserMessagesService
         if (!success)
             await HandleUnknownCommand(telegramEvent.ChatId);
     }
+
+    private async Task TryStartRegularScenario(ScenarioToStart? scenarioToStart) 
+    {
+        if (scenarioToStart is null)
+        {
+            return;
+        }
+
+        foreach (var regularScenario in regularScenarios)
+        {
+            var success = await regularScenario.Start(scenarioToStart);
+            if (success)
+                break;
+        }
+    } 
 
     private async Task HandleDefaultUpdate(long chatId)
     {

@@ -36,7 +36,7 @@ public class EveningStandUpScenario : IRegularScenario
         if (question.ScenarioType != SelfScenarioType)
             return false;
 
-        var scenarioToStartId = await scenariosToStartRepository.AddNewScenarioToStartAndGetItsId(question.UserId, ScenarioId,
+        var scenarioToStartId = await scenariosToStartRepository.AddNewScenarioToStartAndGetItsId(question.UserId, ScenarioId, question.ScenarioType,
             question.Date, question.SprintNumber, question.SprintReplyNumber);
 
         await messageSender.TrySay(EveningStandUpMessages.AskReady(scenarioToStartId), question.UserId);
@@ -44,16 +44,17 @@ public class EveningStandUpScenario : IRegularScenario
         return true;
     }
 
-    public async Task<bool> TryStart(Question question)
+    public async Task<bool> Start(ScenarioToStart scenarioToStart)
     {
-        if (question.ScenarioType != SelfScenarioType)
+        if (scenarioToStart.ScenarioType != SelfScenarioType)
             return false;
+        
+        await scenarioStateRepository.EndScenarioNoMatterWhat(scenarioToStart.ChatId);
+        await scenarioStateRepository.StartNewScenario(scenarioToStart.ChatId, ScenarioId,
+            scenarioToStart.Date, scenarioToStart.SprintNumber, scenarioToStart.SprintReplyNumber);
 
-        await scenarioStateRepository.StartNewScenario(question.UserId, ScenarioId,
-            question.Date, question.SprintNumber, question.SprintReplyNumber);
-
-        await messageSender.TrySay(EveningStandUpMessages.AskWinning(), question.UserId);
-        await scenarioStateRepository.UpdateData(question.UserId,
+        await messageSender.TrySay(EveningStandUpMessages.AskWinning(), scenarioToStart.ChatId);
+        await scenarioStateRepository.UpdateData(scenarioToStart.ChatId,
             new RegularScenarioData() {AnswerType = AnswerType.EveningStandUpWinnings});
 
         return true;

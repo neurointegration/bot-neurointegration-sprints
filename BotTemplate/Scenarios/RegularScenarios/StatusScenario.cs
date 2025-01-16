@@ -1,4 +1,5 @@
 using BotTemplate.Client;
+using BotTemplate.Models.ScenariosData;
 using BotTemplate.Models.Telegram;
 using BotTemplate.Services.Telegram;
 using BotTemplate.Services.YDB;
@@ -12,7 +13,6 @@ public class StatusScenario : IRegularScenario
     private const string ScenarioId = "regular_status";
     private const ScenarioType SelfScenarioType = ScenarioType.Status;
 
-    private readonly ScenarioStateRepository scenarioStateRepository;
     private readonly ScenariosToStartRepository scenariosToStartRepository;
     private readonly IMessageSender messageSender;
     private readonly IBackendApiClient backendApiClient;
@@ -29,12 +29,10 @@ public class StatusScenario : IRegularScenario
     };
 
     public StatusScenario(
-        ScenarioStateRepository scenarioStateRepository,
         ScenariosToStartRepository scenariosToStartRepository,
         IMessageSender messageSender,
         IBackendApiClient backendApiClient)
     {
-        this.scenarioStateRepository = scenarioStateRepository;
         this.scenariosToStartRepository = scenariosToStartRepository;
         this.messageSender = messageSender;
         this.backendApiClient = backendApiClient;
@@ -45,7 +43,7 @@ public class StatusScenario : IRegularScenario
         if (question.ScenarioType != SelfScenarioType)
             return false;
 
-        var scenarioToStartId = await scenariosToStartRepository.AddNewScenarioToStartAndGetItsId(question.UserId, ScenarioId,
+        var scenarioToStartId = await scenariosToStartRepository.AddNewScenarioToStartAndGetItsId(question.UserId, ScenarioId, question.ScenarioType,
             question.Date, question.SprintNumber, question.SprintReplyNumber);
 
         await messageSender.TrySay(StateMessages.AskStatus(scenarioToStartId), question.UserId);
@@ -53,15 +51,9 @@ public class StatusScenario : IRegularScenario
         return true;
     }
 
-    public async Task<bool> TryStart(Question question)
+    public Task<bool> Start(ScenarioToStart scenarioToStart)
     {
-        if (question.ScenarioType != SelfScenarioType)
-            return false;
-
-        await scenarioStateRepository.StartNewScenario(question.UserId, ScenarioId,
-            question.Date, question.SprintNumber, question.SprintReplyNumber);
-
-        return true;
+        return Task.FromResult(true);
     }
 
     public async Task<bool> TryHandle(TelegramEvent telegramEvent, CurrentScenarioInfo? scenarioInfo)
@@ -91,7 +83,6 @@ public class StatusScenario : IRegularScenario
         await backendApiClient.SaveAnswer(sendAnswer);
 
         await messageSender.TrySay(StateMessages.GetRecommendation(text), chatId);
-        await scenarioStateRepository.EndScenarioNoMatterWhat(chatId);
         return true;
     }
 }

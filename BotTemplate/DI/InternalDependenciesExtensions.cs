@@ -63,6 +63,7 @@ public static class InternalDependenciesExtensions
     {
         serviceCollection.AddSingleton<ScenarioStateRepository>();
         serviceCollection.AddSingleton<UserAnswersRepository>();
+        serviceCollection.AddSingleton<ScenariosToStartRepository>();
 
         return serviceCollection;
     }

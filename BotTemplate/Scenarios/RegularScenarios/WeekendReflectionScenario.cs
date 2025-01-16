@@ -38,15 +38,17 @@ public class WeekendReflectionScenario : IRegularScenario
         if (question.ScenarioType != SelfScenarioType)
             return false;
 
+        await scenarioStateRepository.EndScenarioNoMatterWhat(question.UserId);
+
         string scenarioToStartId;
         if (question.SprintReplyNumber == SprintReplyCount - 1)
         {
-            scenarioToStartId = await scenariosToStartRepository.AddNewScenarioToStartAndGetItsId(question.UserId, LastReflectionScenarioId,
+            scenarioToStartId = await scenariosToStartRepository.AddNewScenarioToStartAndGetItsId(question.UserId, LastReflectionScenarioId, question.ScenarioType,
             question.Date, question.SprintNumber, question.SprintReplyNumber);
         }
         else
         {
-            scenarioToStartId = await scenariosToStartRepository.AddNewScenarioToStartAndGetItsId(question.UserId, RegularReflectionScenarioId,
+            scenarioToStartId = await scenariosToStartRepository.AddNewScenarioToStartAndGetItsId(question.UserId, RegularReflectionScenarioId, question.ScenarioType,
             question.Date, question.SprintNumber, question.SprintReplyNumber);
         }
 
@@ -55,26 +57,23 @@ public class WeekendReflectionScenario : IRegularScenario
         return true;
     }
 
-    public async Task<bool> TryStart(Question question)
+    public async Task<bool> Start(ScenarioToStart scenarioToStart)
     {
-        if (question.ScenarioType != SelfScenarioType)
-            return false;
-
-        if (question.SprintReplyNumber == SprintReplyCount - 1)
+        if (scenarioToStart.SprintReplyNumber == SprintReplyCount - 1)
         {
-            await scenarioStateRepository.StartNewScenario(question.UserId,
-                LastReflectionScenarioId, question.Date, question.SprintNumber, question.SprintReplyNumber);
-            await scenarioStateRepository.UpdateData(question.UserId,
+            await scenarioStateRepository.StartNewScenario(scenarioToStart.ChatId,
+                LastReflectionScenarioId, scenarioToStart.Date, scenarioToStart.SprintNumber, scenarioToStart.SprintReplyNumber);
+            await scenarioStateRepository.UpdateData(scenarioToStart.ChatId,
                 new RegularScenarioData() {AnswerType = AnswerType.ReflectionIntegrationChanges});
-            await messageSender.TrySay(WeekendReflectionMessages.AskChanges(), question.UserId);
+            await messageSender.TrySay(WeekendReflectionMessages.AskChanges(), scenarioToStart.ChatId);
         }
         else
         {
-            await scenarioStateRepository.StartNewScenario(question.UserId,
-                RegularReflectionScenarioId, question.Date, question.SprintNumber, question.SprintReplyNumber);
-            await scenarioStateRepository.UpdateData(question.UserId,
+            await scenarioStateRepository.StartNewScenario(scenarioToStart.ChatId,
+                RegularReflectionScenarioId, scenarioToStart.Date, scenarioToStart.SprintNumber, scenarioToStart.SprintReplyNumber);
+            await scenarioStateRepository.UpdateData(scenarioToStart.ChatId,
                 new RegularScenarioData() {AnswerType = AnswerType.ReflectionRegularWhatIDoing});
-            await messageSender.TrySay(WeekendReflectionMessages.AskWhatIDoing(), question.UserId);
+            await messageSender.TrySay(WeekendReflectionMessages.AskWhatIDoing(), scenarioToStart.ChatId);
         }
 
         return true;
