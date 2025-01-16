@@ -38,8 +38,6 @@ public class WeekendReflectionScenario : IRegularScenario
         if (question.ScenarioType != SelfScenarioType)
             return false;
 
-        await scenarioStateRepository.EndScenarioNoMatterWhat(question.UserId);
-
         string scenarioToStartId;
         if (question.SprintReplyNumber == SprintReplyCount - 1)
         {
@@ -59,6 +57,11 @@ public class WeekendReflectionScenario : IRegularScenario
 
     public async Task<bool> Start(ScenarioToStart scenarioToStart)
     {
+        if (scenarioToStart.ScenarioType != SelfScenarioType)
+            return false;
+
+        await scenarioStateRepository.EndScenarioNoMatterWhat(scenarioToStart.ChatId);
+
         if (scenarioToStart.SprintReplyNumber == SprintReplyCount - 1)
         {
             await scenarioStateRepository.StartNewScenario(scenarioToStart.ChatId,
