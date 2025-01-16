@@ -1,9 +1,26 @@
 using BotTemplate.Models.Telegram;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace BotTemplate.Scenarios.RegularScenarios;
 
 public static class WeekendReflectionMessages
 {
+    public static Message AskReady(string scenarioToStartId)
+    {
+        var text = "Время порефлексировать!";
+        var readyButton = new InlineKeyboardButton($"Заполнить сейчас")
+        {
+            CallbackData = CommandsConstants.StartScenarioAction(scenarioToStartId)
+        };
+
+        var buttons = new InlineKeyboardMarkup(new[] 
+        { 
+            new[] { readyButton }
+        });
+
+        return new Message(text, buttons);
+    }
+
     public static Message AskWhatIDoing()
     {
         return new Message("Что сделал по своим проектам на этой неделе?");

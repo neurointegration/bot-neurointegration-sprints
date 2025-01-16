@@ -45,4 +45,6 @@ public static class CommandsConstants
     public const string FinishCheckupRoutineActions = "finish_checkup_routine";
     
     public const string FinishEveningStandUp = "finish_evening_stand_up";
+
+    public static string StartScenarioAction(string scenarioToStartId, string? answer = null) => $"ready {scenarioToStartId}{(answer is not null ? $" {answer}" : string.Empty)}";
 }

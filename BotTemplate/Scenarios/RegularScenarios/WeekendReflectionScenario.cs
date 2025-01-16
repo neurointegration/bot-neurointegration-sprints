@@ -17,17 +17,42 @@ public class WeekendReflectionScenario : IRegularScenario
     private const int SprintReplyCount = 4;
 
     private readonly ScenarioStateRepository scenarioStateRepository;
+    private readonly ScenariosToStartRepository scenariosToStartRepository;
     private readonly IMessageSender messageSender;
     private readonly IBackendApiClient backendApiClient;
 
     public WeekendReflectionScenario(
         ScenarioStateRepository scenarioStateRepository,
+        ScenariosToStartRepository scenariosToStartRepository,
         IMessageSender messageSender,
         IBackendApiClient backendApiClient)
     {
         this.scenarioStateRepository = scenarioStateRepository;
+        this.scenariosToStartRepository = scenariosToStartRepository;
         this.messageSender = messageSender;
         this.backendApiClient = backendApiClient;
+    }
+
+    public async Task<bool> TryAddToStart(Question question)
+    {
+        if (question.ScenarioType != SelfScenarioType)
+            return false;
+
+        string scenarioToStartId;
+        if (question.SprintReplyNumber == SprintReplyCount - 1)
+        {
+            scenarioToStartId = await scenariosToStartRepository.AddNewScenarioToStartAndGetItsId(question.UserId, LastReflectionScenarioId,
+            question.Date, question.SprintNumber, question.SprintReplyNumber);
+        }
+        else
+        {
+            scenarioToStartId = await scenariosToStartRepository.AddNewScenarioToStartAndGetItsId(question.UserId, RegularReflectionScenarioId,
+            question.Date, question.SprintNumber, question.SprintReplyNumber);
+        }
+
+        await messageSender.TrySay(WeekendReflectionMessages.AskReady(scenarioToStartId), question.UserId);
+
+        return true;
     }
 
     public async Task<bool> TryStart(Question question)
@@ -35,7 +60,6 @@ public class WeekendReflectionScenario : IRegularScenario
         if (question.ScenarioType != SelfScenarioType)
             return false;
 
-        string? message;
         if (question.SprintReplyNumber == SprintReplyCount - 1)
         {
             await scenarioStateRepository.StartNewScenario(question.UserId,
@@ -52,7 +76,6 @@ public class WeekendReflectionScenario : IRegularScenario
                 new RegularScenarioData() {AnswerType = AnswerType.ReflectionRegularWhatIDoing});
             await messageSender.TrySay(WeekendReflectionMessages.AskWhatIDoing(), question.UserId);
         }
-
 
         return true;
     }

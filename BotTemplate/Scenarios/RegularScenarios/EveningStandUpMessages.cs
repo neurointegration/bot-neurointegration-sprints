@@ -5,9 +5,25 @@ namespace BotTemplate.Scenarios.RegularScenarios;
 
 public static class EveningStandUpMessages
 {
+    public static Message AskReady(string scenarioToStartId)
+    {
+        var text = "Время заполнять стендап!";
+        var readyButton = new InlineKeyboardButton($"Заполнить сейчас")
+        {
+            CallbackData = CommandsConstants.StartScenarioAction(scenarioToStartId)
+        };
+
+        var buttons = new InlineKeyboardMarkup(new[] 
+        { 
+            new[] { readyButton }
+        });
+
+        return new Message(text, buttons);
+    }
+
     public static Message AskWinning()
     {
-        var text = "Время заполнять стендап! Какие победы были сегодня?";
+        var text = "Какие победы были сегодня?";
 
         return new Message(text);
     }

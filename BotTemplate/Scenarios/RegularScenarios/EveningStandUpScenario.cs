@@ -15,17 +15,33 @@ public class EveningStandUpScenario : IRegularScenario
     private const ScenarioType SelfScenarioType = ScenarioType.EveningStandUp;
 
     private readonly ScenarioStateRepository scenarioStateRepository;
+    private readonly ScenariosToStartRepository scenariosToStartRepository;
     private readonly IMessageSender messageSender;
     private readonly IBackendApiClient backendApiClient;
 
     public EveningStandUpScenario(
         ScenarioStateRepository scenarioStateRepository,
+        ScenariosToStartRepository scenariosToStartRepository,
         IMessageSender messageSender,
         IBackendApiClient backendApiClient)
     {
         this.scenarioStateRepository = scenarioStateRepository;
+        this.scenariosToStartRepository = scenariosToStartRepository;
         this.messageSender = messageSender;
         this.backendApiClient = backendApiClient;
+    }
+
+    public async Task<bool> TryAddToStart(Question question)
+    {
+        if (question.ScenarioType != SelfScenarioType)
+            return false;
+
+        var scenarioToStartId = await scenariosToStartRepository.AddNewScenarioToStartAndGetItsId(question.UserId, ScenarioId,
+            question.Date, question.SprintNumber, question.SprintReplyNumber);
+
+        await messageSender.TrySay(EveningStandUpMessages.AskReady(scenarioToStartId), question.UserId);
+
+        return true;
     }
 
     public async Task<bool> TryStart(Question question)

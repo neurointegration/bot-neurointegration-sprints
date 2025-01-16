@@ -5,7 +5,7 @@ namespace BotTemplate.Scenarios.RegularScenarios;
 
 public static class StateMessages
 {
-    public static Message AskStatus()
+    public static Message AskStatus(string scenarioToStartId)
     {
         var redButton = new InlineKeyboardButton($"\ud83d\udd25 {CommandsConstants.StatusPanic} \ud83d\udd25");
         var orangeButton = new InlineKeyboardButton($"\u26a1\ufe0f {CommandsConstants.StatusOverexcitation} \u26a1\ufe0f");
@@ -15,13 +15,13 @@ public static class StateMessages
         var blueButton = new InlineKeyboardButton($"\ud83d\ude45\ud83c\udffb\u200d\u2642\ufe0f {CommandsConstants.StatusPassivity} \ud83d\ude45\ud83c\udffb\u200d\u2642\ufe0f");
         var purpleButton = new InlineKeyboardButton($"\u2614\ufe0f {CommandsConstants.StatusApathy} \u2614");
 
-        redButton.CallbackData =  CommandsConstants.StatusPanic;
-        orangeButton.CallbackData = CommandsConstants.StatusOverexcitation;
-        yellowButton.CallbackData = CommandsConstants.StatusInclusion;
-        greenButton.CallbackData = CommandsConstants.StatusBalance;
-        lightBlueButton.CallbackData = CommandsConstants.StatusRelaxation;
-        blueButton.CallbackData = CommandsConstants.StatusPassivity;
-        purpleButton.CallbackData = CommandsConstants.StatusApathy;
+        redButton.CallbackData = CommandsConstants.StartScenarioAction(scenarioToStartId, CommandsConstants.StatusPanic);
+        orangeButton.CallbackData = CommandsConstants.StartScenarioAction(scenarioToStartId, CommandsConstants.StatusOverexcitation);
+        yellowButton.CallbackData = CommandsConstants.StartScenarioAction(scenarioToStartId, CommandsConstants.StatusInclusion);
+        greenButton.CallbackData = CommandsConstants.StartScenarioAction(scenarioToStartId, CommandsConstants.StatusBalance);
+        lightBlueButton.CallbackData = CommandsConstants.StartScenarioAction(scenarioToStartId, CommandsConstants.StatusRelaxation);
+        blueButton.CallbackData = CommandsConstants.StartScenarioAction(scenarioToStartId, CommandsConstants.StatusPassivity);
+        purpleButton.CallbackData = CommandsConstants.StartScenarioAction(scenarioToStartId, CommandsConstants.StatusApathy);
     
         var buttons = new[] 
         { 
@@ -40,7 +40,7 @@ public static class StateMessages
         return new Message(text, inline);
     }
     
-    public static Message GetRecomendation(string answer)
+    public static Message GetRecommendation(string answer)
     {
         string message;
         

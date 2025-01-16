@@ -13,6 +13,7 @@ public class StatusScenario : IRegularScenario
     private const ScenarioType SelfScenarioType = ScenarioType.Status;
 
     private readonly ScenarioStateRepository scenarioStateRepository;
+    private readonly ScenariosToStartRepository scenariosToStartRepository;
     private readonly IMessageSender messageSender;
     private readonly IBackendApiClient backendApiClient;
 
@@ -29,12 +30,27 @@ public class StatusScenario : IRegularScenario
 
     public StatusScenario(
         ScenarioStateRepository scenarioStateRepository,
+        ScenariosToStartRepository scenariosToStartRepository,
         IMessageSender messageSender,
         IBackendApiClient backendApiClient)
     {
         this.scenarioStateRepository = scenarioStateRepository;
+        this.scenariosToStartRepository = scenariosToStartRepository;
         this.messageSender = messageSender;
         this.backendApiClient = backendApiClient;
+    }
+
+    public async Task<bool> TryAddToStart(Question question)
+    {
+        if (question.ScenarioType != SelfScenarioType)
+            return false;
+
+        var scenarioToStartId = await scenariosToStartRepository.AddNewScenarioToStartAndGetItsId(question.UserId, ScenarioId,
+            question.Date, question.SprintNumber, question.SprintReplyNumber);
+
+        await messageSender.TrySay(StateMessages.AskStatus(scenarioToStartId), question.UserId);
+
+        return true;
     }
 
     public async Task<bool> TryStart(Question question)
@@ -44,8 +60,6 @@ public class StatusScenario : IRegularScenario
 
         await scenarioStateRepository.StartNewScenario(question.UserId, ScenarioId,
             question.Date, question.SprintNumber, question.SprintReplyNumber);
-
-        await messageSender.TrySay(StateMessages.AskStatus(), question.UserId);
 
         return true;
     }
@@ -60,7 +74,7 @@ public class StatusScenario : IRegularScenario
 
         if (!commands.Contains(text))
         {
-            await messageSender.TrySay(StateMessages.GetRecomendation(text), chatId);
+            await messageSender.TrySay(StateMessages.GetRecommendation(text), chatId);
             return true;
         }
 
@@ -76,7 +90,7 @@ public class StatusScenario : IRegularScenario
         };
         await backendApiClient.SaveAnswer(sendAnswer);
 
-        await messageSender.TrySay(StateMessages.GetRecomendation(text), chatId);
+        await messageSender.TrySay(StateMessages.GetRecommendation(text), chatId);
         await scenarioStateRepository.EndScenarioNoMatterWhat(chatId);
         return true;
     }
