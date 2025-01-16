@@ -14,7 +14,7 @@ public static class EveningStandUpMessages
     
     public static Message AskLive()
     {
-        var text = "Отлично! Какой лайв берешь на ближайшие сутки?";
+        var text = "Отлично! Какой лайф берешь на ближайшие сутки?";
 
         return new Message(text);
     }

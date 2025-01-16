@@ -1,7 +1,6 @@
 using BotTemplate.Client;
 using BotTemplate.Models.Telegram;
 using BotTemplate.Services.Telegram;
-using BotTemplate.Services.Telegram.Messages.Bottom;
 using Neurointegration.Api.DataModels.Dto;
 
 namespace BotTemplate.Scenarios.Common;
@@ -31,9 +30,9 @@ public class ChangeSendRegularMessagesScenario: IScenario
         
         await backendApiClient.UpdateUser(new UpdateUser {UserId = chatId, SendRegularMessages = !getUser.Value.SendRegularMessages});
         var answer = !getUser.Value.SendRegularMessages 
-            ? "Теперь ты проходишь спринты. Обязательно укажи в настройках остальные данные для спринтов"
-            : "Теперь ты больше не проходишь спринты";
-        await messageSender.SayWithMarkup(answer, chatId, BottomMessage.GetMessage().ReplyMarkup);
+            ? "Ура! Ты снова в деле! Обязательно укажи в настройках остальные данные для спринтов"
+            : "Грустно. Если захочешь проходить спринты снова, то переходи в настройки и нажми на кнопку “Я хочу проходить спринты”";
+        await messageSender.Say(answer, chatId);
 
         return true;
     }

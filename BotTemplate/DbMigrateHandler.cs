@@ -39,7 +39,8 @@ public class DbMigrateHandler : YcFunction<string, Response>
         {
             new BotCommand() {Command = CommandsConstants.Start, Description = "Регистрация"},
             new BotCommand() {Command = CommandsConstants.SettingsCommand, Description = "Настройки"},
-            new BotCommand() {Command = CommandsConstants.MyInfoCommand, Description = "Информация о ваших спринтах"}
+            new BotCommand() {Command = CommandsConstants.RoutineActionsCommand, Description = "Рутинные дела"},
+            new BotCommand() {Command = CommandsConstants.ResultTablesCommand, Description = "Таблица результатов"}
         });
     }
 }

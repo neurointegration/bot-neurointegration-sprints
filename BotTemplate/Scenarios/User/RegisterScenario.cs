@@ -2,7 +2,6 @@ using System.Globalization;
 using BotTemplate.Client;
 using BotTemplate.Models.Telegram;
 using BotTemplate.Services.Telegram;
-using BotTemplate.Services.Telegram.Messages.Bottom;
 using BotTemplate.Services.Telegram.Messages.Register;
 using BotTemplate.Services.Telegram.Validators;
 using BotTemplate.Services.YDB;
@@ -40,7 +39,7 @@ public class RegisterScenario: IScenario
         
         if (scenarioInfo != null && scenarioInfo.ScenarioId != ScenarioId)
         {
-            await messageSender.Say("Закночи другой сценарий, прежде чем запустить стартовый сценарий.", telegramEvent.ChatId);
+            await messageSender.Say("Закночи другой сценарий, прежде чем запустить стартовый сценарий", telegramEvent.ChatId);
             return true;
         }
         
@@ -48,7 +47,7 @@ public class RegisterScenario: IScenario
         var getUser = await backendApiClient.GetUser(chatId);
         if (getUser.IsSuccess)
         {
-            await messageSender.Say("Ты уже зарегистрирован.", chatId);
+            await messageSender.Say("Ты уже зарегистрирован", chatId);
             return true;
         }
         if (getUser.Error.Status != ErrorStatus.NotFound)
@@ -79,7 +78,7 @@ public class RegisterScenario: IScenario
                 var emailValidator = new EmailValidator();
                 if (!emailValidator.IsValid(text))
                 {
-                    messageToSend = new Message("Неправильный формат почты.");
+                    messageToSend = new Message("Неправильный формат почты");
                     await scenarioStateRepository.DecreaseIndex(chatId);
                 }
                 else
@@ -206,8 +205,6 @@ public class RegisterScenario: IScenario
                 else
                 {
                     messageToSend = RegisteredMessage.GetMessage();
-                    var buttons = BottomMessage.GetMessage();
-                    messageToSend.ReplyMarkup = buttons.ReplyMarkup;
                     if (text != MessageConstants.WithoutCoachButtonValue)
                         await userAnswersRepository.SaveAnswer(chatId, "Coach", text!);
                     await scenarioStateRepository.EndScenarioNoMatterWhat(chatId);

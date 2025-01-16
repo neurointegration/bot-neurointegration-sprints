@@ -13,7 +13,7 @@ public class RoutineActionsMapper
         this.tableSchema = tableSchema;
     }
 
-    public WeekRoutineAction ToRoutineAction(ResultSet.Row row, int weekNumber)
+    public WeekRoutineAction ToWeekRoutineAction(ResultSet.Row row, int weekNumber)
     {
         var weekCount = weekNumber switch
         {

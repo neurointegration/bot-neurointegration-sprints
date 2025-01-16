@@ -2,6 +2,7 @@ using BotTemplate.Client;
 using BotTemplate.Scenarios;
 using BotTemplate.Scenarios.Coach;
 using BotTemplate.Scenarios.Common;
+using BotTemplate.Scenarios.Common.Messages;
 using BotTemplate.Scenarios.RegularScenarios;
 using BotTemplate.Scenarios.User;
 using BotTemplate.Services.Telegram;
@@ -72,6 +73,7 @@ public static class InternalDependenciesExtensions
         serviceCollection.AddSingleton<IScenario, ChangeCoachStatusScenario>();
         serviceCollection.AddSingleton<IScenario, ChangeSendRegularMessagesScenario>();
         serviceCollection.AddSingleton<IScenario, ChangeEveningStandUpTimeScenario>();
+        serviceCollection.AddSingleton<IScenario, ChangeWeekendReflectionTimeScenario>();
         serviceCollection.AddSingleton<IScenario, ChangeStateTimeRangeScenario>();
         serviceCollection.AddSingleton<IScenario, ChangeRoutineActionsScenario>();
 

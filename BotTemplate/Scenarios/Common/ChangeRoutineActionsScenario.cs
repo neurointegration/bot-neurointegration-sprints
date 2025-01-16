@@ -45,38 +45,26 @@ public class ChangeRoutineActionsScenario : IScenario
 
         if (text == CommandsConstants.ChangeRoutineActions)
         {
-            var messageId =
-                await messageSender.TrySay(RoutineMessage.CurrentRoutines(routineActions), chatId);
-            var data = new RoutineActionsScenarioData()
-            {
-                MessageId = messageId.Value
-            };
-            await scenarioStateRepository.StartNewScenario(chatId, ScenarioId,
-                data: JsonConvert.SerializeObject(data));
+            await messageSender.TrySay(RoutineMessage.CurrentRoutines(routineActions), chatId);
+            await scenarioStateRepository.StartNewScenario(chatId, ScenarioId);
             return true;
         }
 
-        if (scenarioInfo == null || scenarioInfo.Data == null)
+        if (scenarioInfo == null)
             return false;
 
-        var scenarioData = JsonConvert.DeserializeObject<RoutineActionsScenarioData>(scenarioInfo.Data);
-        if (scenarioData == null)
-            throw new ArgumentException("Не правильно указана специальная информация для сценария рутинных действий");
 
         if (text == CommandsConstants.ReturnToRoutineActionsList)
         {
-            await messageSender.TryEdit(RoutineMessage.CurrentRoutines(routineActions),
-                chatId,
-                scenarioData.MessageId);
+            await messageSender.TrySay(RoutineMessage.CurrentRoutines(routineActions), chatId);
             return true;
         }
 
         if (addRoutineCommands.TryGetValue(text ?? "", out var routineType))
         {
-            await messageSender.TryEdit(RoutineMessage.AddRoutinesMessage(routineType),
-                chatId,
-                scenarioData.MessageId);
-            await scenarioStateRepository.UpdateData(chatId, scenarioData with {RoutineType = routineType});
+            await messageSender.TrySay(RoutineMessage.AddRoutinesMessage(routineType), chatId);
+            await scenarioStateRepository.UpdateData(chatId,
+                new RoutineActionsScenarioData() {RoutineType = routineType});
             return true;
         }
 
@@ -87,9 +75,21 @@ public class ChangeRoutineActionsScenario : IScenario
 
             await backendApiClient.DeleteAction(chatId, deleteAction.ActionId);
             routineActions = await backendApiClient.GetUserRoutineActions(chatId);
-            await messageSender.TryEdit(RoutineMessage.CurrentRoutines(routineActions), chatId, scenarioData.MessageId);
+            await messageSender.TrySay(RoutineMessage.CurrentRoutines(routineActions), chatId);
             return true;
         }
+
+
+        if (text == CommandsConstants.CancelEditRoutineActions)
+        {
+            await messageSender.TrySay(RoutineMessage.FinishChangeRoutineActions(), chatId);
+            await scenarioStateRepository.EndScenarioNoMatterWhat(chatId);
+            return true;
+        }
+
+        var scenarioData = JsonConvert.DeserializeObject<RoutineActionsScenarioData>(scenarioInfo.Data);
+        if (scenarioData == null)
+            throw new ArgumentException("Не правильно указана специальная информация для сценария рутинных действий");
 
         if (scenarioData.RoutineType != null)
         {
@@ -99,15 +99,8 @@ public class ChangeRoutineActionsScenario : IScenario
 
             await backendApiClient.AddActions(chatId, newActions);
             routineActions = await backendApiClient.GetUserRoutineActions(chatId);
-            await messageSender.TryEdit(RoutineMessage.CurrentRoutines(routineActions), chatId, scenarioData.MessageId);
+            await messageSender.TrySay(RoutineMessage.CurrentRoutines(routineActions), chatId);
             await scenarioStateRepository.UpdateData(chatId, scenarioData with {RoutineType = null});
-            return true;
-        }
-
-        if (text == CommandsConstants.CancelEditRoutineActions)
-        {
-            await messageSender.TryEdit(RoutineMessage.FinishChangeRoutineActions(), chatId, scenarioData.MessageId);
-            await scenarioStateRepository.EndScenarioNoMatterWhat(chatId);
             return true;
         }
 

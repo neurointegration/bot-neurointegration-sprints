@@ -1,16 +1,14 @@
-﻿using BotTemplate.Models;
-using BotTemplate.Models.Telegram;
-using Neurointegration.Api.DataModels.Models;
+﻿using BotTemplate.Models.Telegram;
 using Telegram.Bot.Types.ReplyMarkups;
 
-namespace BotTemplate.Services.Telegram.Messages.Settings;
+namespace BotTemplate.Scenarios.User.Settings;
 
 public static class ShowSettingsMessage
 {
     private const string Text =
         "Настройки. Здесь ты можешь изменить какие-либо данные о себе или поменять время или дату";
 
-    public static Message GetMessage(User user)
+    public static Message GetMessage(Neurointegration.Api.DataModels.Models.User user)
     {
         var changeIAmCoachButton =
             new[]
@@ -37,33 +35,28 @@ public static class ShowSettingsMessage
                 CallbackData = CommandsConstants.ChangeEveningStanUpTime
             }
         };
+        var changeReflectionTime = new[]
+        {
+            new InlineKeyboardButton("Изменить время недельной рефлексии")
+            {
+                CallbackData = CommandsConstants.ChangeReflectionTime
+            }
+        };
         var changeMessageRangeTime = new[]
         {
-            new InlineKeyboardButton("Изменить интервал ежедневных\nсообщений о состоянии")
+            new InlineKeyboardButton("Изменить время отправки сообщений")
             {
                 CallbackData = CommandsConstants.ChangeStatusTimeRange
             }
         };
-        var routineMessageRangeTime = new[]
-        {
-            new InlineKeyboardButton("Изменить рутинные действия")
-            {
-                CallbackData = CommandsConstants.ChangeRoutineActions
-            }
-        };
-        // var back = new[] { new InlineKeyboardButton("Отмена")
-        // {
-        //     CallbackData = JsonConvert.SerializeObject(new DefaultCallbackData("Отмена"))
-        // } };
 
         var buttons = new List<InlineKeyboardButton[]>
         {
             changeIAmCoachButton,
             changeSendRegularMessages,
+            changeReflectionTime,
             changeEveningStandUpTime,
-            changeMessageRangeTime,
-            routineMessageRangeTime,
-            // back
+            changeMessageRangeTime
         };
 
         var inline = new InlineKeyboardMarkup(buttons);

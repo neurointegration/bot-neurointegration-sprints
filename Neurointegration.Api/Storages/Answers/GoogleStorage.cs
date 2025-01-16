@@ -19,10 +19,10 @@ public class GoogleStorage : IGoogleStorage
         this.log = log;
     }
 
-    public Task Save(string answer, string sheetId, string range)
+    public Task Save(string text, string sheetId, string range)
     {
         log.LogInformation($"Сохранение в гугл таблицу. SheetId={sheetId}, range={range}");
-        Task.Run(() => sheetClient.Write(sheetId, range, answer));
+        Task.Run(() => sheetClient.Write(sheetId, range, text));
         log.LogInformation($"Сохранили ответ в гугл таблицу");
         return Task.CompletedTask;
     }

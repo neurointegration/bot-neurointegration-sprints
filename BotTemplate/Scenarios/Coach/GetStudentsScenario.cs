@@ -22,16 +22,10 @@ public class GetStudentsScenario: IScenario
         if (telegramEvent.Text?.Trim().ToLower() != Command)
             return false;
         
-        if (scenarioInfo != null)
-        {
-            await messageSender.Say("Закночи другой сценарий, прежде чем получать таблицы результатов твоих учеников.", telegramEvent.ChatId);
-            return true;
-        }
-        
         var students = await backendApiClient.GetCoachStudentsAsync(telegramEvent.ChatId);
         if (students.Count == 0)
         {
-            await messageSender.Say("У тебя пока нету учеников.",
+            await messageSender.Say("У тебя пока нету учеников",
                 telegramEvent.ChatId);
             return true;
         }

@@ -1,4 +1,5 @@
 using BotTemplate.Models.Telegram;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace BotTemplate.Scenarios.RegularScenarios;
 
@@ -6,12 +7,12 @@ public static class WeekendReflectionMessages
 {
     public static Message AskWhatIDoing()
     {
-        return new Message("Что сделал по своим проектам на этой неделе?");
+        return new Message("Что сделал по всем проектам на этой неделе?");
     }
 
     public static Message AskWhatINotDoing()
     {
-        return new Message("А что не сделал по своим проектам на этой неделе?");
+        return new Message("А что не сделал по всем проектам на этой неделе?");
     }
     
     public static Message AskStatus()
@@ -57,6 +58,26 @@ public static class WeekendReflectionMessages
     public static Message AskSelfPerception()
     {
         return new Message("Как изменились твои убеждения о себе и отношения с собой?");
+    }
+    
+    public static Message AskChangeRoutineActions()
+    {
+        var text = "Надо внести изменения в список рутиннх действий?";
+        var startButton = new InlineKeyboardButton($"Да!")
+        {
+            CallbackData = CommandsConstants.ChangeRoutineActions
+        };
+        var finishButton = new InlineKeyboardButton($"Нет")
+        {
+            CallbackData = CommandsConstants.FinishWeekendReflection
+        };
+        
+        var buttons = new InlineKeyboardMarkup(new[] 
+        { 
+            new[] { startButton, finishButton }
+        });
+
+        return new Message(text, buttons);
     }
     
     public static Message AskOpportunities()

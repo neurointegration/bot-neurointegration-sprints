@@ -20,7 +20,7 @@ public static class RoutineMessage
 
 
         var text = $@"Твои привычки:
-🚶‍♂️ Лайв. Добавить новые: {CommandsConstants.AddRoutineAction(RoutineType.Life)}
+🚶‍♂️ Лайф. Добавить новые: {CommandsConstants.AddRoutineAction(RoutineType.Life)}
 {string.Join("\n", lifeActions)}{(lifeActions.Length != 0 ? "\n" : "")}
 🚀 Драйв. Добавить новые: {CommandsConstants.AddRoutineAction(RoutineType.Drive)}
 {string.Join("\n", driveActions)}{(driveActions.Length != 0 ? "\n" : "")}
@@ -42,7 +42,7 @@ public static class RoutineMessage
     {
         var type = routineType switch
         {
-            RoutineType.Life => "лайва",
+            RoutineType.Life => "лайфа",
             RoutineType.Pleasure => "кайфа",
             RoutineType.Drive => "драйва",
             _ => throw new ArgumentOutOfRangeException(nameof(routineType), routineType, null)
@@ -74,14 +74,21 @@ public static class RoutineMessage
     {
         var text = "Отметь рутинные действия, которые сделал за сегодня!";
         var buttons = routineActions.Select((action) =>
-                new InlineKeyboardButton($"{action.Action} {action.WeekCount}/7")
+                new[]
                 {
-                    CallbackData = CommandsConstants.CheckupRoutineAction(action.ActionId)
+                    new InlineKeyboardButton($"{action.Action} {action.WeekCount}/7")
+                    {
+                        CallbackData = CommandsConstants.CheckupRoutineAction(action.ActionId)
+                    }
                 })
-            .Append(new InlineKeyboardButton($"Закончить")
-            {
-                CallbackData = CommandsConstants.FinishCheckupRoutineActions
-            });
+            .Append(
+                new[]
+                {
+                    new InlineKeyboardButton($"Закончить")
+                    {
+                        CallbackData = CommandsConstants.FinishCheckupRoutineActions
+                    }
+                });
 
         var inline = new InlineKeyboardMarkup(buttons);
 

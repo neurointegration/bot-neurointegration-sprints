@@ -13,7 +13,10 @@ public class SprintMapper
             UserId = row[SprintDbSettings.UserIdField].GetInt64(),
             SprintNumber = row[SprintDbSettings.SprintNumberField].GetInt64(),
             SheetId = row[SprintDbSettings.SheetIdField].GetUtf8(),
-            SprintStartDate = row[SprintDbSettings.SprintStartDateField].GetDate()
+            SprintStartDate = row[SprintDbSettings.SprintStartDateField].GetDate(),
+            LifeCount = row[SprintDbSettings.LifeCountField].GetOptionalInt32() ?? 0,
+            PleasureCount = row[SprintDbSettings.PleasureCountField].GetOptionalInt32() ?? 0,
+            DriveCount =row[SprintDbSettings.DriveCountField].GetOptionalInt32() ?? 0 
         };
     }
 
