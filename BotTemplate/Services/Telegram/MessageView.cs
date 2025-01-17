@@ -118,7 +118,7 @@ public class HtmlMessageSender : IMessageSender
         await Say(
             "Это шаблон telegram-бота, поддерживающий <b>Yandex Cloud Function</b>!\n" +
             "Если он тебе нужен, то тогда тебе " +
-            "<a href=\"https://github.com/BasedDepartment1/cloud-function-bot\">сюда</a>.",
+            "<a href=\"https://github.com/BasedDepartment1/cloud-function-bot\">сюда</a>",
             chatId
         );
     }

@@ -31,10 +31,24 @@ public class RoutineActionsStorage : IRoutineActionsStorage
                 tableSchema.SprintNumber.WithValue(sprintNumber)
             });
         
-        return result.Select(row => routineActionsMapper.ToRoutineAction(row, weekNumber)).ToList();
+        return result.Select(row => routineActionsMapper.ToWeekRoutineAction(row, weekNumber)).ToList();
     }
 
-    public async Task AddAction(long userId, long sprintNumber, RoutineAction weekRoutineAction)
+    public async Task<WeekRoutineAction> GetAction(long userId, long sprintNumber, string actionId, int weekNumber)
+    {
+        var result = await ydbClient.Find(tableSchema,
+            tableSchema.Fields.ToArray(),
+            new[]
+            {
+                tableSchema.UserId.WithValue(userId),
+                tableSchema.SprintNumber.WithValue(sprintNumber),
+                tableSchema.ActionId.WithValue(actionId)
+            });
+        
+        return routineActionsMapper.ToWeekRoutineAction(result.First(), weekNumber);
+    }
+
+    public async Task AddAction(long userId, long sprintNumber, int typeSprintNumber, RoutineAction weekRoutineAction)
     {
         await ydbClient.Replace(
             tableSchema,
@@ -42,7 +56,7 @@ public class RoutineActionsStorage : IRoutineActionsStorage
             {
                 tableSchema.UserId.WithValue(userId),
                 tableSchema.SprintNumber.WithValue(sprintNumber),
-                tableSchema.ActionId.WithValue(Guid.NewGuid().ToString()),
+                tableSchema.ActionId.WithValue(typeSprintNumber.ToString()),
                 tableSchema.Action.WithValue(weekRoutineAction.Action),
                 tableSchema.Type.WithValue(weekRoutineAction.Type.ToString()),
                 tableSchema.WeekOneCount.WithValue(0),

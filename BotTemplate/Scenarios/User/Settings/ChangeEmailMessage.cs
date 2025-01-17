@@ -4,7 +4,7 @@ namespace BotTemplate.Services.Telegram.Messages.Settings;
 
 public static class ChangeEmailMessage
 {
-    private const string Text = "Укажи новую почту.";
+    private const string Text = "Укажи новую почту";
     
     public static Message GetMessage()
     {

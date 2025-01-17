@@ -1,7 +1,7 @@
 using BotTemplate.Client;
 using BotTemplate.Models.Telegram;
+using BotTemplate.Scenarios.User.Settings;
 using BotTemplate.Services.Telegram;
-using BotTemplate.Services.Telegram.Messages.Settings;
 
 namespace BotTemplate.Scenarios.User;
 
@@ -34,8 +34,7 @@ public class SettingsScenario : IScenario
             if (!getUser.IsSuccess)
                 await messageSender.Say(MessageConstants.UnknownErrorText, chatId);
 
-            var message = ShowSettingsMessage.GetMessage(getUser.Value);
-            await messageSender.SayWithMarkup(message.Text, chatId, message.ReplyMarkup);
+            await messageSender.TrySay(ShowSettingsMessage.GetMessage(getUser.Value), chatId);
             return true;
         }
 

@@ -50,11 +50,13 @@ public class ChangeStateTimeRangeScenario : IScenario
         {
             var timeSpanStrings = text!.Split('-');
 
-            var messageStartTime = TimeSpan.Parse(timeSpanStrings[0]).Subtract(TimeSpan.FromHours(3));
+            var mskStartTime = TimeSpan.Parse(timeSpanStrings[0]);
+            var messageStartTime = mskStartTime.Subtract(TimeSpan.FromHours(3));
             if (messageStartTime < TimeSpan.FromHours(0))
                 messageStartTime = messageStartTime.Add(TimeSpan.FromHours(24));
 
-            var messageEndTime = TimeSpan.Parse(timeSpanStrings[1]) - TimeSpan.FromHours(3);
+            var mskEndTime = TimeSpan.Parse(timeSpanStrings[1]);
+            var messageEndTime = mskEndTime - TimeSpan.FromHours(3);
             if (messageEndTime < TimeSpan.FromHours(0))
                 messageEndTime = messageEndTime.Add(TimeSpan.FromHours(24));
 
@@ -66,7 +68,7 @@ public class ChangeStateTimeRangeScenario : IScenario
             };
             await scenarioStateRepository.EndScenarioNoMatterWhat(chatId);
             await backendApiClient.UpdateUser(updateUser);
-            await messageSender.Say("Интервал опроса состояний изменен.", chatId);
+            await messageSender.Say($"Теперь я буду присылать уведомления о состоянии в {mskStartTime:hh.mm}-{mskEndTime:hh.mm}", chatId);
         }
 
         return true;

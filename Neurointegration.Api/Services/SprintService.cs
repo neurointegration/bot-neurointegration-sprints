@@ -29,7 +29,7 @@ public class SprintService : ISprintService
             UserId = user.UserId,
             SprintNumber = sprintNumber,
             SheetId = sheetId,
-            SprintStartDate = sprintStartDate
+            SprintStartDate = sprintStartDate,
         };
         await sprintStorage.SaveOrUpdate(sprint);
 

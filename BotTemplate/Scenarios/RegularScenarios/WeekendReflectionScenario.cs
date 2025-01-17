@@ -93,6 +93,13 @@ public class WeekendReflectionScenario : IRegularScenario
         if (scenarioData == null)
             throw new ArgumentException("Не правильно указана специальная информация для сценария вечерней рефлексии");
 
+        if (text == CommandsConstants.FinishWeekendReflection)
+        {
+            await messageSender.TrySay(WeekendReflectionMessages.FinishReflection(), chatId);
+            await scenarioStateRepository.EndScenarioNoMatterWhat(chatId);
+            return true;
+        }
+
         var sendAnswer = new SendAnswer
         {
             UserId = chatId,
@@ -104,7 +111,7 @@ public class WeekendReflectionScenario : IRegularScenario
             SprintReplyNumber = scenarioInfo.SprintReplyNumber!.Value
         };
         await backendApiClient.SaveAnswer(sendAnswer);
-        
+
         await AskRegularReflectionMessages(chatId, scenarioData.AnswerType);
         await AskIntegrationReflectionMessages(chatId, scenarioData.AnswerType);
 
@@ -143,8 +150,8 @@ public class WeekendReflectionScenario : IRegularScenario
 
         if (answerType == AnswerType.ReflectionRegularCorrection)
         {
-            await messageSender.TrySay(WeekendReflectionMessages.FinishReflection(), chatId);
-            await scenarioStateRepository.EndScenarioNoMatterWhat(chatId);
+            await messageSender.TrySay(WeekendReflectionMessages.AskChangeRoutineActions(), chatId);
+            await scenarioStateRepository.UpdateData(chatId, new RegularScenarioData());
         }
     }
 
@@ -187,8 +194,8 @@ public class WeekendReflectionScenario : IRegularScenario
 
         if (answerType == AnswerType.ReflectionIntegrationOpportunities)
         {
-            await messageSender.TrySay(WeekendReflectionMessages.FinishReflection(), chatId);
-            await scenarioStateRepository.EndScenarioNoMatterWhat(chatId);
+            await messageSender.TrySay(WeekendReflectionMessages.AskChangeRoutineActions(), chatId);
+            await scenarioStateRepository.UpdateData(chatId, new RegularScenarioData());
         }
     }
 }

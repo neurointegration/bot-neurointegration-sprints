@@ -9,7 +9,7 @@ public class GetTablesLinksScenario: IScenario
     private readonly IBackendApiClient backendApiClient;
     private readonly IMessageSender messageSender;
 
-    private const string Command = CommandsConstants.ResultTables;
+    private const string Command = CommandsConstants.ResultTablesCommand;
 
     public GetTablesLinksScenario(IBackendApiClient backendApiClient, IMessageSender messageSender)
     {
@@ -22,16 +22,10 @@ public class GetTablesLinksScenario: IScenario
         if (telegramEvent.Text?.Trim().ToLower() != Command)
             return false;
         
-        if (scenarioInfo != null)
-        {
-            await messageSender.Say("Закночи другой сценарий, прежде чем получать таблицу результатов.", telegramEvent.ChatId);
-            return true;
-        }
-        
         var sprints = await backendApiClient.GetUserSprintsAsync(telegramEvent.ChatId, telegramEvent.ChatId);
         if (sprints.Count == 0)
         {
-            await messageSender.Say("У тебя пока нету таблиц.",
+            await messageSender.Say("У тебя пока нету таблиц",
                 telegramEvent.ChatId);
             return true;
         }

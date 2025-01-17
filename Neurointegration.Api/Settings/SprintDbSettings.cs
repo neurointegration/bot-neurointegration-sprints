@@ -8,4 +8,7 @@ public static class SprintDbSettings
     public const string UserIdField = "user_id";
     public const string SheetIdField = "sheet_id";
     public const string SprintStartDateField = "sprint_start_date";
+    public const string LifeCountField = "life_count";
+    public const string PleasureCountField = "pleasure_count";
+    public const string DriveCountField = "drive_count";
 }

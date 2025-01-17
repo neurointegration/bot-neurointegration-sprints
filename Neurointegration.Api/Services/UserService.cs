@@ -80,6 +80,9 @@ public class UserService : IUserService
         if (updateUser.MessageStartTime != null)
             storedUser.MessageStartTime = updateUser.MessageStartTime.Value;
 
+        if (updateUser.WeekReflectionTime != null)
+            storedUser.WeekReflectionTime = updateUser.WeekReflectionTime.Value;
+
         if (updateUser.EveningStandUpTime != null)
             storedUser.EveningStandUpTime = updateUser.EveningStandUpTime.Value;
 
@@ -184,8 +187,10 @@ public class UserService : IUserService
         var reflectionStart = firstReflectionDate;
         while (reflectionStart < DateTime.UtcNow.Date)
         {
-            reflectionStart = reflectionStart.AddDays(7).Add(user.WeekReflectionTime.Value);
+            reflectionStart = reflectionStart.AddDays(7);
         }
+
+        reflectionStart += user.WeekReflectionTime.Value;
 
         var questionReflection = new Question(
             reflectionStart,

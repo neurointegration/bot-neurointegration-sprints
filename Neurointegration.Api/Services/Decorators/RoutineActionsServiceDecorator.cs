@@ -22,10 +22,10 @@ public class RoutineActionsServiceDecorator: IRoutineActionsService
         return result;
     }
 
-    public async Task AddAction(long userId, RoutineAction weekRoutineAction)
+    public async Task AddAction(long userId, RoutineAction routineAction)
     {
-        logger.LogInformation($"Пробуем добавить рутинные действия {weekRoutineAction}");
-        await service.AddAction(userId, weekRoutineAction);
+        logger.LogInformation($"Пробуем добавить рутинные действия {routineAction}");
+        await service.AddAction(userId, routineAction);
     }
 
     public async Task DeleteAction(long userId, string actionId)

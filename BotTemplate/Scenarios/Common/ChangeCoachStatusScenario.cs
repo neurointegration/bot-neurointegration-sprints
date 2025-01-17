@@ -1,7 +1,6 @@
 using BotTemplate.Client;
 using BotTemplate.Models.Telegram;
 using BotTemplate.Services.Telegram;
-using BotTemplate.Services.Telegram.Messages.Bottom;
 using Neurointegration.Api.DataModels.Dto;
 
 namespace BotTemplate.Scenarios.Common;
@@ -31,7 +30,7 @@ public class ChangeCoachStatusScenario: IScenario
         
         await backendApiClient.UpdateUser(new UpdateUser {UserId = chatId, IAmCoach = !getUser.Value.IAmCoach});
         var answer = !getUser.Value.IAmCoach ? "Теперь ты тренер" : "Теперь ты не тренер";
-        await messageSender.SayWithMarkup(answer, chatId, BottomMessage.GetMessage().ReplyMarkup);
+        await messageSender.Say(answer, chatId);
         return true;
     }
 }

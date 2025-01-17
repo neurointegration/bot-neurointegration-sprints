@@ -28,6 +28,41 @@ public class GoogleSheetUtils
         return $"Стендап!{column}{row}:{column}{row}";
     }
 
+    public string GetRoutineActionNameCell(RoutineType routineType, Sprint sprint)
+    {
+        var row = routineType switch
+        {
+            RoutineType.Life => 9 + sprint.LifeCount,
+            RoutineType.Pleasure => 30 + sprint.PleasureCount,
+            RoutineType.Drive => 51 + sprint.DriveCount,
+            _ => throw new ArgumentOutOfRangeException(nameof(routineType), routineType, null)
+        };
+        var column = "E";
+
+        return $"Проекты!{column}{row}:{column}{row}";
+    }
+
+    public string GetRoutineActionCheckUpCell(RoutineType routineType, int sprintTypeNumber, int weekNumber)
+    {
+        var row = routineType switch
+        {
+            RoutineType.Life => 9 + sprintTypeNumber,
+            RoutineType.Pleasure => 30 + sprintTypeNumber,
+            RoutineType.Drive => 51 + sprintTypeNumber,
+            _ => throw new ArgumentOutOfRangeException(nameof(routineType), routineType, null)
+        };
+        var column = weekNumber switch
+        {
+            0 => "T",
+            1 => "U",
+            2 => "V",
+            3 => "W",
+            _ => throw new ArgumentOutOfRangeException(nameof(weekNumber), weekNumber, null)
+        };
+
+        return $"Проекты!{column}{row}:{column}{row}";
+    }
+
     private string GetEveningStandUpCell(int dayOfSprint, AnswerType answerType)
     {
         var row = 12 + dayOfSprint;
@@ -97,7 +132,7 @@ public class GoogleSheetUtils
     {
         var row = 12 + dayOfSprint;
         var answerNumber = sprintReplyNumber % 3;
-        
+
         var column = answerNumber switch
         {
             0 => "C",
