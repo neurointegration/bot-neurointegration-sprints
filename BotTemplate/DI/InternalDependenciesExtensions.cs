@@ -82,7 +82,7 @@ public static class InternalDependenciesExtensions
         serviceCollection.AddSingleton<IScenario, SettingsScenario>();
         serviceCollection.AddSingleton<IScenario, GetStudentsScenario>();
         serviceCollection.AddSingleton<IScenario, GetTablesLinksScenario>();
-        serviceCollection.AddSingleton<IScenario, MyInfoScenario>();
+        serviceCollection.AddSingleton<IScenario, MainRoutineActionsScenario>();
         
         serviceCollection.AddSingleton<IScenario, StatusScenario>();
         serviceCollection.AddSingleton<IScenario, EveningStandUpScenario>();

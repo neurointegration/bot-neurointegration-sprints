@@ -61,7 +61,7 @@ public class ChangeWeekendReflectionTimeScenario : IScenario
             await scenarioStateRepository.EndScenarioNoMatterWhat(chatId);
             await backendApiClient.UpdateUser(updateUser);
             await messageSender.Say(
-                $"Теперь я буду присылать напоминание о еженедельной рефлексии в {mskWeekReflectionTime:hh.mm} по МСК", chatId);
+                $"Теперь я буду присылать напоминание о еженедельной рефлексии в {mskWeekReflectionTime:hh\\:mm} по МСК", chatId);
         }
 
         return true;

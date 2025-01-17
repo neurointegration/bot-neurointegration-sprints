@@ -39,7 +39,7 @@ public static class CommandsConstants
 
     public static string AddRoutineAction(RoutineType routineType) => $"/{routineType.ToString().ToLower()}Add";
     public static string DeleteRoutineAction(int i) => $"{DeleteRoutineActionPrefix}{i}";
-    public const string DeleteRoutineActionPrefix = "/actionDelete";
+    public const string DeleteRoutineActionPrefix = "/deleteAction";
 
     public static string CheckupRoutineAction(string id) => $"/checkupAction{id}";
     public const string CheckupRoutineActionPrefix = "/checkupAction";

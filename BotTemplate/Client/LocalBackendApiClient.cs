@@ -28,9 +28,9 @@ public class LocalBackendApiClient : IBackendApiClient
             throw new HttpRequestException(answer.Error.Message);
     }
 
-    public async Task<List<Question>> GetQuestionsAsync(int timePeriod, ScenarioType? scenarioType)
+    public async Task<List<Question>> GetQuestionsAsync(int timePeriod, ScenarioType? scenarioType, long? userId)
     {
-        var questionsActionResult = await questionService.Get(timePeriod, scenarioType);
+        var questionsActionResult = await questionService.Get(timePeriod, scenarioType, userId);
 
         return questionsActionResult;
     }

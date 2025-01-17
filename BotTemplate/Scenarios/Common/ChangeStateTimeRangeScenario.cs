@@ -68,7 +68,7 @@ public class ChangeStateTimeRangeScenario : IScenario
             };
             await scenarioStateRepository.EndScenarioNoMatterWhat(chatId);
             await backendApiClient.UpdateUser(updateUser);
-            await messageSender.Say($"Теперь я буду присылать уведомления о состоянии в {mskStartTime:hh.mm}-{mskEndTime:hh.mm}", chatId);
+            await messageSender.Say($"Теперь я буду присылать уведомления о состоянии в {mskStartTime:hh\\:mm}-{mskEndTime:hh\\:mm}", chatId);
         }
 
         return true;
