@@ -7,7 +7,7 @@ namespace Neurointegration.Api.Storages.Answers;
 
 public class AnswerTableSchema: BaseTableSchema
 {
-    public override string TableName => "user_sprint_answers";
+    public override string TableName => "user_sprint_answers2";
 
     public readonly Int64YbdField UserId;
     public readonly Int32YbdField SprintReplyNumber;
