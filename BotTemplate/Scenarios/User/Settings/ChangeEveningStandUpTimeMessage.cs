@@ -1,6 +1,6 @@
 ﻿using BotTemplate.Models.Telegram;
 
-namespace BotTemplate.Services.Telegram.Messages.Settings;
+namespace BotTemplate.Scenarios.User.Settings;
 
 public static class ChangeEveningStandUpTimeMessage
 {

@@ -1,7 +1,7 @@
 using BotTemplate.Client;
 using BotTemplate.Models.Telegram;
+using BotTemplate.Scenarios.User.Settings;
 using BotTemplate.Services.Telegram;
-using BotTemplate.Services.Telegram.Messages.Settings;
 using BotTemplate.Services.Telegram.Validators;
 using BotTemplate.Services.YDB;
 using Neurointegration.Api.DataModels.Dto;
@@ -60,7 +60,7 @@ public class ChangeEveningStandUpTimeScenario : IScenario
             };
             await scenarioStateRepository.EndScenarioNoMatterWhat(chatId);
             await backendApiClient.UpdateUser(updateUser);
-            await messageSender.Say($"Теперь я буду присылать напоминание о вечернем стендапе в {mskEveningStandUp:hh.mm} по МСК", chatId);
+            await messageSender.Say($"Теперь я буду присылать напоминание о вечернем стендапе в {mskEveningStandUp:hh\\:mm} по МСК", chatId);
         }
 
         return true;
