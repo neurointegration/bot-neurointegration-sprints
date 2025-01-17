@@ -40,8 +40,8 @@ public class ScenariosToStartRepository : IRepository
             DECLARE $date AS DATETIME?;
             DECLARE $data AS Json?;
 
-            REPLACE INTO {TableName} ( chat_id, scenario_id, scenario_type, current_sprint_number, sprint_reply_number, date, data )
-            VALUES ( $chat_id, $scenario_id, $scenario_type, $current_sprint_number, $sprint_reply_number, $date, $data)
+            REPLACE INTO {TableName} (scenario_to_start_id, chat_id, scenario_id, scenario_type, current_sprint_number, sprint_reply_number, date, data )
+            VALUES ( $scenario_to_start_id, $chat_id, $scenario_id, $scenario_type, $current_sprint_number, $sprint_reply_number, $date, $data)
         ", new Dictionary<string, YdbValue?>
         {
             {"$scenario_to_start_id", YdbValue.MakeUtf8(scenarioToStartId)},
@@ -94,7 +94,7 @@ public class ScenariosToStartRepository : IRepository
 
         Enum.TryParse(rowsArray.First()["scenario_type"].GetUtf8(), out ScenarioType scenarioType);
         return new ScenarioToStart(
-                rowsArray.First()["chatId"].GetInt64(),
+                rowsArray.First()["chat_id"].GetInt64(),
                 rowsArray.First()["scenario_id"].GetUtf8(),
                 scenarioType,
                 rowsArray.First()["date"].GetOptionalDatetime(),
@@ -117,7 +117,7 @@ public class ScenariosToStartRepository : IRepository
                 current_sprint_number Int64 NOT NULL,
                 sprint_reply_number Int32 NOT NULL,
                 date DATETIME,
-                data Json
+                data Json,
                 
                 PRIMARY KEY (scenario_to_start_id)
             )
