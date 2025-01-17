@@ -82,13 +82,57 @@ public class WeekendReflectionScenario : IRegularScenario
         return true;
     }
 
+    private async Task<bool> TryStart(string text)
+    {
+         var splittedText = text.Split();
+
+        if (splittedText.Length != 2) 
+            return false;
+
+        var userStatusCommand = splittedText[0];
+        var scenarioToStartId = splittedText[1];
+
+        if (userStatusCommand != CommandsConstants.StartEveningStandupActionPrefix)
+            return false;
+
+        var scenarioToStart = await scenariosToStartRepository.GetScenarioToStart(scenarioToStartId);
+        if (scenarioToStart is null || scenarioToStart.ScenarioType is not SelfScenarioType)
+            return false;
+        await scenariosToStartRepository.DeleteScenarioToStart(scenarioToStartId);
+
+        if (scenarioToStart.SprintReplyNumber == SprintReplyCount - 1)
+        {
+            await scenarioStateRepository.StartNewScenario(scenarioToStart.ChatId,
+                LastReflectionScenarioId, scenarioToStart.Date, scenarioToStart.SprintNumber, scenarioToStart.SprintReplyNumber);
+            await scenarioStateRepository.UpdateData(scenarioToStart.ChatId,
+                new RegularScenarioData() {AnswerType = AnswerType.ReflectionIntegrationChanges});
+            await messageSender.TrySay(WeekendReflectionMessages.AskChanges(), scenarioToStart.ChatId);
+        }
+        else
+        {
+            await scenarioStateRepository.StartNewScenario(scenarioToStart.ChatId,
+                RegularReflectionScenarioId, scenarioToStart.Date, scenarioToStart.SprintNumber, scenarioToStart.SprintReplyNumber);
+            await scenarioStateRepository.UpdateData(scenarioToStart.ChatId,
+                new RegularScenarioData() {AnswerType = AnswerType.ReflectionRegularWhatIDoing});
+            await messageSender.TrySay(WeekendReflectionMessages.AskWhatIDoing(), scenarioToStart.ChatId);
+        }
+
+        return true;
+    }
+
     public async Task<bool> TryHandle(TelegramEvent telegramEvent, CurrentScenarioInfo? scenarioInfo)
     {
         var chatId = telegramEvent.ChatId;
-        if (scenarioInfo == null || scenarioInfo.ScenarioId != RegularReflectionScenarioId)
-            return false;
 
         var text = telegramEvent.Text ?? "";
+        var tryStartScenarioResult = await TryStart(text);
+
+        if (tryStartScenarioResult)
+            return true;
+
+        if (scenarioInfo == null || scenarioInfo.ScenarioId != RegularReflectionScenarioId)
+            return false;
+        
         var scenarioData = JsonConvert.DeserializeObject<RegularScenarioData>(scenarioInfo.Data);
         if (scenarioData == null)
             throw new ArgumentException("Не правильно указана специальная информация для сценария вечерней рефлексии");

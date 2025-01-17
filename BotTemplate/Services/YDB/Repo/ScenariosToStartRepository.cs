@@ -59,7 +59,7 @@ public class ScenariosToStartRepository : IRepository
         return scenarioToStartId;
     }
 
-    public async Task<ScenarioToStart?> GetScenarioToStartAndDeleteIt(string scenarioToStartId)
+    public async Task<ScenarioToStart?> GetScenarioToStart(string scenarioToStartId)
     {
         var rows = await botDatabase.ExecuteFind($@"
             DECLARE $scenario_to_start_id AS Utf8;
@@ -77,22 +77,16 @@ public class ScenariosToStartRepository : IRepository
             return null;
         }
 
-        await botDatabase.ExecuteModify($@"
-            DECLARE $scenario_to_start_id AS Utf8;
-
-            DELETE FROM {TableName} WHERE scenario_to_start_id = $scenario_to_start_id;
-        ", new Dictionary<string, YdbValue?>
-        {
-            {"$scenario_to_start_id", YdbValue.MakeUtf8(scenarioToStartId)}
-        });
-
         var rowsArray = rows as ResultSet.Row[] ?? rows.ToArray();
         if (!rowsArray.Any())
         {
             return null;
         }
 
-        Enum.TryParse(rowsArray.First()["scenario_type"].GetUtf8(), out ScenarioType scenarioType);
+        var isScenarioTypeParseSuccess = Enum.TryParse(rowsArray.First()["scenario_type"].GetUtf8(), out ScenarioType scenarioType);
+        if (!isScenarioTypeParseSuccess)
+            return null;
+
         return new ScenarioToStart(
                 rowsArray.First()["chat_id"].GetInt64(),
                 rowsArray.First()["scenario_id"].GetUtf8(),
@@ -102,6 +96,17 @@ public class ScenariosToStartRepository : IRepository
                 rowsArray.First()["sprint_reply_number"].GetInt32(),
                 rowsArray.First()["data"].GetOptionalJson()
             );
+    }
+
+    public async Task DeleteScenarioToStart(string scenarioToStartId) {
+        await botDatabase.ExecuteModify($@"
+            DECLARE $scenario_to_start_id AS Utf8;
+
+            DELETE FROM {TableName} WHERE scenario_to_start_id = $scenario_to_start_id;
+        ", new Dictionary<string, YdbValue?>
+        {
+            {"$scenario_to_start_id", YdbValue.MakeUtf8(scenarioToStartId)}
+        });
     }
 
     public async Task CreateTable()

@@ -1,5 +1,4 @@
 using BotTemplate.Client;
-using BotTemplate.Models.ScenariosData;
 using BotTemplate.Models.Telegram;
 using BotTemplate.Services.Telegram;
 using BotTemplate.Services.YDB;
@@ -19,13 +18,13 @@ public class StatusScenario : IRegularScenario
 
     private readonly HashSet<string> commands = new HashSet<string>()
     {
-        CommandsConstants.StatusPanic,
-        CommandsConstants.StatusOverexcitation,
-        CommandsConstants.StatusInclusion,
-        CommandsConstants.StatusBalance,
-        CommandsConstants.StatusRelaxation,
-        CommandsConstants.StatusPassivity,
-        CommandsConstants.StatusApathy,
+        CommandsConstants.StatusPanicActionPrefix,
+        CommandsConstants.StatusOverexcitationActionPrefix,
+        CommandsConstants.StatusInclusionActionPrefix,
+        CommandsConstants.StatusBalanceActionPrefix,
+        CommandsConstants.StatusRelaxationActionPrefix,
+        CommandsConstants.StatusPassivityActionPrefix,
+        CommandsConstants.StatusApathyActionPrefix
     };
 
     public StatusScenario(
@@ -51,38 +50,52 @@ public class StatusScenario : IRegularScenario
         return true;
     }
 
-    public Task<bool> Start(ScenarioToStart scenarioToStart)
-    {
-        return Task.FromResult(true);
-    }
-
     public async Task<bool> TryHandle(TelegramEvent telegramEvent, CurrentScenarioInfo? scenarioInfo)
     {
         var chatId = telegramEvent.ChatId;
-        if (scenarioInfo == null || scenarioInfo.ScenarioId != ScenarioId)
-            return false;
 
         var text = telegramEvent.Text ?? "";
+        var splittedText = text.Split();
 
-        if (!commands.Contains(text))
+        if (splittedText.Length != 2) 
+            return false;
+
+        var userStatusCommand = splittedText[0];
+        var scenarioToStartId = splittedText[1];
+
+        if (!commands.Contains(userStatusCommand))
+            return false;
+
+        var scenarioToStart = await scenariosToStartRepository.GetScenarioToStart(scenarioToStartId);
+        if (scenarioToStart is null || scenarioToStart.ScenarioType is not SelfScenarioType)
+            return false;
+        await scenariosToStartRepository.DeleteScenarioToStart(scenarioToStartId);
+
+        var userStatus = userStatusCommand switch
         {
-            await messageSender.TrySay(StateMessages.GetRecommendation(text), chatId);
-            return true;
-        }
+            CommandsConstants.StatusPanicActionPrefix => CommandsConstants.StatusPanic,
+            CommandsConstants.StatusOverexcitationActionPrefix => CommandsConstants.StatusOverexcitation,
+            CommandsConstants.StatusInclusionActionPrefix => CommandsConstants.StatusInclusion,
+            CommandsConstants.StatusBalanceActionPrefix => CommandsConstants.StatusBalance,
+            CommandsConstants.StatusRelaxationActionPrefix => CommandsConstants.StatusRelaxation,
+            CommandsConstants.StatusPassivityActionPrefix => CommandsConstants.StatusPassivity,
+            CommandsConstants.StatusApathyActionPrefix => CommandsConstants.StatusApathy,
+            _ => throw new ArgumentException("Не существует такой команды статуса")
+        };
 
         var sendAnswer = new SendAnswer
         {
             UserId = chatId,
-            Answer = text,
+            Answer = userStatus,
             AnswerType = AnswerType.Status,
             ScenarioType = SelfScenarioType,
-            Date = DateOnly.FromDateTime(scenarioInfo.Date ?? DateTime.UtcNow),
-            SprintNumber = (int) scenarioInfo.CurrentSprintNumber!.Value,
-            SprintReplyNumber = scenarioInfo.SprintReplyNumber!.Value
+            Date = DateOnly.FromDateTime(scenarioToStart.Date ?? DateTime.UtcNow),
+            SprintNumber = (int) scenarioToStart.SprintNumber,
+            SprintReplyNumber = scenarioToStart.SprintReplyNumber
         };
         await backendApiClient.SaveAnswer(sendAnswer);
 
-        await messageSender.TrySay(StateMessages.GetRecommendation(text), chatId);
+        await messageSender.TrySay(StateMessages.GetRecommendation(userStatus), chatId);
         return true;
     }
 }

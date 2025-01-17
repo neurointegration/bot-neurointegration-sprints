@@ -37,6 +37,16 @@ public static class CommandsConstants
     public const string StatusPassivity = "Пассивность";
     public const string StatusApathy = "Апатия";
 
+    public const string StatusPanicActionPrefix = "/status_panic";
+    public const string StatusOverexcitationActionPrefix = "/status_overexcitation";
+    public const string StatusInclusionActionPrefix = "/status_inclusion";
+    public const string StatusBalanceActionPrefix = "/status_balance";
+    public const string StatusRelaxationActionPrefix = "/status_relaxation";
+    public const string StatusPassivityActionPrefix = "/status_passivity";
+    public const string StatusApathyActionPrefix = "/status_apathy";
+    public const string StartEveningStandupActionPrefix = "/start_evening_standup";
+    public const string StartReflectionActionPrefix = "/start_reflection";
+
     public static string AddRoutineAction(RoutineType routineType) => $"/{routineType.ToString().ToLower()}Add";
     public static string DeleteRoutineAction(int i) => $"{DeleteRoutineActionPrefix}{i}";
     public const string DeleteRoutineActionPrefix = "/deleteAction";
@@ -47,8 +57,4 @@ public static class CommandsConstants
     public const string FinishCheckupRoutineActions = "finish_checkup_routine";
     
     public const string FinishEveningStandUp = "finish_evening_stand_up";
-    public const string FinishWeekendReflection = "finish_weekend_relection";
-
-    public const string StartRegularScenarioRegexPattern = @"ready [({]?[a-fA-F0-9]{8}[-]?([a-fA-F0-9]{4}[-]?){3}[a-fA-F0-9]{12}[})]?.*$";
-    public static string StartScenarioAction(string scenarioToStartId, string? answer = null) => $"ready {scenarioToStartId}{(answer is not null ? $" {answer}" : string.Empty)}";
-}
+    public const string FinishWeekendReflection = "finish_weekend_relection";}

@@ -15,13 +15,13 @@ public static class StateMessages
         var blueButton = new InlineKeyboardButton($"\ud83d\ude45\ud83c\udffb\u200d\u2642\ufe0f {CommandsConstants.StatusPassivity} \ud83d\ude45\ud83c\udffb\u200d\u2642\ufe0f");
         var purpleButton = new InlineKeyboardButton($"\u2614\ufe0f {CommandsConstants.StatusApathy} \u2614");
 
-        redButton.CallbackData = CommandsConstants.StartScenarioAction(scenarioToStartId, CommandsConstants.StatusPanic);
-        orangeButton.CallbackData = CommandsConstants.StartScenarioAction(scenarioToStartId, CommandsConstants.StatusOverexcitation);
-        yellowButton.CallbackData = CommandsConstants.StartScenarioAction(scenarioToStartId, CommandsConstants.StatusInclusion);
-        greenButton.CallbackData = CommandsConstants.StartScenarioAction(scenarioToStartId, CommandsConstants.StatusBalance);
-        lightBlueButton.CallbackData = CommandsConstants.StartScenarioAction(scenarioToStartId, CommandsConstants.StatusRelaxation);
-        blueButton.CallbackData = CommandsConstants.StartScenarioAction(scenarioToStartId, CommandsConstants.StatusPassivity);
-        purpleButton.CallbackData = CommandsConstants.StartScenarioAction(scenarioToStartId, CommandsConstants.StatusApathy);
+        redButton.CallbackData = $"{CommandsConstants.StatusPanicActionPrefix} {scenarioToStartId}";
+        orangeButton.CallbackData = $"{CommandsConstants.StatusOverexcitationActionPrefix} {scenarioToStartId}";
+        yellowButton.CallbackData = $"{CommandsConstants.StatusInclusionActionPrefix} {scenarioToStartId}";
+        greenButton.CallbackData = $"{CommandsConstants.StatusBalanceActionPrefix} {scenarioToStartId}";
+        lightBlueButton.CallbackData = $"{CommandsConstants.StatusRelaxationActionPrefix} {scenarioToStartId}";
+        blueButton.CallbackData = $"{CommandsConstants.StatusPassivityActionPrefix} {scenarioToStartId}";
+        purpleButton.CallbackData = $"{CommandsConstants.StatusApathyActionPrefix} {scenarioToStartId}";
     
         var buttons = new[] 
         { 

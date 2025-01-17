@@ -10,7 +10,7 @@ public static class EveningStandUpMessages
         var text = "Время заполнять стендап!";
         var readyButton = new InlineKeyboardButton($"Заполнить сейчас")
         {
-            CallbackData = CommandsConstants.StartScenarioAction(scenarioToStartId)
+            CallbackData = $"{CommandsConstants.StartEveningStandupActionPrefix} {scenarioToStartId}"
         };
 
         var buttons = new InlineKeyboardMarkup(new[] 

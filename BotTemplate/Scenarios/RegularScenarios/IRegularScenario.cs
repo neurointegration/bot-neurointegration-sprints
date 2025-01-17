@@ -8,5 +8,4 @@ namespace BotTemplate.Scenarios.RegularScenarios;
 public interface IRegularScenario : IScenario
 {
     Task<bool> TryAddToStart(Question question);
-    Task<bool> Start(ScenarioToStart scenarioToStart);
 }

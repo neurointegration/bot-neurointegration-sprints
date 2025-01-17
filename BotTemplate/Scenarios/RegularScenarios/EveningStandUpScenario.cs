@@ -44,12 +44,24 @@ public class EveningStandUpScenario : IRegularScenario
         return true;
     }
 
-    public async Task<bool> Start(ScenarioToStart scenarioToStart)
+    private async Task<bool> TryStart(string text)
     {
-        if (scenarioToStart.ScenarioType != SelfScenarioType)
+         var splittedText = text.Split();
+
+        if (splittedText.Length != 2) 
             return false;
+
+        var userStatusCommand = splittedText[0];
+        var scenarioToStartId = splittedText[1];
+
+        if (userStatusCommand != CommandsConstants.StartEveningStandupActionPrefix)
+            return false;
+
+        var scenarioToStart = await scenariosToStartRepository.GetScenarioToStart(scenarioToStartId);
+        if (scenarioToStart is null || scenarioToStart.ScenarioType is not SelfScenarioType)
+            return false;
+        await scenariosToStartRepository.DeleteScenarioToStart(scenarioToStartId);
         
-        await scenarioStateRepository.EndScenarioNoMatterWhat(scenarioToStart.ChatId);
         await scenarioStateRepository.StartNewScenario(scenarioToStart.ChatId, ScenarioId,
             scenarioToStart.Date, scenarioToStart.SprintNumber, scenarioToStart.SprintReplyNumber);
 
@@ -63,10 +75,15 @@ public class EveningStandUpScenario : IRegularScenario
     public async Task<bool> TryHandle(TelegramEvent telegramEvent, CurrentScenarioInfo? scenarioInfo)
     {
         var chatId = telegramEvent.ChatId;
-        if (scenarioInfo == null || scenarioInfo.ScenarioId != ScenarioId)
-            return false;
 
         var text = telegramEvent.Text?.Trim() ?? "";
+        var tryStartScenarioResult = await TryStart(text);
+
+        if (tryStartScenarioResult)
+            return true;
+
+        if (scenarioInfo == null || scenarioInfo.ScenarioId != ScenarioId)
+            return false;
 
         var scenarioData = JsonConvert.DeserializeObject<RegularScenarioData>(scenarioInfo.Data);
         if (scenarioData == null)

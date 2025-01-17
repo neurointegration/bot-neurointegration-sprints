@@ -10,7 +10,7 @@ public static class WeekendReflectionMessages
         var text = "Время порефлексировать!";
         var readyButton = new InlineKeyboardButton($"Заполнить сейчас")
         {
-            CallbackData = CommandsConstants.StartScenarioAction(scenarioToStartId)
+            CallbackData = $"{CommandsConstants.StartReflectionActionPrefix} {scenarioToStartId}"
         };
 
         var buttons = new InlineKeyboardMarkup(new[] 
