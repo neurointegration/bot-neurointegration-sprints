@@ -12,7 +12,8 @@ public record Question
         ScenarioType scenarioType,
         long sprintNumber,
         int sprintReplyNumber,
-        int priority
+        int priority,
+        bool isDelayed = false
     )
     {
         Date = date;
@@ -21,6 +22,7 @@ public record Question
         SprintNumber = sprintNumber;
         SprintReplyNumber = sprintReplyNumber;
         Priority = priority;
+        IsDelayed = isDelayed;
     }
 
     public Question(Question question)
@@ -31,6 +33,7 @@ public record Question
         SprintNumber = question.SprintNumber;
         SprintReplyNumber = question.SprintReplyNumber;
         Priority = question.Priority;
+        IsDelayed = question.IsDelayed;
     }
 
     public DateTime Date { get; set; }
@@ -39,4 +42,5 @@ public record Question
     public long SprintNumber { get; set; }
     public int SprintReplyNumber { get; set; }
     public int Priority { get; set; }
+    public bool IsDelayed { get; set; }
 }

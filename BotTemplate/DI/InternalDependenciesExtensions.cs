@@ -3,6 +3,7 @@ using BotTemplate.Scenarios;
 using BotTemplate.Scenarios.Coach;
 using BotTemplate.Scenarios.Common;
 using BotTemplate.Scenarios.Common.Messages;
+using BotTemplate.Scenarios.Questions;
 using BotTemplate.Scenarios.RegularScenarios;
 using BotTemplate.Scenarios.User;
 using BotTemplate.Services.Telegram;
@@ -83,6 +84,8 @@ public static class InternalDependenciesExtensions
         serviceCollection.AddSingleton<IScenario, GetStudentsScenario>();
         serviceCollection.AddSingleton<IScenario, GetTablesLinksScenario>();
         serviceCollection.AddSingleton<IScenario, MainRoutineActionsScenario>();
+
+        serviceCollection.AddSingleton<IScenario, DelayQuestionScenario>();
         
         serviceCollection.AddSingleton<IScenario, StatusScenario>();
         serviceCollection.AddSingleton<IScenario, EveningStandUpScenario>();

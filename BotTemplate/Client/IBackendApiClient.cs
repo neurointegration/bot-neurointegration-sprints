@@ -19,6 +19,12 @@ public interface IBackendApiClient
     Task<List<Question>> GetQuestionsAsync(int timePeriod, ScenarioType? scenarioType, long? userId);
 
     /// <summary>
+    /// Отложить вопрос на 1 час
+    /// </summary>
+    /// <param name="question">Вопрос, который надо отложить на 1 час</param>
+    Task<Result> CreateDelayedQuestion(Question question);
+
+    /// <summary>
     /// Создать пользователя
     /// </summary>
     /// <param name="createUser">Данные пользователя</param>

@@ -28,14 +28,17 @@ public class QuestionStorage : IQuestionStorage
             DECLARE ${QuestionDbSettings.PriorityField} AS Int32;
             DECLARE ${QuestionDbSettings.SprintReplyNumberField} AS Int32;
             DECLARE ${QuestionDbSettings.SprintNumberField} AS Int64;
+            DECLARE ${QuestionDbSettings.IsDelayedField} AS Utf8;
 
              REPLACE INTO {QuestionDbSettings.TableName} 
                 ( {QuestionDbSettings.DateField}, {QuestionDbSettings.UserIdField},
                   {QuestionDbSettings.ScenarioTypeField}, {QuestionDbSettings.PriorityField}, 
-                    {QuestionDbSettings.SprintReplyNumberField}, {QuestionDbSettings.SprintNumberField} )
+                    {QuestionDbSettings.SprintReplyNumberField}, {QuestionDbSettings.SprintNumberField},
+                    {QuestionDbSettings.IsDelayedField})
              VALUES ( ${QuestionDbSettings.DateField}, ${QuestionDbSettings.UserIdField},
                       ${QuestionDbSettings.ScenarioTypeField}, ${QuestionDbSettings.PriorityField},
-                      ${QuestionDbSettings.SprintReplyNumberField}, ${QuestionDbSettings.SprintNumberField} )",
+                      ${QuestionDbSettings.SprintReplyNumberField}, ${QuestionDbSettings.SprintNumberField},
+                      ${QuestionDbSettings.IsDelayedField})",
             new Dictionary<string, YdbValue>
             {
                 {$"${QuestionDbSettings.DateField}", YdbValue.MakeDatetime(question.Date)},
@@ -43,7 +46,8 @@ public class QuestionStorage : IQuestionStorage
                 {$"${QuestionDbSettings.ScenarioTypeField}", YdbValue.MakeUtf8(question.ScenarioType.ToString())},
                 {$"${QuestionDbSettings.PriorityField}", YdbValue.MakeInt32(question.Priority)},
                 {$"${QuestionDbSettings.SprintReplyNumberField}", YdbValue.MakeInt32(question.SprintReplyNumber)},
-                {$"${QuestionDbSettings.SprintNumberField}", YdbValue.MakeInt64(question.SprintNumber)}
+                {$"${QuestionDbSettings.SprintNumberField}", YdbValue.MakeInt64(question.SprintNumber)},
+                {$"${QuestionDbSettings.IsDelayedField}", YdbValue.MakeBool(question.IsDelayed)}
             });
     }
 

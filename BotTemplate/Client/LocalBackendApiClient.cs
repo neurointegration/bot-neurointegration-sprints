@@ -35,6 +35,11 @@ public class LocalBackendApiClient : IBackendApiClient
         return questionsActionResult;
     }
 
+    public async Task<Result> CreateDelayedQuestion(Question question) 
+    {
+        return await questionService.CreateDelayedQuestion(question);
+    }
+
     public async Task<User> CreateUserAsync(CreateUser createUser)
     {
         var result = await userService.CreateUser(createUser);

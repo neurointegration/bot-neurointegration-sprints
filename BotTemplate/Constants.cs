@@ -46,6 +46,7 @@ public static class CommandsConstants
     public const string StatusApathyActionPrefix = "/status_apathy";
     public const string StartEveningStandupActionPrefix = "/start_evening_standup";
     public const string StartReflectionActionPrefix = "/start_reflection";
+    public const string DelayQuestionActionPrefix = "/delay";
 
     public static string AddRoutineAction(RoutineType routineType) => $"/{routineType.ToString().ToLower()}Add";
     public static string DeleteRoutineAction(int i) => $"{DeleteRoutineActionPrefix}{i}";

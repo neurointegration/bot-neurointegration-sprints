@@ -11,6 +11,8 @@ public class ScenarioToStart
     public long SprintNumber { get; set; }
     public int SprintReplyNumber { get; set; }
     public string? Data { get; set; }
+    public bool IsDelayed { get; set; }
+    public int Priority { get; set; }
 
     public ScenarioToStart(
         long chatId,
@@ -19,7 +21,9 @@ public class ScenarioToStart
         DateTime? date,
         long sprintNumber,
         int sprintReplyNumber,
-        string? data
+        string? data,
+        int priority,
+        bool isDelayed
     )
     {
         ChatId = chatId;
@@ -29,5 +33,7 @@ public class ScenarioToStart
         SprintNumber = sprintNumber;
         SprintReplyNumber = sprintReplyNumber;
         Data = data;
+        IsDelayed = isDelayed;
+        Priority = priority;
     }
 }

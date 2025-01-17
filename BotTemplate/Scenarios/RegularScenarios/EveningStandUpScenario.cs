@@ -36,10 +36,10 @@ public class EveningStandUpScenario : IRegularScenario
         if (question.ScenarioType != SelfScenarioType)
             return false;
 
-        var scenarioToStartId = await scenariosToStartRepository.AddNewScenarioToStartAndGetItsId(question.UserId, ScenarioId, question.ScenarioType,
-            question.Date, question.SprintNumber, question.SprintReplyNumber);
+        var scenarioToStartId = await scenariosToStartRepository.AddNewScenarioToStartAndGetItsId(question.UserId, ScenarioId, question.Priority, question.ScenarioType,
+            question.Date, question.SprintNumber, question.SprintReplyNumber, question.IsDelayed);
 
-        await messageSender.TrySay(EveningStandUpMessages.AskReady(scenarioToStartId), question.UserId);
+        await messageSender.TrySay(EveningStandUpMessages.AskReady(scenarioToStartId, question.IsDelayed), question.UserId);
 
         return true;
     }
@@ -51,10 +51,10 @@ public class EveningStandUpScenario : IRegularScenario
         if (splittedText.Length != 2) 
             return false;
 
-        var userStatusCommand = splittedText[0];
+        var eveningStandupCommand = splittedText[0];
         var scenarioToStartId = splittedText[1];
 
-        if (userStatusCommand != CommandsConstants.StartEveningStandupActionPrefix)
+        if (eveningStandupCommand != CommandsConstants.StartEveningStandupActionPrefix)
             return false;
 
         var scenarioToStart = await scenariosToStartRepository.GetScenarioToStart(scenarioToStartId);

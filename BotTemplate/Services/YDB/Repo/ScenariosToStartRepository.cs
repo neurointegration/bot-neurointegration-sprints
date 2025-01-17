@@ -22,10 +22,12 @@ public class ScenariosToStartRepository : IRepository
     public async Task<string> AddNewScenarioToStartAndGetItsId(
         long chatId,
         string scenarioId,
+        int priority,
         ScenarioType scenarioType,
-        DateTime? date = null,
-        long currentSprintNumber = 0,
-        int sprintReplyNumber = 0,
+        DateTime? date,
+        long currentSprintNumber,
+        int sprintReplyNumber,
+        bool isDelayed,
         string? data = null)
     {
         var scenarioToStartId = Guid.NewGuid().ToString();
@@ -39,9 +41,11 @@ public class ScenariosToStartRepository : IRepository
             DECLARE $sprint_reply_number AS Int32;
             DECLARE $date AS DATETIME?;
             DECLARE $data AS Json?;
+            DECLARE $priority AS Int32;
+            DECLARE $is_delayed AS Utf8;
 
-            REPLACE INTO {TableName} (scenario_to_start_id, chat_id, scenario_id, scenario_type, current_sprint_number, sprint_reply_number, date, data )
-            VALUES ( $scenario_to_start_id, $chat_id, $scenario_id, $scenario_type, $current_sprint_number, $sprint_reply_number, $date, $data)
+            REPLACE INTO {TableName} (scenario_to_start_id, chat_id, scenario_id, scenario_type, current_sprint_number, sprint_reply_number, date, data, priority, is_delayed )
+            VALUES ( $scenario_to_start_id, $chat_id, $scenario_id, $scenario_type, $current_sprint_number, $sprint_reply_number, $date, $data, $priority, $is_delayed)
         ", new Dictionary<string, YdbValue?>
         {
             {"$scenario_to_start_id", YdbValue.MakeUtf8(scenarioToStartId)},
@@ -51,7 +55,9 @@ public class ScenariosToStartRepository : IRepository
             {"$current_sprint_number", YdbValue.MakeInt64(currentSprintNumber)},
             {"$sprint_reply_number", YdbValue.MakeInt32(sprintReplyNumber)},
             {"$date", YdbValue.MakeOptionalDatetime(date)},
-            {"$data", YdbValue.MakeOptionalJson(data)}
+            {"$data", YdbValue.MakeOptionalJson(data)},
+            {"$priority", YdbValue.MakeInt32(priority)},
+            {"$is_delayed", YdbValue.MakeBool(isDelayed)}
         });
 
         logger.LogInformation($"Добавили для пользователя {chatId} возможность начать сценарий {scenarioId}");
@@ -64,7 +70,7 @@ public class ScenariosToStartRepository : IRepository
         var rows = await botDatabase.ExecuteFind($@"
             DECLARE $scenario_to_start_id AS Utf8;
 
-            SELECT chat_id, scenario_id, scenario_type, current_sprint_number, sprint_reply_number, date, data
+            SELECT chat_id, scenario_id, scenario_type, current_sprint_number, sprint_reply_number, date, data, priority, is_delayed
             FROM {TableName}
             WHERE scenario_to_start_id = $scenario_to_start_id
         ", new Dictionary<string, YdbValue>
@@ -94,7 +100,9 @@ public class ScenariosToStartRepository : IRepository
                 rowsArray.First()["date"].GetOptionalDatetime(),
                 rowsArray.First()["current_sprint_number"].GetInt64(),
                 rowsArray.First()["sprint_reply_number"].GetInt32(),
-                rowsArray.First()["data"].GetOptionalJson()
+                rowsArray.First()["data"].GetOptionalJson(),
+                rowsArray.First()["priority"].GetInt32(),
+                rowsArray.First()["is_delayed"].GetBool()
             );
     }
 
@@ -121,6 +129,8 @@ public class ScenariosToStartRepository : IRepository
                 scenario_type Utf8 NOT NULL,
                 current_sprint_number Int64 NOT NULL,
                 sprint_reply_number Int32 NOT NULL,
+                is_delayed Bool NOT NULL,
+                priority Int32 NOT NULL,
                 date DATETIME,
                 data Json,
                 

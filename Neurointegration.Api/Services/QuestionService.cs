@@ -49,7 +49,7 @@ public class QuestionService : IQuestionService
                 continue;
             }
 
-            switch (question.ScenarioType.IsRegularEvent())
+            switch (question.ScenarioType.IsRegularEvent() && !question.IsDelayed)
             {
                 case true:
                     var updateResult = await CreateNextQuestionWithLogs(question);
@@ -68,6 +68,20 @@ public class QuestionService : IQuestionService
         }
 
         return resultQuestion;
+    }
+
+    public async Task<Result> CreateDelayedQuestion(Question question) {
+        question.IsDelayed = true;
+        question.Date = DateTime.UtcNow.AddHours(1);
+
+        try {
+            await questionStorage.AddOrReplace(question);
+        }
+        catch {
+            return Result.Fail(Error.InnerError("Ошибка при создании отложенного вопроса"));
+        }
+
+        return Result.Success();
     }
 
     private async Task<Result> CreateNextQuestionWithLogs(Question question)

@@ -1,4 +1,5 @@
 ﻿using BotTemplate.Services.Telegram;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Telegram.Bot.Types;
@@ -12,11 +13,18 @@ public class TelegramHandler : BaseFunctionHandler<UserMessagesService>
 
     protected override async Task<string> InnerHandleRequest(string request, Context context)
     {
-        var body = JObject.Parse(request).GetValue("body")!.Value<string>()!;
-        var message = JsonConvert.DeserializeObject<Update>(body)!;
+        try {
+            var body = JObject.Parse(request).GetValue("body")!.Value<string>()!;
+            var message = JsonConvert.DeserializeObject<Update>(body)!;
 
-        await HandleService.HandleMessage(message);
+            await HandleService.HandleMessage(message);
 
-        return "ok";
+            return "ok";
+        }
+        catch (Exception e)
+        {
+            Logger.LogError(e, "Что-то пошло не так...");
+            return "not ok";
+        }
     }
 }

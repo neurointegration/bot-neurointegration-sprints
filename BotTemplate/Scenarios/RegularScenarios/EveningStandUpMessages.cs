@@ -5,18 +5,29 @@ namespace BotTemplate.Scenarios.RegularScenarios;
 
 public static class EveningStandUpMessages
 {
-    public static Message AskReady(string scenarioToStartId)
+    public static Message AskReady(string scenarioToStartId, bool isDelayed)
     {
         var text = "Время заполнять стендап!";
         var readyButton = new InlineKeyboardButton($"Заполнить сейчас")
         {
             CallbackData = $"{CommandsConstants.StartEveningStandupActionPrefix} {scenarioToStartId}"
         };
-
-        var buttons = new InlineKeyboardMarkup(new[] 
-        { 
-            new[] { readyButton }
-        });
+        var delayButton = new InlineKeyboardButton($"Отложить на час")
+        {
+            CallbackData = $"{CommandsConstants.DelayQuestionActionPrefix} {scenarioToStartId}"
+        };
+        
+        InlineKeyboardMarkup buttons;
+        if (!isDelayed)
+            buttons = new InlineKeyboardMarkup(new[] 
+            { 
+                new[] { readyButton, delayButton }
+            });
+        else
+            buttons = new InlineKeyboardMarkup(new[] 
+            { 
+                new[] { readyButton }
+            });
 
         return new Message(text, buttons);
     }

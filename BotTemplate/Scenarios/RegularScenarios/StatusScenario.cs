@@ -42,8 +42,8 @@ public class StatusScenario : IRegularScenario
         if (question.ScenarioType != SelfScenarioType)
             return false;
 
-        var scenarioToStartId = await scenariosToStartRepository.AddNewScenarioToStartAndGetItsId(question.UserId, ScenarioId, question.ScenarioType,
-            question.Date, question.SprintNumber, question.SprintReplyNumber);
+        var scenarioToStartId = await scenariosToStartRepository.AddNewScenarioToStartAndGetItsId(question.UserId, ScenarioId, question.Priority, question.ScenarioType,
+            question.Date, question.SprintNumber, question.SprintReplyNumber, question.IsDelayed);
 
         await messageSender.TrySay(StateMessages.AskStatus(scenarioToStartId), question.UserId);
 
