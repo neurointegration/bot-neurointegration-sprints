@@ -21,6 +21,7 @@ public class RoutineActionsMapper
             1 => tableSchema.WeekTwoCount.GetValue(row),
             2 => tableSchema.WeekThreeCount.GetValue(row),
             3 => tableSchema.WeekFourCount.GetValue(row),
+            _ => throw new ArgumentOutOfRangeException(nameof(weekNumber), weekNumber, null)
         };
         return new WeekRoutineAction()
         {
