@@ -216,7 +216,7 @@ public class RegisterScenario: IScenario
         }
 
         if (messageToSend is not null)
-            await messageSender.SayWithMarkup(messageToSend.Text, chatId, messageToSend.ReplyMarkup);
+            await messageSender.TrySay(messageToSend, chatId);
 
         return true;
     }

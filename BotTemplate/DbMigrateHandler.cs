@@ -1,4 +1,5 @@
 using BotTemplate.DI;
+using BotTemplate.Services.YDB;
 using Common.Ydb;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -29,18 +30,26 @@ public class DbMigrateHandler : YcFunction<string, Response>
             .AddTransient(provider =>
                 new YdbClient(secretSettings.YdbSecretSettings, provider.GetRequiredService<ILogger>()))
             .AddInitialize()
+            .AddBotDb(configuration)
+            .AddRepositories()
             .AddTgClient(configuration.TelegramToken);
         var serviceProvider = service.BuildServiceProvider();
         // var initializer = serviceProvider.GetService<YdbInitializer>() ??
         //                   throw new ArgumentException("Нет экземпляра инициализатора бд для апи");
-        // await initializer.CreateTables();
-        var botClient = serviceProvider.GetRequiredService<ITelegramBotClient>();
-        await botClient.SetMyCommandsAsync(new[]
-        {
-            new BotCommand() {Command = CommandsConstants.Start, Description = "Регистрация"},
-            new BotCommand() {Command = CommandsConstants.SettingsCommand, Description = "Настройки"},
-            new BotCommand() {Command = CommandsConstants.RoutineActionsCommand, Description = "Рутинные дела"},
-            new BotCommand() {Command = CommandsConstants.ResultTablesCommand, Description = "Таблица результатов"}
-        });
+        // await initializer.CreateTables()
+        
+        // var scenariosToStartRepository = serviceProvider.GetRequiredService<ScenariosToStartRepository>();
+        // await scenariosToStartRepository.CreateTable();
+        
+        // var botClient = serviceProvider.GetRequiredService<ITelegramBotClient>();
+        // await botClient.SetMyCommandsAsync(new[]
+        // {
+        //     new BotCommand() {Command = CommandsConstants.Start, Description = "Регистрация"},
+        //     new BotCommand() {Command = CommandsConstants.SettingsCommand, Description = "Настройки"},
+        //     new BotCommand() {Command = CommandsConstants.RoutineActionsCommand, Description = "Рутинные дела"},
+        //     new BotCommand() {Command = CommandsConstants.ResultTablesCommand, Description = "Таблица результатов"}
+        // });
+
+
     }
 }
