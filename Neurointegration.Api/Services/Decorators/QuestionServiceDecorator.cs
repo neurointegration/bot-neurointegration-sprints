@@ -13,10 +13,10 @@ public class QuestionServiceDecorator: IQuestionService
         this.log = log;
     }
     
-    public async Task<List<Question>> Get(int time, ScenarioType? scenarioType)
+    public async Task<List<Question>> Get(int time, ScenarioType? scenarioType, long? userId)
     {
         log.LogInformation($"Получаем вопросы на следующие {time} минут и по сценарию {scenarioType}");
-        var getResult = await questionService.Get(time, scenarioType);
+        var getResult = await questionService.Get(time, scenarioType, userId);
         
         log.LogInformation($"Получено {getResult.Count} вопросов");
 

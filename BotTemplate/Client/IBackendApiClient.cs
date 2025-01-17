@@ -16,7 +16,7 @@ public interface IBackendApiClient
     /// Достать список вопросов
     /// </summary>
     /// <param name="timePeriod">Промежуток за который взять вопросы</param>
-    Task<List<Question>> GetQuestionsAsync(int timePeriod, ScenarioType? scenarioType);
+    Task<List<Question>> GetQuestionsAsync(int timePeriod, ScenarioType? scenarioType, long? userId);
 
     /// <summary>
     /// Создать пользователя

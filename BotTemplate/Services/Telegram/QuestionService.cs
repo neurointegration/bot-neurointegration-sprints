@@ -32,7 +32,8 @@ public class QuestionService
     {
         var questions = await backendApiClient.GetQuestionsAsync(
             questionRequest.Time ?? DefaultRequestTimeMinutes,
-            questionRequest.ScenarioType);
+            questionRequest.ScenarioType,
+            questionRequest.UserId);
 
         foreach (var question in questions)
         {

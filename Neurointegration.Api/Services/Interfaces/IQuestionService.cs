@@ -4,5 +4,5 @@ namespace Neurointegration.Api.Services;
 
 public interface IQuestionService
 {
-    Task<List<Question>> Get(int time, ScenarioType? scenarioType);
+    Task<List<Question>> Get(int time, ScenarioType? scenarioType, long? userId);
 }

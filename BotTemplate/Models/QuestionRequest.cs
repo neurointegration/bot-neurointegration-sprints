@@ -12,6 +12,9 @@ public record QuestionRequest
     [JsonConverter(typeof(StringEnumConverter))]
     [JsonProperty("scenario_type")]
     public ScenarioType? ScenarioType { get; set; }
+    
+    [JsonProperty("user_id")]
+    public long? UserId { get; set; }
 
     // обязателен для корректной дессериализации
     public QuestionRequest()
