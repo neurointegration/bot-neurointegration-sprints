@@ -10,7 +10,7 @@ public static class RoutineMessage
     {
         var listActions = routineActions.Select((action, i) => action with
         {
-            Action = $"- {action.Action}. Удалить: {CommandsConstants.DeleteRoutineAction(i)}"
+            Action = $"{action.Action}: {CommandsConstants.DeleteRoutineAction(i)}"
         }).ToArray();
         var lifeActions = listActions.Where(action => action.Type == RoutineType.Life).Select(x => x.Action).ToArray();
         var driveActions = listActions.Where(action => action.Type == RoutineType.Drive).Select(x => x.Action)
@@ -19,12 +19,18 @@ public static class RoutineMessage
             .ToArray();
 
 
-        var text = $@"Твои привычки:
-🚶‍♂️ Лайф. Добавить новые: {CommandsConstants.AddRoutineAction(RoutineType.Life)}
+        var text = $@"Рутинные дела:
+🚶‍♂️ Лайф
+Нажми на команду, чтобы добавить новые дела: {CommandsConstants.AddRoutineAction(RoutineType.Life)}
+Нажми на команду, чтобы удалить рутинное дело:
 {string.Join("\n", lifeActions)}{(lifeActions.Length != 0 ? "\n" : "")}
-🚀 Драйв. Добавить новые: {CommandsConstants.AddRoutineAction(RoutineType.Drive)}
+🚀 Драйв
+Нажми на команду, чтобы добавить новые дела: {CommandsConstants.AddRoutineAction(RoutineType.Drive)}
+Нажми на команду, чтобы удалить рутинное дело:
 {string.Join("\n", driveActions)}{(driveActions.Length != 0 ? "\n" : "")}
-💆‍♀️ Кайф. Добавить новые: {CommandsConstants.AddRoutineAction(RoutineType.Pleasure)}
+💆‍♀️ Кайф
+Нажми на команду, чтобы добавить новые дела: {CommandsConstants.AddRoutineAction(RoutineType.Pleasure)}
+Нажми на команду, чтобы удалить рутинное дело:
 {string.Join("\n", pleasureActions)}{(pleasureActions.Length != 0 ? "\n" : "")}";
 
         var cancelButton = new InlineKeyboardButton("Завершить")
@@ -72,7 +78,7 @@ public static class RoutineMessage
 
     public static Message RoutineWeekendStatus(List<WeekRoutineAction> routineActions)
     {
-        var text = "Отметь рутинные действия, которые сделал за сегодня!";
+        var text = "Нажми на рутинное дело, чтобы отметить его выполнение";
         var buttons = routineActions.Select((action) =>
                 new[]
                 {
