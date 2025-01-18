@@ -65,7 +65,7 @@ public class WeekendReflectionScenario : IRegularScenario
         var weekendReflectionCommand = splittedText[0];
         var scenarioToStartId = splittedText[1];
 
-        if (weekendReflectionCommand != CommandsConstants.StartEveningStandupActionPrefix)
+        if (weekendReflectionCommand != CommandsConstants.StartReflectionActionPrefix)
             return false;
 
         var scenarioToStart = await scenariosToStartRepository.GetScenarioToStart(scenarioToStartId);

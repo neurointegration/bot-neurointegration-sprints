@@ -42,7 +42,7 @@ public class ScenariosToStartRepository : IRepository
             DECLARE $date AS DATETIME?;
             DECLARE $data AS Json?;
             DECLARE $priority AS Int32;
-            DECLARE $is_delayed AS Utf8;
+            DECLARE $is_delayed AS Bool;
 
             REPLACE INTO {TableName} (scenario_to_start_id, chat_id, scenario_id, scenario_type, current_sprint_number, sprint_reply_number, date, data, priority, is_delayed )
             VALUES ( $scenario_to_start_id, $chat_id, $scenario_id, $scenario_type, $current_sprint_number, $sprint_reply_number, $date, $data, $priority, $is_delayed)

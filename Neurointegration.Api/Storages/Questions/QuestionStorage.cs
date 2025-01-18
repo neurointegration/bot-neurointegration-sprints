@@ -28,7 +28,7 @@ public class QuestionStorage : IQuestionStorage
             DECLARE ${QuestionDbSettings.PriorityField} AS Int32;
             DECLARE ${QuestionDbSettings.SprintReplyNumberField} AS Int32;
             DECLARE ${QuestionDbSettings.SprintNumberField} AS Int64;
-            DECLARE ${QuestionDbSettings.IsDelayedField} AS Utf8;
+            DECLARE ${QuestionDbSettings.IsDelayedField} AS Bool;
 
              REPLACE INTO {QuestionDbSettings.TableName} 
                 ( {QuestionDbSettings.DateField}, {QuestionDbSettings.UserIdField},
