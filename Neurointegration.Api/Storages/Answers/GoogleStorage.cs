@@ -5,12 +5,12 @@ namespace Neurointegration.Api.Storages.Answers;
 
 public class GoogleStorage : IGoogleStorage
 {
-    private readonly GoogleSheetClient sheetClient;
-    private readonly GoogleDriveClient driveClient;
+    private readonly IGoogleSheetClient sheetClient;
+    private readonly IGoogleDriveClient driveClient;
     private readonly GoogleSheetUtils googleSheetUtils;
     private readonly ILogger log;
 
-    public GoogleStorage(GoogleSheetClient sheetClient, GoogleDriveClient driveClient,
+    public GoogleStorage(IGoogleSheetClient sheetClient, IGoogleDriveClient driveClient,
         GoogleSheetUtils googleSheetUtils, ILogger log)
     {
         this.sheetClient = sheetClient;
@@ -19,11 +19,12 @@ public class GoogleStorage : IGoogleStorage
         this.log = log;
     }
 
-    public async Task Save(string answer, string sheetId, string range)
+    public Task Save(string text, string sheetId, string range)
     {
         log.LogInformation($"Сохранение в гугл таблицу. SheetId={sheetId}, range={range}");
-        Task.Run(() => sheetClient.Write(sheetId, range, answer));
+        Task.Run(() => sheetClient.Write(sheetId, range, text));
         log.LogInformation($"Сохранили ответ в гугл таблицу");
+        return Task.CompletedTask;
     }
 
     public async Task<string> CreateSheet(DateOnly startDate)

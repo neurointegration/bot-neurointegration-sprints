@@ -2,25 +2,21 @@ using Ydb.Sdk.Value;
 
 namespace Common.Ydb.Fields;
 
-public abstract class YdbFieldBase<T> : IYdbField
+public abstract class YdbFieldBase<T> : YdbField
 {
-    public string Type { get; }
-    public string Name { get; }
+    public override string Type { get; }
+    public override string Name { get; }
 
     protected abstract YdbValue Transform(T value);
 
-    protected YdbFieldBase(string name, string type)
+    protected YdbFieldBase(string name, string type, FieldConditions[] conditions)
     {
         Name = name;
         Type = type;
+        Conditions = conditions.ToHashSet();
     }
 
-    public YdbValue GetParameterValue(T value) =>
-        Transform(value);
+    public abstract T GetValue(ResultSet.Row row);
 
-    public string NameDeclare => $"${Name}";
-    public string FieldDeclare => $"DECLARE {NameDeclare} AS {Type};";
-
-    public string GetParameterKey() =>
-        NameDeclare;
+    public YdbFieldWithValue WithValue(T value) => new(this, Transform(value));
 }

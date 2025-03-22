@@ -2,12 +2,11 @@
 
 namespace Neurointegration.Api.DataModels.Models;
 
-public class User
+public record User
 {
     public User()
     {
     }
-
 
     public User(CreateUser createUser)
     {

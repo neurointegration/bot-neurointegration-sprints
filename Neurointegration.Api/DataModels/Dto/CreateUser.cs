@@ -1,6 +1,6 @@
 ﻿namespace Neurointegration.Api.DataModels.Dto;
 
-public class CreateUser
+public record CreateUser
 {
     public long UserId { get; set; }
     public string Email { get; set; }

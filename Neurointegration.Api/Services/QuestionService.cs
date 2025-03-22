@@ -28,7 +28,7 @@ public class QuestionService : IQuestionService
         this.log = log;
     }
 
-    public async Task<List<Question>> Get(int time, ScenarioType? scenarioType)
+    public async Task<List<Question>> Get(int time, ScenarioType? scenarioType, long? userId)
     {
         var questions = await questionStorage.Get(DateTime.UtcNow.AddMinutes(time), scenarioType);
         var sendUsers = new HashSet<long>();
@@ -39,6 +39,9 @@ public class QuestionService : IQuestionService
             if (sendUsers.Contains(question.UserId))
                 continue;
 
+            if (userId != null && userId != question.UserId)
+                continue;
+
             var getUser = await userService.GetUser(question.UserId);
             if (!getUser.IsSuccess || (question.ScenarioType.IsRegularEvent() && !getUser.Value.SendRegularMessages))
             {
@@ -46,7 +49,7 @@ public class QuestionService : IQuestionService
                 continue;
             }
 
-            switch (question.ScenarioType.IsRegularEvent())
+            switch (question.ScenarioType.IsRegularEvent() && !question.IsDelayed)
             {
                 case true:
                     var updateResult = await CreateNextQuestionWithLogs(question);
@@ -67,12 +70,26 @@ public class QuestionService : IQuestionService
         return resultQuestion;
     }
 
+    public async Task<Result> CreateDelayedQuestion(Question question) {
+        question.IsDelayed = true;
+        question.Date = DateTime.UtcNow.AddHours(1);
+
+        try {
+            await questionStorage.AddOrReplace(question);
+        }
+        catch {
+            return Result.Fail(Error.InnerError("Ошибка при создании отложенного вопроса"));
+        }
+
+        return Result.Success();
+    }
+
     private async Task<Result> CreateNextQuestionWithLogs(Question question)
     {
         log.LogDebug($"Попытка обновить вопрос {question}");
-        
+
         var updateResult = await CreateNextQuestion(question);
-        
+
         if (!updateResult.IsSuccess)
             log.LogError($"Неудалось обновить вопрос {question}. Ошибка {updateResult.Error}");
 
@@ -86,7 +103,7 @@ public class QuestionService : IQuestionService
         var activeSprint = await sprintService.GetSprint(question.UserId, question.SprintNumber);
         if (!activeSprint.IsSuccess)
             return activeSprint;
-        
+
         var getNewDate = await GetNewQuestionDateTime(question);
         if (!getNewDate.IsSuccess)
             return getNewDate;
@@ -110,9 +127,9 @@ public class QuestionService : IQuestionService
     private async Task<Result> Delete(Question question)
     {
         log.LogDebug($"Попытка удалить вопрос {question}");
-        
-        var deleteResult =  await questionStorage.Delete(question);
-        
+
+        var deleteResult = await questionStorage.Delete(question);
+
         if (!deleteResult.IsSuccess)
             log.LogError($"Неудалось удалить вопрос {question}. Ошибка {deleteResult.Error}");
 

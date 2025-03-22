@@ -53,23 +53,31 @@ public class SprintStorage : ISprintStorage
 
     public async Task SaveOrUpdate(Sprint sprint)
     {
-        await ydbClient.ExecuteModify($@"
+        await ydbClient.ExecuteDataQuery($@"
              DECLARE ${SprintDbSettings.UserIdField} AS Int64;
              DECLARE ${SprintDbSettings.SprintNumberField} AS Int64;
              DECLARE ${SprintDbSettings.SheetIdField} AS text;
              DECLARE ${SprintDbSettings.SprintStartDateField} AS DATE;
+             DECLARE ${SprintDbSettings.LifeCountField} AS Int32?;
+             DECLARE ${SprintDbSettings.PleasureCountField} AS Int32?;
+             DECLARE ${SprintDbSettings.DriveCountField} AS Int32?;
 
              REPLACE INTO {SprintDbSettings.TableName} 
                 ( {SprintDbSettings.UserIdField}, {SprintDbSettings.SprintNumberField}, {SprintDbSettings.SheetIdField},
-                  {SprintDbSettings.SprintStartDateField} )
+                  {SprintDbSettings.SprintStartDateField}, {SprintDbSettings.LifeCountField}, {SprintDbSettings.PleasureCountField},
+                    {SprintDbSettings.DriveCountField} )
              VALUES ( ${SprintDbSettings.UserIdField}, ${SprintDbSettings.SprintNumberField}, ${SprintDbSettings.SheetIdField},
-                        ${SprintDbSettings.SprintStartDateField} )",
+                        ${SprintDbSettings.SprintStartDateField}, ${SprintDbSettings.LifeCountField}, ${SprintDbSettings.PleasureCountField},
+                    ${SprintDbSettings.DriveCountField} )",
             new Dictionary<string, YdbValue>()
             {
                 {$"${SprintDbSettings.UserIdField}", YdbValue.MakeInt64(sprint.UserId)},
                 {$"${SprintDbSettings.SprintNumberField}", YdbValue.MakeInt64(sprint.SprintNumber)},
                 {$"${SprintDbSettings.SheetIdField}", YdbValue.MakeUtf8(sprint.SheetId)},
-                {$"${SprintDbSettings.SprintStartDateField}", YdbValue.MakeDate(sprint.SprintStartDate)}
+                {$"${SprintDbSettings.SprintStartDateField}", YdbValue.MakeDate(sprint.SprintStartDate)},
+                {$"${SprintDbSettings.LifeCountField}", YdbValue.MakeOptionalInt32(sprint.LifeCount)},
+                {$"${SprintDbSettings.PleasureCountField}", YdbValue.MakeOptionalInt32(sprint.PleasureCount)},
+                {$"${SprintDbSettings.DriveCountField}", YdbValue.MakeOptionalInt32(sprint.DriveCount)}
             });
     }
 

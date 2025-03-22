@@ -3,10 +3,10 @@ using Neurointegration.Api.DataModels.Dto;
 using Neurointegration.Api.DataModels.Models;
 using Neurointegration.Api.DataModels.Result;
 using Neurointegration.Api.Excpetions;
-using Neurointegration.Api.Extensions;
 using Neurointegration.Api.Helpers;
 using Neurointegration.Api.Storages;
 using Neurointegration.Api.Storages.Questions;
+using Neurointegration.Api.Storages.User;
 
 namespace Neurointegration.Api.Services;
 
@@ -18,6 +18,7 @@ public class UserService : IUserService
     private readonly IQuestionStorage questionStorage;
     private readonly QuestionHelper questionHelper;
     private readonly IValidator<User> userValidator;
+    private readonly ILogger logger;
 
     public UserService(
         IUsersStorage usersStorage,
@@ -25,7 +26,8 @@ public class UserService : IUserService
         IGoogleStorage googleStorage,
         IQuestionStorage questionStorage,
         QuestionHelper questionHelper,
-        IValidator<User> userValidator)
+        IValidator<User> userValidator,
+        ILogger logger)
     {
         this.usersStorage = usersStorage;
         this.sprintService = sprintService;
@@ -33,12 +35,13 @@ public class UserService : IUserService
         this.questionStorage = questionStorage;
         this.questionHelper = questionHelper;
         this.userValidator = userValidator;
+        this.logger = logger;
     }
 
     public async Task<User> CreateUser(CreateUser createUser)
     {
         var storedUser = await usersStorage.GetUser(createUser.UserId);
-        if (storedUser != null)
+        if (storedUser.IsSuccess)
             throw new DataConflictException("User с таким id уже существует");
 
         var user = new User(createUser);
@@ -77,21 +80,38 @@ public class UserService : IUserService
         if (updateUser.MessageStartTime != null)
             storedUser.MessageStartTime = updateUser.MessageStartTime.Value;
 
+        if (updateUser.WeekReflectionTime != null)
+            storedUser.WeekReflectionTime = updateUser.WeekReflectionTime.Value;
+
         if (updateUser.EveningStandUpTime != null)
             storedUser.EveningStandUpTime = updateUser.EveningStandUpTime.Value;
 
         if (storedUser.SendRegularMessages == false && updateUser.SendRegularMessages == true)
         {
-            if (updateUser.ReflectionDate == null || storedUser.MessageEndTime == null ||
-                storedUser.MessageStartTime == null || storedUser.EveningStandUpTime == null ||
-                updateUser.SprintStartDate == null)
+            if (storedUser.MessageEndTime == null || storedUser.MessageStartTime == null ||
+                storedUser.EveningStandUpTime == null)
                 throw new ArgumentException("Для добавления отправки сообщений указаны не все обязательные параметры");
 
-            var (sprint, lastSprintNumber) = await sprintService.GetActiveSprint(updateUser.UserId);
-            if (sprint == null)
-                sprint = await sprintService.CreateSprint(storedUser, lastSprintNumber + 1,
+            var lastSprint = await sprintService.GetLastSprint(updateUser.UserId);
+            if (lastSprint == null)
+            {
+                if (updateUser.SprintStartDate == null)
+                {
+                    throw new ArgumentException(
+                        "Для добавления отправки сообщений необходимо указать дату начала спринта");
+                }
+
+                lastSprint = await sprintService.CreateSprint(storedUser, 1,
                     updateUser.SprintStartDate.Value);
-            await AddRegularQuestions(storedUser, sprint, updateUser.ReflectionDate.Value);
+            }
+
+            if (!lastSprint.IsActive())
+            {
+                lastSprint = await sprintService.CreateSprint(storedUser, lastSprint.SprintNumber + 1,
+                    DateTime.UtcNow);
+            }
+
+            await AddRegularQuestions(storedUser, lastSprint, DateTime.UtcNow.AddDays(7));
         }
 
         if (storedUser.SendRegularMessages == true && updateUser.SendRegularMessages is true or null)
@@ -116,7 +136,8 @@ public class UserService : IUserService
             {
                 var question = await questionStorage.Get(storedUser.UserId, ScenarioType.Status);
                 var newQuestion = new Question(question.Value);
-                newQuestion.Date = question.Value.Date + questionHelper.GetNewStatusQuestionTime(newQuestion, storedUser);
+                newQuestion.Date = question.Value.Date +
+                                   questionHelper.GetNewStatusQuestionTime(newQuestion, storedUser);
                 await questionStorage.UpdateQuestion(question.Value, newQuestion);
             }
         }
@@ -126,8 +147,10 @@ public class UserService : IUserService
             await questionStorage.DeleteUserQuestions(storedUser.UserId);
         }
 
+        storedUser.SendRegularMessages = updateUser.SendRegularMessages ?? storedUser.SendRegularMessages;
 
         IsUserValid(storedUser);
+
         await usersStorage.SaveUser(storedUser);
 
         return Result<User>.Success(storedUser);
@@ -150,6 +173,7 @@ public class UserService : IUserService
 
     private async Task AddRegularQuestions(User user, Sprint sprint, DateTime firstReflectionDate)
     {
+        logger.LogInformation("Добавляем пользователю регулярные вопросы");
         var startMessageDay = sprint.SprintStartDate < DateTime.UtcNow.Date
             ? DateTime.UtcNow.Date
             : sprint.SprintStartDate;
@@ -163,8 +187,10 @@ public class UserService : IUserService
         var reflectionStart = firstReflectionDate;
         while (reflectionStart < DateTime.UtcNow.Date)
         {
-            reflectionStart = reflectionStart.AddDays(7).Add(user.WeekReflectionTime.Value);
+            reflectionStart = reflectionStart.AddDays(7);
         }
+
+        reflectionStart += user.WeekReflectionTime.Value;
 
         var questionReflection = new Question(
             reflectionStart,
@@ -184,7 +210,6 @@ public class UserService : IUserService
         questionStatus.Date += questionHelper.GetNewStatusQuestionTime(questionStatus, user);
         questionStatus.SprintReplyNumber = 0;
 
-        // TODO: удалить созданные, если одно из сохранений не удалось
         try
         {
             await questionStorage.AddOrReplace(questionEveningStandUp);
@@ -209,7 +234,7 @@ public class UserService : IUserService
         var grantedUser = await GetUser(grantedUserId);
         if (!grantedUser.IsSuccess)
             return grantedUser;
-        
+
         if (ownerSheets.Count == 0)
             throw new ArgumentException($"У пользователя id={ownerId} нет гугл таблиц");
 
@@ -218,7 +243,7 @@ public class UserService : IUserService
             var permissionId = await googleStorage.GrantedAccessSheet(sheetId, grantedUser.Value.Email);
             await usersStorage.AddAccess(grantedUser.Value.UserId, ownerId, sheetId, permissionId);
         }
-        
+
         return Result.Success();
     }
 
@@ -246,7 +271,7 @@ public class UserService : IUserService
             var permissionId = await googleStorage.GrantedAccessSheet(sheetId, grantedUser.Value.Email);
             await usersStorage.AddAccess(grantedUserId, userId, sheetId, permissionId);
         }
-        
+
         return Result.Success();
     }
 
@@ -256,7 +281,7 @@ public class UserService : IUserService
 
         return sprints;
     }
-    
+
     public async Task<Result<List<Sprint>>> GetSprints(string username)
     {
         var user = await usersStorage.GetUser(username);
@@ -292,5 +317,11 @@ public class UserService : IUserService
         var validationResult = userValidator.Validate(user);
         if (!validationResult.IsValid)
             throw new ArgumentException(string.Join(", ", validationResult.Errors.Select(x => x.ErrorMessage)));
+    }
+
+    public async Task DeleteUser(long userId)
+    {
+        await usersStorage.DeleteUser(userId);
+        await questionStorage.DeleteUserQuestions(userId);
     }
 }

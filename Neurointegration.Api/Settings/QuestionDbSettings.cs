@@ -10,4 +10,5 @@ public class QuestionDbSettings
     public const string PriorityField = "priority";
     public const string SprintReplyNumberField = "sprint_reply_number";
     public const string SprintNumberField = "sprint_number";
+    public const string IsDelayedField = "is_delayed";
 }

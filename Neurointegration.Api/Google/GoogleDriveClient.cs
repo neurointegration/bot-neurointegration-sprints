@@ -7,7 +7,7 @@ using File = Google.Apis.Drive.v3.Data.File;
 
 namespace Neurointegration.Api.Google;
 
-public class GoogleDriveClient
+public class GoogleDriveClient: IGoogleDriveClient
 {
     private readonly DriveService driveService;
 
