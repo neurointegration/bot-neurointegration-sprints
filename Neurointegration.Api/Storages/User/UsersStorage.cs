@@ -1,13 +1,12 @@
 ﻿using Common.Ydb;
 using Neurointegration.Api.DataModels.Dto;
-using Neurointegration.Api.DataModels.Models;
 using Neurointegration.Api.DataModels.Result;
 using Neurointegration.Api.Excpetions;
 using Neurointegration.Api.Settings;
 using Neurointegration.Api.Storages.Mapper;
 using Ydb.Sdk.Value;
 
-namespace Neurointegration.Api.Storages;
+namespace Neurointegration.Api.Storages.User;
 
 public class UsersStorage : IUsersStorage
 {
@@ -20,9 +19,9 @@ public class UsersStorage : IUsersStorage
         this.userMapper = userMapper;
     }
 
-    public async Task SaveUser(User user)
+    public async Task SaveUser(DataModels.Models.User user)
     {
-        await ydbClient.ExecuteModify($@"
+        await ydbClient.ExecuteDataQuery($@"
              DECLARE ${UserDbSettings.UserIdField} AS Int64;
              DECLARE ${UserDbSettings.EmailField} AS text;
              DECLARE ${UserDbSettings.UsernameField} AS text;
@@ -52,7 +51,7 @@ public class UsersStorage : IUsersStorage
             });
     }
 
-    public async Task<Result<User>> GetUser(long userId)
+    public async Task<Result<DataModels.Models.User>> GetUser(long userId)
     {
         var rows = await ydbClient.ExecuteFind($@"
             DECLARE ${UserDbSettings.UserIdField} AS Int64;
@@ -67,12 +66,12 @@ public class UsersStorage : IUsersStorage
 
         var rowsList = rows.ToList();
         if (rowsList.Count == 0)
-            return Result<User>.Fail(Error.NotFound($"Пользователь с userId={userId} не найден"));
+            return Result<DataModels.Models.User>.Fail(Error.NotFound($"Пользователь с userId={userId} не найден"));
 
-        return Result<User>.Success(userMapper.ToUserEntity(rowsList[0]));
+        return Result<DataModels.Models.User>.Success(userMapper.ToUserEntity(rowsList[0]));
     }
 
-    public async Task<Result<User>> GetUser(string username)
+    public async Task<Result<DataModels.Models.User>> GetUser(string username)
     {
         var rows = await ydbClient.ExecuteFind($@"
             DECLARE ${UserDbSettings.UsernameField} AS Utf8;
@@ -87,14 +86,14 @@ public class UsersStorage : IUsersStorage
 
         var rowsList = rows.ToList();
         if (rowsList.Count == 0)
-            return Result<User>.Fail(Error.NotFound($"Пользователь с username={username} не найден"));
+            return Result<DataModels.Models.User>.Fail(Error.NotFound($"Пользователь с username={username} не найден"));
 
-        return Result<User>.Success(userMapper.ToUserEntity(rowsList[0]));
+        return Result<DataModels.Models.User>.Success(userMapper.ToUserEntity(rowsList[0]));
     }
 
     public async Task AddAccess(long grantedUserId, long ownerUserId, string sheetId, string permissionId)
     {
-        await ydbClient.ExecuteModify($@"
+        await ydbClient.ExecuteDataQuery($@"
              DECLARE ${UserAccessDbSettings.GrantedUserIdField} AS Int64;
              DECLARE ${UserAccessDbSettings.OwnerUserIdField} AS Int64;
              DECLARE ${UserAccessDbSettings.PermissionIdField} AS Utf8;
@@ -135,7 +134,7 @@ public class UsersStorage : IUsersStorage
 
     public async Task DeleteAccess(long grantedUserId, long ownerId)
     {
-        await ydbClient.ExecuteModify($@"
+        await ydbClient.ExecuteDataQuery($@"
              DECLARE ${UserAccessDbSettings.GrantedUserIdField} AS Int64;
              DECLARE ${UserAccessDbSettings.OwnerUserIdField} AS Int64;
 
@@ -165,6 +164,19 @@ public class UsersStorage : IUsersStorage
         return rows.Select(row => row[UserAccessDbSettings.GrantedUserIdField].GetInt64()).ToList();
     }
 
+    public async Task DeleteUser(long userId)
+    {
+        await ydbClient.ExecuteDataQuery($@"
+             DECLARE ${UserDbSettings.UserIdField} AS Int64;
+
+            DELETE FROM {UserDbSettings.TableName}
+            WHERE {UserDbSettings.UserIdField} == ${UserDbSettings.UserIdField};",
+            new Dictionary<string, YdbValue>()
+            {
+                {$"${UserDbSettings.UserIdField}", YdbValue.MakeInt64(userId)},
+            });
+    }
+
     public async Task<IEnumerable<long>> GetAccessUsers(long userId)
     {
         var rows = await ydbClient.ExecuteFind($@"
@@ -181,7 +193,7 @@ public class UsersStorage : IUsersStorage
         return rows.Select(row => row[UserAccessDbSettings.OwnerUserIdField].GetInt64());
     }
 
-    public async Task<List<User>> GetPublicCoachs()
+    public async Task<List<DataModels.Models.User>> GetPublicCoachs()
     {
         var rows = await ydbClient.ExecuteFind($@"
             SELECT *

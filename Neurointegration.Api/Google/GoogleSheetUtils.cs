@@ -7,15 +7,15 @@ public class GoogleSheetUtils
     public string GetAnswerCell(
         DateTime sprintStartDate,
         ScenarioType scenarioType,
-        int answerNumber,
+        AnswerType answerType,
         DateOnly date,
         int sprintReplyNumber)
     {
         var dateOfSprint = date.DayNumber - DateOnly.FromDateTime(sprintStartDate).DayNumber;
         return scenarioType switch
         {
-            ScenarioType.EveningStandUp => GetEveningStandUpCell(dateOfSprint, answerNumber),
-            ScenarioType.Reflection => GetReflectionCell(sprintReplyNumber, answerNumber),
+            ScenarioType.EveningStandUp => GetEveningStandUpCell(dateOfSprint, answerType),
+            ScenarioType.Reflection => GetReflectionCell(sprintReplyNumber, answerType),
             ScenarioType.Status => GetStatusCell(dateOfSprint, sprintReplyNumber),
             _ => throw new ArgumentOutOfRangeException(nameof(scenarioType), scenarioType, null)
         };
@@ -28,67 +28,102 @@ public class GoogleSheetUtils
         return $"Стендап!{column}{row}:{column}{row}";
     }
 
-    private string GetEveningStandUpCell(int dayOfSprint, int answerNumber)
+    public string GetRoutineActionNameCell(RoutineType routineType, Sprint sprint)
+    {
+        var row = routineType switch
+        {
+            RoutineType.Life => 9 + sprint.LifeCount,
+            RoutineType.Pleasure => 30 + sprint.PleasureCount,
+            RoutineType.Drive => 51 + sprint.DriveCount,
+            _ => throw new ArgumentOutOfRangeException(nameof(routineType), routineType, null)
+        };
+        var column = "E";
+
+        return $"Проекты!{column}{row}:{column}{row}";
+    }
+
+    public string GetRoutineActionCheckUpCell(RoutineType routineType, int sprintTypeNumber, int weekNumber)
+    {
+        var row = routineType switch
+        {
+            RoutineType.Life => 9 + sprintTypeNumber,
+            RoutineType.Pleasure => 30 + sprintTypeNumber,
+            RoutineType.Drive => 51 + sprintTypeNumber,
+            _ => throw new ArgumentOutOfRangeException(nameof(routineType), routineType, null)
+        };
+        var column = weekNumber switch
+        {
+            0 => "T",
+            1 => "U",
+            2 => "V",
+            3 => "W",
+            _ => throw new ArgumentOutOfRangeException(nameof(weekNumber), weekNumber, null)
+        };
+
+        return $"Проекты!{column}{row}:{column}{row}";
+    }
+
+    private string GetEveningStandUpCell(int dayOfSprint, AnswerType answerType)
     {
         var row = 12 + dayOfSprint;
-        var column = answerNumber switch
+        var column = answerType switch
         {
-            0 => "F",
-            1 => "H",
-            2 => "L",
-            3 => "P",
-            _ => throw new ArgumentException("Недопустимый номер ответа")
+            AnswerType.EveningStandUpWinnings => "F",
+            AnswerType.EveningStandUpLive => "H",
+            AnswerType.EveningStandUpPleasure => "L",
+            AnswerType.EveningStandUpDrive => "P",
+            _ => throw new ArgumentException($"Недопустимый тип ответа {answerType}")
         };
 
         return $"Стендап!{column}{row}:{column}{row}";
     }
 
-    private string GetReflectionCell(int sprintReplyNumber, int answerNumber)
+    private string GetReflectionCell(int sprintReplyNumber, AnswerType answerType)
     {
         if (sprintReplyNumber == 3)
-            return GetReflectionIntegrationCell(answerNumber);
+            return GetReflectionIntegrationCell(answerType);
 
-        var row = answerNumber switch
+        var row = answerType switch
         {
-            0 => "13",
-            1 => "16",
-            2 => "19",
-            3 => "22",
-            4 => "25",
-            _ => throw new ArgumentException("Недопустимый номер ответа")
+            AnswerType.ReflectionRegularWhatIDoing => "13",
+            AnswerType.ReflectionRegularWhatINotDoing => "16",
+            AnswerType.ReflectionRegularMyStatus => "19",
+            AnswerType.ReflectionRegularOrbits => "22",
+            AnswerType.ReflectionRegularCorrection => "25",
+            _ => throw new ArgumentException($"Недопустимый тип ответа {answerType}")
         };
         var column = sprintReplyNumber switch
         {
             0 => "B",
             1 => "G",
             2 => "L",
-            _ => throw new ArgumentException("Недопустимый номер ответа")
+            _ => throw new ArgumentException($"Недопустимый тип ответа {answerType}")
         };
 
         return $"Трекинг!{column}{row}:{column}{row}";
     }
 
-    private string GetReflectionIntegrationCell(int answerNumber)
+    private string GetReflectionIntegrationCell(AnswerType answerType)
     {
-        var row = answerNumber switch
+        var row = answerType switch
         {
-            0 => "31",
-            1 => "31",
-            2 => "31",
-            3 => "34",
-            4 => "34",
-            5 => "34",
-            _ => throw new ArgumentException("Недопустимый номер ответа")
+            AnswerType.ReflectionIntegrationChanges => "31",
+            AnswerType.ReflectionIntegrationActions => "31",
+            AnswerType.ReflectionIntegrationAbilities => "31",
+            AnswerType.ReflectionIntegrationBeliefs => "34",
+            AnswerType.ReflectionIntegrationSelfPerception => "34",
+            AnswerType.ReflectionIntegrationOpportunities => "34",
+            _ => throw new ArgumentException($"Недопустимый тип ответа {answerType}")
         };
-        var column = answerNumber switch
+        var column = answerType switch
         {
-            0 => "B",
-            1 => "G",
-            2 => "L",
-            3 => "B",
-            4 => "G",
-            5 => "L",
-            _ => throw new ArgumentException("Недопустимый номер ответа")
+            AnswerType.ReflectionIntegrationChanges => "B",
+            AnswerType.ReflectionIntegrationActions => "G",
+            AnswerType.ReflectionIntegrationAbilities => "L",
+            AnswerType.ReflectionIntegrationBeliefs => "B",
+            AnswerType.ReflectionIntegrationSelfPerception => "G",
+            AnswerType.ReflectionIntegrationOpportunities => "L",
+            _ => throw new ArgumentException($"Недопустимый тип ответа {answerType}")
         };
         return $"Трекинг!{column}{row}:{column}{row}";
     }
@@ -97,6 +132,7 @@ public class GoogleSheetUtils
     {
         var row = 12 + dayOfSprint;
         var answerNumber = sprintReplyNumber % 3;
+
         var column = answerNumber switch
         {
             0 => "C",

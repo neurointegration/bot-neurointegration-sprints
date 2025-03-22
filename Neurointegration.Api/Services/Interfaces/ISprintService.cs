@@ -12,8 +12,8 @@ public interface ISprintService
     
     Task SaveOrUpdate(Sprint sprint);
     
-    Task<(Sprint?, long)> GetActiveSprint(long userId);
+    Task<Sprint?> GetLastSprint(long userId);
     Task<List<string>> GetUserGoogleSheets(long ownerId);
     Task<Result<Sprint>> GetSprint(long userId, long sprintNumber);
-    Task<List<Sprint>> GetSprints(long ownerId);
+    Task<List<Sprint>> GetSprints(long userId);
 }

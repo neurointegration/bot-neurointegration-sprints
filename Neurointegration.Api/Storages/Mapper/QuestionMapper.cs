@@ -19,6 +19,7 @@ public class QuestionMapper
             scenario,
             row[QuestionDbSettings.SprintNumberField].GetInt64(),
             row[QuestionDbSettings.SprintReplyNumberField].GetInt32(),
-            row[QuestionDbSettings.PriorityField].GetInt32());
+            row[QuestionDbSettings.PriorityField].GetInt32(),
+            row[QuestionDbSettings.IsDelayedField].GetOptionalBool() ?? false);
     }
 }

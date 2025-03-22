@@ -1,7 +1,14 @@
 using BotTemplate.Client;
-using BotTemplate.Models.Telegram;
+using BotTemplate.Scenarios;
+using BotTemplate.Scenarios.Coach;
+using BotTemplate.Scenarios.Common;
+using BotTemplate.Scenarios.Common.Messages;
+using BotTemplate.Scenarios.Questions;
+using BotTemplate.Scenarios.RegularScenarios;
+using BotTemplate.Scenarios.User;
 using BotTemplate.Services.Telegram;
 using BotTemplate.Services.YDB;
+using BotTemplate.Services.YDB.Repo;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Telegram.Bot;
@@ -19,10 +26,13 @@ public static class InternalDependenciesExtensions
 
         return serviceCollection
             .AddSingleton<ILogger>(factory.CreateLogger(categoryName))
+            .AddSingleton(configuration)
             .AddBackend()
             .AddTgClient(configuration.TelegramToken)
-            .AddMessageView()
+            .AddMessageSender()
             .AddBotDb(configuration)
+            .AddRepositories()
+            .AddScenarios()
             .AddSingleton<QuestionService>()
             .AddSingleton<UserMessagesService>()
             .BuildServiceProvider();
@@ -35,10 +45,10 @@ public static class InternalDependenciesExtensions
         return serviceCollection;
     }
 
-    public static IServiceCollection AddMessageView(this IServiceCollection serviceCollection)
+    public static IServiceCollection AddMessageSender(this IServiceCollection serviceCollection)
     {
-        serviceCollection.AddSingleton<IMessageView>(provider =>
-            new HtmlMessageView(provider.GetRequiredService<ITelegramBotClient>(),
+        serviceCollection.AddSingleton<IMessageSender>(provider =>
+            new HtmlMessageSender(provider.GetRequiredService<ITelegramBotClient>(),
                 provider.GetRequiredService<ILogger>()));
 
         return serviceCollection;
@@ -47,6 +57,44 @@ public static class InternalDependenciesExtensions
     public static IServiceCollection AddBotDb(this IServiceCollection serviceCollection, Configuration configuration)
     {
         serviceCollection.AddSingleton<IBotDatabase>(provider => new BotDatabase(configuration));
+
+        return serviceCollection;
+    }
+
+    public static IServiceCollection AddRepositories(this IServiceCollection serviceCollection)
+    {
+        serviceCollection.AddSingleton<ScenarioStateRepository>();
+        serviceCollection.AddSingleton<UserAnswersRepository>();
+        serviceCollection.AddSingleton<ScenariosToStartRepository>();
+
+        return serviceCollection;
+    }
+
+    public static IServiceCollection AddScenarios(this IServiceCollection serviceCollection)
+    {
+        serviceCollection.AddSingleton<IScenario, ChangeCoachStatusScenario>();
+        serviceCollection.AddSingleton<IScenario, ChangeSendRegularMessagesScenario>();
+        serviceCollection.AddSingleton<IScenario, ChangeEveningStandUpTimeScenario>();
+        serviceCollection.AddSingleton<IScenario, ChangeWeekendReflectionTimeScenario>();
+        serviceCollection.AddSingleton<IScenario, ChangeStateTimeRangeScenario>();
+        serviceCollection.AddSingleton<IScenario, ChangeRoutineActionsScenario>();
+
+        serviceCollection.AddSingleton<IScenario, RegisterScenario>();
+        serviceCollection.AddSingleton<IScenario, SettingsScenario>();
+        serviceCollection.AddSingleton<IScenario, GetStudentsScenario>();
+        serviceCollection.AddSingleton<IScenario, GetTablesLinksScenario>();
+        serviceCollection.AddSingleton<IScenario, MainRoutineActionsScenario>();
+
+        serviceCollection.AddSingleton<IScenario, DelayQuestionScenario>();
+        
+        serviceCollection.AddSingleton<IScenario, StatusScenario>();
+        serviceCollection.AddSingleton<IScenario, EveningStandUpScenario>();
+        serviceCollection.AddSingleton<IScenario, WeekendReflectionScenario>();
+        serviceCollection.AddSingleton<IScenario, CheckupRoutineActionsScenario>();
+        
+        serviceCollection.AddSingleton<IRegularScenario, StatusScenario>();
+        serviceCollection.AddSingleton<IRegularScenario, EveningStandUpScenario>();
+        serviceCollection.AddSingleton<IRegularScenario, WeekendReflectionScenario>();
 
         return serviceCollection;
     }

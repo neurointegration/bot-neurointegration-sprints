@@ -1,5 +1,6 @@
 ﻿using Neurointegration.Api.DataModels.Dto;
 using Neurointegration.Api.DataModels.Models;
+using Neurointegration.Api.DataModels.Result;
 
 namespace BotTemplate.Client;
 
@@ -9,13 +10,19 @@ public interface IBackendApiClient
     /// Сохранить ответ на вопрос
     /// </summary>
     /// <param name="sendAnswer">Ответ</param>
-    Task SendAnswerAsync(SendAnswer sendAnswer);
+    Task SaveAnswer(SendAnswer sendAnswer);
 
     /// <summary>
     /// Достать список вопросов
     /// </summary>
     /// <param name="timePeriod">Промежуток за который взять вопросы</param>
-    Task<List<Question>> GetQuestionsAsync(int timePeriod, ScenarioType? scenarioType);
+    Task<List<Question>> GetQuestionsAsync(int timePeriod, ScenarioType? scenarioType, long? userId);
+
+    /// <summary>
+    /// Отложить вопрос на 1 час
+    /// </summary>
+    /// <param name="question">Вопрос, который надо отложить на 1 час</param>
+    Task<Result> CreateDelayedQuestion(Question question);
 
     /// <summary>
     /// Создать пользователя
@@ -27,13 +34,13 @@ public interface IBackendApiClient
     /// Обновить пользователя, указываются только обновляемые поля, если поле обновлять не надо, то оно указывается как null
     /// </summary>
     /// <param name="updateUser">Новые данные пользователя</param>
-    Task<User> UpdateUserAsync(UpdateUser updateUser);
+    Task<User> UpdateUser(UpdateUser updateUser);
 
     /// <summary>
     /// Достать информацию о пользователе
     /// </summary>
     /// <param name="userId">Id пользователя</param>
-    Task<User> GetUserAsync(long userId);
+    Task<Result<User>> GetUser(long userId);
 
     /// <summary>
     /// Получить все спринты пользователя
@@ -81,4 +88,24 @@ public interface IBackendApiClient
     /// </summary>
     /// <param name="coachId">id тренера</param>
     Task<List<User>> GetCoachStudentsAsync(long coachId);
+    
+    /// <summary>
+    /// Достать информацию о рутинных действиях пользователя
+    /// </summary>
+    /// <param name="userId">Id пользователя</param>
+    Task<List<WeekRoutineAction>> GetUserRoutineActions(long userId);
+
+    /// <summary>
+    /// Добавить 1 к количеству выполнений рутины за неделю
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="actionId"></param>
+    /// <returns></returns>
+    Task CheckupAction(long userId, string actionId);
+    
+    Task AddActions(long userId, List<RoutineAction> routineActions);
+    
+    Task AddAction(long userId, RoutineAction routineAction);
+
+    Task DeleteAction(long userId, string actionId);
 }

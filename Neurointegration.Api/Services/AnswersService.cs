@@ -36,7 +36,7 @@ public class AnswersService : IAnswersService
             return getSprint;
 
         var range = googleSheetUtils.GetAnswerCell(getSprint.Value.SprintStartDate, answer.ScenarioType,
-            answer.AnswerNumber, answer.Date, answer.SprintReplyNumber);
+            answer.AnswerType, answer.Date, answer.SprintReplyNumber);
 
         await googleStorage.Save(answer.Answer, getSprint.Value.SheetId, range);
 

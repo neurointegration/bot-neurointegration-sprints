@@ -21,21 +21,24 @@ public class QuestionStorage : IQuestionStorage
 
     public async Task AddOrReplace(Question question)
     {
-        await ydbClient.ExecuteModify($@"
+        await ydbClient.ExecuteDataQuery($@"
             DECLARE ${QuestionDbSettings.DateField} AS DATETIME;
             DECLARE ${QuestionDbSettings.UserIdField} AS Int64;
             DECLARE ${QuestionDbSettings.ScenarioTypeField} AS Utf8;
             DECLARE ${QuestionDbSettings.PriorityField} AS Int32;
             DECLARE ${QuestionDbSettings.SprintReplyNumberField} AS Int32;
             DECLARE ${QuestionDbSettings.SprintNumberField} AS Int64;
+            DECLARE ${QuestionDbSettings.IsDelayedField} AS Bool;
 
              REPLACE INTO {QuestionDbSettings.TableName} 
                 ( {QuestionDbSettings.DateField}, {QuestionDbSettings.UserIdField},
                   {QuestionDbSettings.ScenarioTypeField}, {QuestionDbSettings.PriorityField}, 
-                    {QuestionDbSettings.SprintReplyNumberField}, {QuestionDbSettings.SprintNumberField} )
+                    {QuestionDbSettings.SprintReplyNumberField}, {QuestionDbSettings.SprintNumberField},
+                    {QuestionDbSettings.IsDelayedField})
              VALUES ( ${QuestionDbSettings.DateField}, ${QuestionDbSettings.UserIdField},
                       ${QuestionDbSettings.ScenarioTypeField}, ${QuestionDbSettings.PriorityField},
-                      ${QuestionDbSettings.SprintReplyNumberField}, ${QuestionDbSettings.SprintNumberField} )",
+                      ${QuestionDbSettings.SprintReplyNumberField}, ${QuestionDbSettings.SprintNumberField},
+                      ${QuestionDbSettings.IsDelayedField})",
             new Dictionary<string, YdbValue>
             {
                 {$"${QuestionDbSettings.DateField}", YdbValue.MakeDatetime(question.Date)},
@@ -43,7 +46,8 @@ public class QuestionStorage : IQuestionStorage
                 {$"${QuestionDbSettings.ScenarioTypeField}", YdbValue.MakeUtf8(question.ScenarioType.ToString())},
                 {$"${QuestionDbSettings.PriorityField}", YdbValue.MakeInt32(question.Priority)},
                 {$"${QuestionDbSettings.SprintReplyNumberField}", YdbValue.MakeInt32(question.SprintReplyNumber)},
-                {$"${QuestionDbSettings.SprintNumberField}", YdbValue.MakeInt64(question.SprintNumber)}
+                {$"${QuestionDbSettings.SprintNumberField}", YdbValue.MakeInt64(question.SprintNumber)},
+                {$"${QuestionDbSettings.IsDelayedField}", YdbValue.MakeBool(question.IsDelayed)}
             });
     }
 
@@ -113,13 +117,13 @@ public class QuestionStorage : IQuestionStorage
     {
         try
         {
-            await ydbClient.ExecuteModify($@"
+            await ydbClient.ExecuteDataQuery($@"
             DECLARE ${QuestionDbSettings.DateField} AS DATETIME;
             DECLARE ${QuestionDbSettings.UserIdField} AS Int64;
 
             DELETE FROM {QuestionDbSettings.TableName}
-            WHERE {QuestionDbSettings.DateField} == ${QuestionDbSettings.DateField} AND 
-                  {QuestionDbSettings.UserIdField} == ${QuestionDbSettings.UserIdField};",
+            WHERE {QuestionDbSettings.DateField} = ${QuestionDbSettings.DateField} AND 
+                  {QuestionDbSettings.UserIdField} = ${QuestionDbSettings.UserIdField};",
                 new Dictionary<string, YdbValue>
                 {
                     {$"${QuestionDbSettings.DateField}", YdbValue.MakeDatetime(question.Date)},
@@ -142,11 +146,11 @@ public class QuestionStorage : IQuestionStorage
 
     public async Task DeleteUserQuestions(long userId)
     {
-        await ydbClient.ExecuteModify($@"
+        await ydbClient.ExecuteDataQuery($@"
             DECLARE ${QuestionDbSettings.UserIdField} AS Int64;
 
             DELETE FROM {QuestionDbSettings.TableName}
-            WHERE {QuestionDbSettings.UserIdField} == ${QuestionDbSettings.UserIdField};",
+            WHERE {QuestionDbSettings.UserIdField} = ${QuestionDbSettings.UserIdField};",
             new Dictionary<string, YdbValue>
             {
                 {$"${QuestionDbSettings.UserIdField}", YdbValue.MakeInt64(userId)}

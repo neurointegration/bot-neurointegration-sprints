@@ -1,5 +1,7 @@
-﻿using BotTemplate.Models.Telegram;
+﻿using BotTemplate.Models;
+using BotTemplate.Models.Telegram;
 using Neurointegration.Api.DataModels.Models;
+using Newtonsoft.Json;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace BotTemplate.Services.Telegram.Messages.Register;

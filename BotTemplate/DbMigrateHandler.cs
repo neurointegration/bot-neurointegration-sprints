@@ -1,10 +1,13 @@
+using BotTemplate.DI;
 using BotTemplate.Services.YDB;
-using BotTemplate.Services.YDB.Repo;
 using Common.Ydb;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Neurointegration.Api.DI;
 using Neurointegration.Api.Settings;
 using Neurointegration.Api.Storages.Tables;
+using Telegram.Bot;
+using Telegram.Bot.Types;
 using Yandex.Cloud.Functions;
 
 namespace BotTemplate;
@@ -19,20 +22,34 @@ public class DbMigrateHandler : YcFunction<string, Response>
 
     public async Task Handle()
     {
-        var configuration = Configuration.FromEnvironment();
-        var botDatabase = new BotDatabase(configuration);
-        var scenariosRepo = await ScenariosRepository.InitWithCreate(botDatabase);
-        await CurrentScenarioRepository.InitWithCreate(botDatabase, scenariosRepo);
-        await UserAnswersRepository.InitWithCreate(botDatabase);
-        await UsersRepository.InitWithCreate(botDatabase);
-        
         var secretSettings = ApiSecretSettings.FromEnvironment();
+        var configuration = Configuration.FromEnvironment();
+        using var factory = LoggerFactory.Create(builder => builder.AddSimpleConsole());
         var service = new ServiceCollection()
-            .AddTransient(_ => new YdbClient(secretSettings.YdbSecretSettings))
-            .AddDb();
+            .AddSingleton<ILogger>(factory.CreateLogger("Migrate"))
+            .AddTransient(provider =>
+                new YdbClient(secretSettings.YdbSecretSettings, provider.GetRequiredService<ILogger>()))
+            .AddInitialize()
+            .AddBotDb(configuration)
+            .AddRepositories()
+            .AddTgClient(configuration.TelegramToken);
         var serviceProvider = service.BuildServiceProvider();
-        var initializer = serviceProvider.GetService<YdbInitializer>() ??
-                          throw new ArgumentException("Нет экземпляра инициализатора бд для апи");
-        await initializer.CreateTables();
+        // var initializer = serviceProvider.GetService<YdbInitializer>() ??
+        //                   throw new ArgumentException("Нет экземпляра инициализатора бд для апи");
+        // await initializer.CreateTables()
+        
+        // var scenariosToStartRepository = serviceProvider.GetRequiredService<ScenariosToStartRepository>();
+        // await scenariosToStartRepository.CreateTable();
+        
+        // var botClient = serviceProvider.GetRequiredService<ITelegramBotClient>();
+        // await botClient.SetMyCommandsAsync(new[]
+        // {
+        //     new BotCommand() {Command = CommandsConstants.Start, Description = "Регистрация"},
+        //     new BotCommand() {Command = CommandsConstants.SettingsCommand, Description = "Настройки"},
+        //     new BotCommand() {Command = CommandsConstants.RoutineActionsCommand, Description = "Рутинные дела"},
+        //     new BotCommand() {Command = CommandsConstants.ResultTablesCommand, Description = "Таблица результатов"}
+        // });
+
+
     }
 }

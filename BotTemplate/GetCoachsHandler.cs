@@ -8,7 +8,7 @@ public class GetCoachListHandler : BaseFunctionHandler<IBackendApiClient>
 {
     protected override async Task<string> InnerHandleRequest(string request, Context context)
     {
-        var listCoach = await handleService.GetPublicCoachListAsync();
+        var listCoach = await HandleService.GetPublicCoachListAsync();
         return JsonConvert.SerializeObject(listCoach);
     }
 

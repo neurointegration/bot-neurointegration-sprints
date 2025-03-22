@@ -24,7 +24,7 @@ public class QuestionsController : ControllerBase
     {
         log.Log(LogLevel.Information, "Accept request GET /question/{time}", time);
 
-        var questions = await questionService.Get(time, null);
+        var questions = await questionService.Get(time, null, null);
         return Ok(questions);
     }
 }

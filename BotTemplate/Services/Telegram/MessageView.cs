@@ -3,15 +3,16 @@ using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
+using Message = BotTemplate.Models.Telegram.Message;
 
 namespace BotTemplate.Services.Telegram;
 
-public class HtmlMessageView : IMessageView
+public class HtmlMessageSender : IMessageSender
 {
     private readonly ITelegramBotClient botClient;
     private readonly ILogger log;
 
-    public HtmlMessageView(ITelegramBotClient client, ILogger log)
+    public HtmlMessageSender(ITelegramBotClient client, ILogger log)
     {
         botClient = client;
         this.log = log;
@@ -32,7 +33,69 @@ public class HtmlMessageView : IMessageView
             log.LogError($"Не удалось отправить сообщение {text} пользователю {chatId}. Ошибка {e.Message}");
         }
     }
+    
+    public async Task<int?> TrySay(Message message, long chatId)
+    {
+        try
+        {
+            var sendingMessage = await botClient.SendTextMessageAsync(
+                chatId,
+                message.Text,
+                parseMode: ParseMode.Html,
+                replyMarkup: message.ReplyMarkup
+            );
 
+            return sendingMessage.MessageId;
+        }
+        catch (Exception e)
+        {
+            log.LogError($"Не удалось отправить сообщение {message.Text} пользователю {chatId}. Ошибка {e.Message}");
+        }
+
+        return null;
+    }
+    
+    public async Task TryEdit(Message message, long chatId, int messageId)
+    {
+        if (message.ReplyMarkup is not InlineKeyboardMarkup inlineKeyboardMarkup)
+            return;
+        
+        try
+        {
+            await botClient.EditMessageTextAsync(
+                chatId,
+                messageId,
+                message.Text,
+                parseMode: ParseMode.Html,
+                replyMarkup: inlineKeyboardMarkup
+            );
+        }
+        catch (Exception e)
+        {
+            log.LogError($"Не удалось изменить сообщение {messageId}. Ошибка {e.Message}");
+        }
+    }
+
+    public async Task TrySay(string? text, long chatId)
+    {
+        if (text == null)
+            return;
+        
+        try
+        {
+            await botClient.SendTextMessageAsync(
+                chatId,
+                text,
+                parseMode: ParseMode.Html
+            );
+        }
+        catch (Exception e)
+        {
+            log.LogError($"Не удалось отправить сообщение {text} пользователю {chatId}. Ошибка {e.Message}");
+        }
+    }
+
+    
     public async Task SayWithMarkup(string text, long chatId, IReplyMarkup? replyMarkup)
     {
         try
@@ -55,7 +118,7 @@ public class HtmlMessageView : IMessageView
         await Say(
             "Это шаблон telegram-бота, поддерживающий <b>Yandex Cloud Function</b>!\n" +
             "Если он тебе нужен, то тогда тебе " +
-            "<a href=\"https://github.com/BasedDepartment1/cloud-function-bot\">сюда</a>.",
+            "<a href=\"https://github.com/BasedDepartment1/cloud-function-bot\">сюда</a>",
             chatId
         );
     }

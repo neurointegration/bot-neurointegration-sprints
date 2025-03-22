@@ -1,5 +1,6 @@
 ﻿using Neurointegration.Api.DataModels.Dto;
 using Neurointegration.Api.DataModels.Models;
+using Neurointegration.Api.DataModels.Result;
 using Neurointegration.Api.Services;
 
 namespace BotTemplate.Client;
@@ -9,27 +10,34 @@ public class LocalBackendApiClient : IBackendApiClient
     private readonly IAnswersService answersService;
     private readonly IQuestionService questionService;
     private readonly IUserService userService;
+    private readonly IRoutineActionsService routineActionsService;
 
     public LocalBackendApiClient(IAnswersService answersService, IQuestionService questionService,
-        IUserService userService)
+        IUserService userService, IRoutineActionsService routineActionsService)
     {
         this.answersService = answersService;
         this.questionService = questionService;
         this.userService = userService;
+        this.routineActionsService = routineActionsService;
     }
 
-    public async Task SendAnswerAsync(SendAnswer sendAnswer)
+    public async Task SaveAnswer(SendAnswer sendAnswer)
     {
         var answer = await answersService.Save(sendAnswer);
         if (!answer.IsSuccess)
             throw new HttpRequestException(answer.Error.Message);
     }
 
-    public async Task<List<Question>> GetQuestionsAsync(int timePeriod, ScenarioType? scenarioType)
+    public async Task<List<Question>> GetQuestionsAsync(int timePeriod, ScenarioType? scenarioType, long? userId)
     {
-        var questionsActionResult = await questionService.Get(timePeriod, scenarioType);
+        var questionsActionResult = await questionService.Get(timePeriod, scenarioType, userId);
 
         return questionsActionResult;
+    }
+
+    public async Task<Result> CreateDelayedQuestion(Question question) 
+    {
+        return await questionService.CreateDelayedQuestion(question);
     }
 
     public async Task<User> CreateUserAsync(CreateUser createUser)
@@ -39,7 +47,7 @@ public class LocalBackendApiClient : IBackendApiClient
         return result;
     }
 
-    public async Task<User> UpdateUserAsync(UpdateUser updateUser)
+    public async Task<User> UpdateUser(UpdateUser updateUser)
     {
         var result = await userService.UpdateUser(updateUser);
         if (!result.IsSuccess)
@@ -47,12 +55,9 @@ public class LocalBackendApiClient : IBackendApiClient
         return result.Value;
     }
 
-    public async Task<User> GetUserAsync(long userId)
+    public async Task<Result<User>> GetUser(long userId)
     {
-        var result = await userService.GetUser(userId);
-        if (!result.IsSuccess)
-            throw new HttpRequestException(result.Error.Message);
-        return result.Value;
+        return await userService.GetUser(userId);
     }
 
     public async Task<List<Sprint>> GetUserSprintsAsync(long ownerId, long grantedUserId)
@@ -93,5 +98,33 @@ public class LocalBackendApiClient : IBackendApiClient
         if (!result.IsSuccess)
             throw new HttpRequestException(result.Error.Message);
         return result.Value;
+    }
+
+    public async Task<List<WeekRoutineAction>> GetUserRoutineActions(long userId)
+    {
+        return await routineActionsService.GetWeekActions(userId);
+    }
+    
+    public async Task CheckupAction(long userId, string actionId)
+    {
+        await routineActionsService.CheckupAction(userId, actionId);
+    }
+
+    public async Task AddActions(long userId, List<RoutineAction> routineActions)
+    {
+        foreach (var routineAction in routineActions)
+        {
+            await AddAction(userId, routineAction);
+        }
+    }
+
+    public async Task AddAction(long userId, RoutineAction routineAction)
+    {
+        await routineActionsService.AddAction(userId, routineAction);
+    }
+
+    public async Task DeleteAction(long userId, string actionId)
+    {
+        await routineActionsService.DeleteAction(userId, actionId);
     }
 }
