@@ -16,7 +16,7 @@ public class SprintServiceDecorator : ISprintService
 
     public async Task<Sprint> CreateSprint(User user, long sprintNumber, DateTime sprintStartDate)
     {
-        logger.LogInformation("Создаем спринт");
+        logger.LogInformation($"Создаем спринт {sprintNumber} для пользователя {user.UserId}");
         return await sprintService.CreateSprint(user, sprintNumber, sprintStartDate);
     }
 

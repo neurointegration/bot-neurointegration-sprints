@@ -22,7 +22,7 @@ public static class ShowSettingsMessage
             new[]
             {
                 new InlineKeyboardButton(user.SendRegularMessages
-                    ? "Я больше не хочу проходить спринты"
+                    ? "Я хочу остановить прохождение спринтов"
                     : "Я хочу проходить спринты")
                 {
                     CallbackData = CommandsConstants.ChangeSprintRegular

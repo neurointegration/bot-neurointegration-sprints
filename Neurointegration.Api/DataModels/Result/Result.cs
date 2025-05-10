@@ -15,7 +15,7 @@ public record Result<T> : Result
         };
     }
 
-    public new static Result<T> Fail(Error error)
+    public new static Result<T> Fail(Error? error)
     {
         return new Result<T>()
         {
@@ -27,8 +27,13 @@ public record Result<T> : Result
 
 public record Result
 {
-    public Error Error { get; protected set; }
+    public Error? Error { get; protected set; }
     public bool IsSuccess { get; protected set; }
+
+    public bool HasError(ErrorStatus errorStatus)
+    {
+        return !IsSuccess && Error != null && Error.Status == errorStatus;
+    }
 
     public static Result Success()
     {
@@ -38,7 +43,7 @@ public record Result
         };
     }
 
-    public static Result Fail(Error error)
+    public static Result Fail(Error? error)
     {
         return new Result()
         {
