@@ -4,7 +4,7 @@ public class YdbSecretSettings
 {
     public string YdbEndpoint { get; set; }
     public string YdbPath { get; set; }
-    
+    public bool LogQuery { get; set; }
     public string? IamTokenPath { get; set; }
     
     public static YdbSecretSettings FromEnvironment()
@@ -18,6 +18,8 @@ public class YdbSecretSettings
                       throw new ArgumentException("Не задана переменная NEURO_YDB_PATH"),
             
             IamTokenPath = Environment.GetEnvironmentVariable("IAM_TOKEN_PATH"),
+            
+            LogQuery = Environment.GetEnvironmentVariable("DB_LOG_QUERY")?.ToLower() == "true"
         };
     }
 }

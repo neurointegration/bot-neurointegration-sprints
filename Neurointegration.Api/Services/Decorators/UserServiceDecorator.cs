@@ -8,6 +8,7 @@ public class UserServiceDecorator : IUserService
 {
     private readonly IUserService userService;
     private readonly ILogger logger;
+    private readonly Dictionary<long, User> userCache = new Dictionary<long, User>();
 
     public UserServiceDecorator(IUserService userService, ILogger logger)
     {
@@ -19,15 +20,23 @@ public class UserServiceDecorator : IUserService
     {
         logger.LogInformation($"Создаем пользователя {createUser}");
         var result = await userService.CreateUser(createUser);
+        userCache[result.UserId] = result;
         logger.LogInformation($"Создали пользователя {result}");
         return result;
     }
 
     public async Task<Result<User>> GetUser(long userId)
     {
-        logger.LogInformation("Получаем пользователя");
+        logger.LogInformation($"Получаем пользователя {userId}");
+        if (userCache.TryGetValue(userId, out var user))
+        {
+            logger.LogInformation("Нашли пользователя в кэше");
+            return await Task.FromResult(Result<User>.Success(user));
+        }
+
         var result = await userService.GetUser(userId);
-        logger.LogInformation($"Получили пользователя {result}");
+        userCache[result.Value.UserId] = result.Value;
+        logger.LogInformation($"Нашли пользователя в хранилище {result}");
 
         return result;
     }
@@ -56,6 +65,7 @@ public class UserServiceDecorator : IUserService
     {
         logger.LogInformation($"Обновляем пользователя: {updateUser}");
         var result = await userService.UpdateUser(updateUser);
+        userCache[result.Value.UserId] = result.Value;
         logger.LogInformation($"Обновили пользователя {result}");
         return result;
     }
@@ -88,5 +98,6 @@ public class UserServiceDecorator : IUserService
     public async Task DeleteUser(long userId)
     {
         await userService.DeleteUser(userId);
+        userCache.Remove(userId);
     }
 }

@@ -33,4 +33,20 @@ public class QuestionHelper
 
         return value.Value;
     }
+    
+    public TimeSpan UpdateStatusQuestionTime(Question? question, User user)
+    {
+        var dayReply = question.SprintReplyNumber % 3;
+
+        if (user.MessageEndTime < user.MessageStartTime)
+            user.MessageEndTime += TimeSpan.FromDays(1);
+
+        var period = (user.MessageEndTime - user.MessageStartTime) / 3;
+        var startTime = user.MessageStartTime + period * dayReply;
+        var value = startTime + TimeSpan.FromMinutes(random.Next((int) period.Value.TotalMinutes));
+        if (value.Value.Days > 0)
+            value = value.Value - TimeSpan.FromDays(value.Value.Days);
+
+        return value.Value;
+    }
 }

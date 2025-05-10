@@ -53,7 +53,7 @@ public class UserService : IUserService
             var sprint = await sprintService
                 .CreateSprint(user, 0, createUser.SprintStartDate.Value);
             user.Sprints.Add(sprint);
-            await AddRegularQuestions(user, sprint, createUser.FirstReflectionDate.Value);
+            await AddRegularQuestions(user, sprint, DateOnly.FromDateTime(createUser.FirstReflectionDate.Value));
         }
 
         await usersStorage.SaveUser(user);
@@ -89,7 +89,7 @@ public class UserService : IUserService
         if (storedUser.SendRegularMessages == false && updateUser.SendRegularMessages == true)
         {
             if (storedUser.MessageEndTime == null || storedUser.MessageStartTime == null ||
-                storedUser.EveningStandUpTime == null)
+                storedUser.EveningStandUpTime == null || storedUser.WeekReflectionTime == null)
                 throw new ArgumentException("Для добавления отправки сообщений указаны не все обязательные параметры");
 
             var lastSprint = await sprintService.GetLastSprint(updateUser.UserId);
@@ -111,7 +111,7 @@ public class UserService : IUserService
                     DateTime.UtcNow);
             }
 
-            await AddRegularQuestions(storedUser, lastSprint, DateTime.UtcNow.AddDays(7));
+            await AddRegularQuestions(storedUser, lastSprint, DateOnly.FromDateTime(DateTime.UtcNow).AddDays(7));
         }
 
         if (storedUser.SendRegularMessages == true && updateUser.SendRegularMessages is true or null)
@@ -128,7 +128,9 @@ public class UserService : IUserService
             {
                 var question = await questionStorage.Get(storedUser.UserId, ScenarioType.EveningStandUp);
                 var newQuestion = new Question(question.Value);
-                newQuestion.Date = question.Value.Date + updateUser.EveningStandUpTime.Value;
+                newQuestion.Date =
+                    DateOnly.FromDateTime(question.Value.Date)
+                        .ToDateTime(TimeOnly.FromTimeSpan(updateUser.EveningStandUpTime.Value));
                 await questionStorage.UpdateQuestion(question.Value, newQuestion);
             }
 
@@ -136,8 +138,20 @@ public class UserService : IUserService
             {
                 var question = await questionStorage.Get(storedUser.UserId, ScenarioType.Status);
                 var newQuestion = new Question(question.Value);
-                newQuestion.Date = question.Value.Date +
-                                   questionHelper.GetNewStatusQuestionTime(newQuestion, storedUser);
+                newQuestion.Date =
+                    DateOnly.FromDateTime(question.Value.Date)
+                        .ToDateTime(
+                            TimeOnly.FromTimeSpan(questionHelper.UpdateStatusQuestionTime(newQuestion, storedUser)));
+                await questionStorage.UpdateQuestion(question.Value, newQuestion);
+            }
+
+            if (updateUser.WeekReflectionTime != null)
+            {
+                var question = await questionStorage.Get(storedUser.UserId, ScenarioType.Reflection);
+                var newQuestion = new Question(question.Value);
+                newQuestion.Date =
+                    DateOnly.FromDateTime(question.Value.Date)
+                        .ToDateTime(TimeOnly.FromTimeSpan(updateUser.WeekReflectionTime.Value));
                 await questionStorage.UpdateQuestion(question.Value, newQuestion);
             }
         }
@@ -171,7 +185,7 @@ public class UserService : IUserService
         return Result<List<User>>.Success(students);
     }
 
-    private async Task AddRegularQuestions(User user, Sprint sprint, DateTime firstReflectionDate)
+    private async Task AddRegularQuestions(User user, Sprint sprint, DateOnly firstReflectionDate)
     {
         logger.LogInformation("Добавляем пользователю регулярные вопросы");
         var startMessageDay = sprint.SprintStartDate < DateTime.UtcNow.Date
@@ -184,13 +198,11 @@ public class UserService : IUserService
             sprint.SprintNumber,
             0,
             0);
-        var reflectionStart = firstReflectionDate;
+        var reflectionStart = firstReflectionDate.ToDateTime(TimeOnly.MinValue) + user.WeekReflectionTime.Value;
         while (reflectionStart < DateTime.UtcNow.Date)
         {
             reflectionStart = reflectionStart.AddDays(7);
         }
-
-        reflectionStart += user.WeekReflectionTime.Value;
 
         var questionReflection = new Question(
             reflectionStart,

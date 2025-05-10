@@ -86,7 +86,7 @@ public class QuestionService : IQuestionService
 
     private async Task<Result> CreateNextQuestionWithLogs(Question question)
     {
-        log.LogDebug($"Попытка обновить вопрос {question}");
+        log.LogInformation($"Попытка обновить вопрос {question}");
 
         var updateResult = await CreateNextQuestion(question);
 
@@ -100,33 +100,35 @@ public class QuestionService : IQuestionService
     {
         var updateQuestion = new Question(question);
 
-        var activeSprint = await sprintService.GetSprint(question.UserId, question.SprintNumber);
-        if (!activeSprint.IsSuccess)
-            return activeSprint;
+        var activeSprintResult = await sprintService.GetSprint(question.UserId, question.SprintNumber);
+        if (!activeSprintResult.IsSuccess)
+            return activeSprintResult;
 
         var getNewDate = await GetNewQuestionDateTime(question);
         if (!getNewDate.IsSuccess)
             return getNewDate;
         updateQuestion.Date = getNewDate.Value;
         updateQuestion.SprintReplyNumber += 1;
-        updateQuestion.SprintNumber = GetNextQuestionSprintNumber(question, activeSprint.Value);
+        updateQuestion.SprintNumber = GetNextQuestionSprintNumber(question, activeSprintResult.Value);
         if (updateQuestion.SprintNumber != question.SprintNumber)
         {
             updateQuestion.SprintReplyNumber = 0;
             var result = await CreateSprintIfNotExist(question.UserId, updateQuestion.SprintNumber,
-                activeSprint.Value.SprintStartDate.AddDays(SprintConstants.SprintDaysCount));
+                activeSprintResult.Value.SprintStartDate.AddDays(SprintConstants.SprintDaysCount));
             if (!result.IsSuccess)
                 return result;
         }
 
-        await questionStorage.UpdateQuestion(question, updateQuestion);
+        log.LogInformation($"Сохраняем следующий вопрос");
+        await questionStorage.AddOrReplace(updateQuestion);
+        await Delete(question);
 
         return Result.Success();
     }
 
     private async Task<Result> Delete(Question question)
     {
-        log.LogDebug($"Попытка удалить вопрос {question}");
+        log.LogInformation($"Попытка удалить вопрос {question}");
 
         var deleteResult = await questionStorage.Delete(question);
 
@@ -184,8 +186,9 @@ public class QuestionService : IQuestionService
 
     private async Task<Result> CreateSprintIfNotExist(long userId, long sprintNumber, DateTime sprintStartDate)
     {
+        log.LogInformation($"Проверяем есть ли у пользователя {userId} спринт {sprintNumber}");
         var getSprint = await sprintService.GetSprint(userId, sprintNumber);
-        if (getSprint.Error.Status == ErrorStatus.NotFound)
+        if (getSprint.HasError(ErrorStatus.NotFound))
         {
             var getUser = await userService.GetUser(userId);
             if (!getUser.IsSuccess)

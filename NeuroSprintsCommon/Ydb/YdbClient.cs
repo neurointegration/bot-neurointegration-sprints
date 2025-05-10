@@ -176,8 +176,11 @@ public class YdbClient
     {
         using var tableClient = await CreateTableClient();
 
-        logger.LogInformation(query);
-        logger.LogInformation(string.Join(";", parameters));
+        if (configuration.LogQuery)
+        {
+            logger.LogInformation(query.ReplaceLineEndings(" "));
+            logger.LogInformation(string.Join(";", parameters));
+        }
 
         var response = await tableClient.SessionExec(async session
             => await session.ExecuteDataQuery(

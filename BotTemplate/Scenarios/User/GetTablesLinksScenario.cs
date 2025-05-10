@@ -42,7 +42,7 @@ public class GetTablesLinksScenario: IScenario
             .OrderByDescending(sprint => sprint.SprintNumber)
             .Aggregate("Таблицы твоих результатов и ответов:\n",
                 (current, spreadSheet) => current +
-                                          $"<a href='https://docs.google.com/spreadsheets/d/{spreadSheet.SheetId}'>Таблица твоих результатов и ответов</a>\n");
+                                          $"<a href='https://docs.google.com/spreadsheets/d/{spreadSheet.SheetId}'>Таблица по спринту {spreadSheet.SprintNumber + 1}</a>\n");
         await messageSender.Say(message, telegramEvent.ChatId);
 
         return true;
