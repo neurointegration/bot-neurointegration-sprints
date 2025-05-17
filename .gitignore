@@ -9,3 +9,4 @@ Tests/testsettings.json
 iamfile.txt
 deploy.cmd
 */ydb_key.json
+*/ydb_key_prod.json
