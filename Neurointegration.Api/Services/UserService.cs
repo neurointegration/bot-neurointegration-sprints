@@ -118,41 +118,67 @@ public class UserService : IUserService
         {
             if (updateUser.ReflectionDate != null)
             {
-                var question = await questionStorage.Get(storedUser.UserId, ScenarioType.Reflection);
-                var newQuestion = new Question(question.Value);
-                newQuestion.Date = updateUser.ReflectionDate.Value;
-                await questionStorage.UpdateQuestion(question.Value, newQuestion);
+                var questionResult = await questionStorage.Get(storedUser.UserId, ScenarioType.Reflection);
+                if (!questionResult.IsSuccess && !questionResult.HasError(ErrorStatus.NotFound))
+                    return Result<User>.Fail(questionResult.Error);
+
+                if (questionResult.IsSuccess)
+                {
+                    var newQuestion = new Question(questionResult.Value);
+                    newQuestion.Date = updateUser.ReflectionDate.Value;
+                    await questionStorage.UpdateQuestion(questionResult.Value, newQuestion);
+                }
             }
 
             if (updateUser.EveningStandUpTime != null)
             {
-                var question = await questionStorage.Get(storedUser.UserId, ScenarioType.EveningStandUp);
-                var newQuestion = new Question(question.Value);
-                newQuestion.Date =
-                    DateOnly.FromDateTime(question.Value.Date)
-                        .ToDateTime(TimeOnly.FromTimeSpan(updateUser.EveningStandUpTime.Value));
-                await questionStorage.UpdateQuestion(question.Value, newQuestion);
+                var questionResult = await questionStorage.Get(storedUser.UserId, ScenarioType.EveningStandUp);
+                if (!questionResult.IsSuccess && !questionResult.HasError(ErrorStatus.NotFound))
+                    return Result<User>.Fail(questionResult.Error);
+                
+                if (questionResult.IsSuccess)
+                {
+                    var newQuestion = new Question(questionResult.Value);
+                    newQuestion.Date =
+                        DateOnly.FromDateTime(questionResult.Value.Date)
+                            .ToDateTime(TimeOnly.FromTimeSpan(updateUser.EveningStandUpTime.Value));
+                    await questionStorage.UpdateQuestion(questionResult.Value, newQuestion);
+                }
             }
 
             if (updateUser.MessageStartTime != null || updateUser.MessageEndTime != null)
             {
-                var question = await questionStorage.Get(storedUser.UserId, ScenarioType.Status);
-                var newQuestion = new Question(question.Value);
-                newQuestion.Date =
-                    DateOnly.FromDateTime(question.Value.Date)
-                        .ToDateTime(
-                            TimeOnly.FromTimeSpan(questionHelper.UpdateStatusQuestionTime(newQuestion, storedUser)));
-                await questionStorage.UpdateQuestion(question.Value, newQuestion);
+                var questionResult = await questionStorage.Get(storedUser.UserId, ScenarioType.Status);
+                if (!questionResult.IsSuccess && !questionResult.HasError(ErrorStatus.NotFound))
+                    return Result<User>.Fail(questionResult.Error);
+
+                if (questionResult.IsSuccess)
+                {
+                    var newQuestion = new Question(questionResult.Value);
+                    newQuestion.Date =
+                        DateOnly.FromDateTime(questionResult.Value.Date)
+                            .ToDateTime(
+                                TimeOnly.FromTimeSpan(
+                                    questionHelper.UpdateStatusQuestionTime(newQuestion, storedUser)));
+                    await questionStorage.UpdateQuestion(questionResult.Value, newQuestion);
+                }
             }
 
             if (updateUser.WeekReflectionTime != null)
             {
-                var question = await questionStorage.Get(storedUser.UserId, ScenarioType.Reflection);
-                var newQuestion = new Question(question.Value);
-                newQuestion.Date =
-                    DateOnly.FromDateTime(question.Value.Date)
-                        .ToDateTime(TimeOnly.FromTimeSpan(updateUser.WeekReflectionTime.Value));
-                await questionStorage.UpdateQuestion(question.Value, newQuestion);
+                var questionResult = await questionStorage.Get(storedUser.UserId, ScenarioType.Reflection);
+                if (!questionResult.IsSuccess && !questionResult.HasError(ErrorStatus.NotFound))
+                    return Result<User>.Fail(questionResult.Error);
+
+                if (questionResult.IsSuccess)
+                {
+                    var newQuestion = new Question(questionResult.Value)
+                    {
+                        Date = DateOnly.FromDateTime(questionResult.Value.Date)
+                            .ToDateTime(TimeOnly.FromTimeSpan(updateUser.WeekReflectionTime.Value))
+                    };
+                    await questionStorage.UpdateQuestion(questionResult.Value, newQuestion);
+                }
             }
         }
 
