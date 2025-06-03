@@ -35,7 +35,10 @@ public class UserServiceDecorator : IUserService
         }
 
         var result = await userService.GetUser(userId);
-        userCache[result.Value.UserId] = result.Value;
+        if (result.Value != null)
+        {
+            userCache[result.Value.UserId] = result.Value;
+        }
         logger.LogInformation($"Нашли пользователя в хранилище {result}");
 
         return result;

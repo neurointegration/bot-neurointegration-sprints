@@ -50,7 +50,7 @@ public class RegisterScenario: IScenario
             await messageSender.Say("Ты уже зарегистрирован", chatId);
             return true;
         }
-        if (getUser.HasError(ErrorStatus.NotFound))
+        if (!getUser.HasError(ErrorStatus.NotFound))
         {
             await messageSender.Say(MessageConstants.UnknownErrorText, chatId);
             return true;
