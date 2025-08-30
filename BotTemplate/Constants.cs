@@ -13,12 +13,14 @@ public static class MessageConstants
 public static class CommandsConstants
 {
     public const string Start = "/start"; 
-    public const string SettingsCommand = "/settings"; 
+    public const string SettingsCommand = "/settings";
+    public const string LoginCommand = "/login";
     public const string MyInfoCommand = "/info"; 
     public const string ResultTablesCommand = "/tables"; 
     public const string RoutineActionsCommand = "/routine"; 
     
-    public const string Settings = "настройки"; 
+    public const string Settings = "настройки";
+    public const string Login = "залогиниться на сайте";
     public const string GetStudents = "мои ученики"; 
     public const string ChangeCoachStatus = "change_coach_status_flag"; 
     public const string ChangeSprintRegular = "change_sprints_regular_flag"; 

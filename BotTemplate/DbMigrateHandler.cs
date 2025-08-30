@@ -45,6 +45,7 @@ public class DbMigrateHandler : YcFunction<string, Response>
         // await botClient.SetMyCommandsAsync(new[]
         // {
         //     new BotCommand() {Command = CommandsConstants.Start, Description = "Регистрация"},
+        //     new BotCommand() {Command = CommandsConstants.LoginCommand, Description = "Вход в Нейроспринт"},
         //     new BotCommand() {Command = CommandsConstants.SettingsCommand, Description = "Настройки"},
         //     new BotCommand() {Command = CommandsConstants.RoutineActionsCommand, Description = "Рутинные дела"},
         //     new BotCommand() {Command = CommandsConstants.ResultTablesCommand, Description = "Таблица результатов"}
